@@ -1,0 +1,76 @@
+:root {
+    --nav-bg: #333;
+    --nav-text: #fff;
+    --nav-hover-bg: #ddd;
+    --nav-hover-text: #000;
+}
+
+/* Outer navbar container (matches .navbar in JSX) */
+.navbar {
+    background-color: var(--nav-bg);
+    color: var(--nav-text);
+    display: flex;
+    align-items: center;
+    justify-content: space-between; /* Distributes space between logo and links */
+    flex-wrap: wrap; /* Allows links to wrap gracefully on smaller screens */
+    padding: 12px 20px;
+    gap: 16px;
+}
+
+/* Logo styling */
+.navbar .logo {
+    font-weight: 700;
+    font-size: 1.2rem;
+    color: var(--nav-text);
+    white-space: nowrap; /* Prevents logo text from breaking apart */
+}
+
+/* The <nav> element inside the navbar */
+nav.nav {
+    background: transparent;
+    display: flex;
+    align-items: center;
+}
+
+/* List container for all links */
+.nav-links {
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap; /* Wraps excess dashboard links onto a new line if needed */
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    align-items: center;
+}
+
+/* Individual list items */
+.nav-item {
+    display: inline-block;
+}
+
+/* Router links styling */
+.nav-item a {
+    color: var(--nav-text);
+    text-decoration: none;
+    padding: 6px 10px;
+    border-radius: 4px;
+    display: inline-block;
+    font-size: 0.9rem;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* Hover effect */
+.nav-item a:hover {
+    background-color: var(--nav-hover-bg);
+    color: var(--nav-hover-text);
+}
+
+/* Utility: make navbar fixed to top (optional) */
+.navbar.fixed-left {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 1000;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
