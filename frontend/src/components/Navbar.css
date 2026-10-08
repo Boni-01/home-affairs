@@ -1,76 +1,280 @@
+/* ============================================================
+   NAVBAR — Lesotho Government Style
+   ============================================================ */
+
 :root {
-    --nav-bg: #333;
-    --nav-text: #fff;
-    --nav-hover-bg: #ddd;
-    --nav-hover-text: #000;
+  --nav-blue: #00209F;
+  --nav-white: #FFFFFF;
+  --nav-green: #009543;
+  --nav-black: #000000;
+  --nav-light-bg: #F4F7FB;
+  --nav-border: #CBD5E1;
+  --nav-text-muted: #64748B;
+  --nav-text-dark: #1e293b;
+  --nav-shadow: 0 2px 12px rgba(0, 32, 159, 0.08);
 }
 
-/* Outer navbar container (matches .navbar in JSX) */
+/* ------------------------------------------------------------
+   Container
+   ------------------------------------------------------------ */
 .navbar {
-    background-color: var(--nav-bg);
-    color: var(--nav-text);
-    display: flex;
-    align-items: center;
-    justify-content: space-between; /* Distributes space between logo and links */
-    flex-wrap: wrap; /* Allows links to wrap gracefully on smaller screens */
-    padding: 12px 20px;
-    gap: 16px;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  background: #fff;
+  box-shadow: var(--nav-shadow);
+  font-family: Arial, Helvetica, sans-serif;
 }
 
-/* Logo styling */
-.navbar .logo {
-    font-weight: 700;
-    font-size: 1.2rem;
-    color: var(--nav-text);
-    white-space: nowrap; /* Prevents logo text from breaking apart */
+/* ------------------------------------------------------------
+   Lesotho flag stripe on top
+   ------------------------------------------------------------ */
+.flag-stripe {
+  display: flex;
+  height: 4px;
+  width: 100%;
 }
 
-/* The <nav> element inside the navbar */
-nav.nav {
-    background: transparent;
-    display: flex;
-    align-items: center;
+.flag-blue {
+  flex: 1;
+  background: var(--nav-blue);
 }
 
-/* List container for all links */
+.flag-white {
+  flex: 1;
+  background: var(--nav-white);
+  border-top: 1px solid var(--nav-border);
+  border-bottom: 1px solid var(--nav-border);
+}
+
+.flag-green {
+  flex: 1;
+  background: var(--nav-green);
+}
+
+/* ------------------------------------------------------------
+   Main container
+   ------------------------------------------------------------ */
+.navbar-container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 14px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+/* ------------------------------------------------------------
+   Logo
+   ------------------------------------------------------------ */
+.navbar-logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  color: inherit;
+  flex-shrink: 0;
+}
+
+.logo-mark {
+  font-size: 28px;
+  line-height: 1;
+}
+
+.logo-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+}
+
+.logo-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--nav-blue);
+  letter-spacing: 0.2px;
+}
+
+.logo-subtitle {
+  font-size: 11px;
+  color: var(--nav-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  font-weight: 600;
+}
+
+/* ------------------------------------------------------------
+   Navigation
+   ------------------------------------------------------------ */
+.navbar-nav {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex: 1;
+  justify-content: flex-end;
+}
+
 .nav-links {
-    list-style: none;
-    display: flex;
-    flex-wrap: wrap; /* Wraps excess dashboard links onto a new line if needed */
-    gap: 8px;
-    margin: 0;
-    padding: 0;
-    align-items: center;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  flex-wrap: wrap;
 }
 
-/* Individual list items */
-.nav-item {
-    display: inline-block;
+.nav-link {
+  display: inline-block;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--nav-text-dark);
+  text-decoration: none;
+  border-radius: 6px;
+  transition: all 0.15s ease;
+  white-space: nowrap;
 }
 
-/* Router links styling */
-.nav-item a {
-    color: var(--nav-text);
-    text-decoration: none;
+.nav-link:hover {
+  background: var(--nav-light-bg);
+  color: var(--nav-blue);
+}
+
+.nav-link.active {
+  background: var(--nav-blue);
+  color: #fff;
+}
+
+.nav-link.active:hover {
+  background: #001a80;
+  color: #fff;
+}
+
+.nav-link-cta {
+  background: var(--nav-green);
+  color: #fff;
+}
+
+.nav-link-cta:hover {
+  background: #007a36;
+  color: #fff;
+}
+
+/* ------------------------------------------------------------
+   Logout button
+   ------------------------------------------------------------ */
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-left: 12px;
+  border-left: 1px solid var(--nav-border);
+}
+
+.btn-logout {
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  background: transparent;
+  color: var(--nav-blue);
+  border: 1px solid var(--nav-blue);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: inherit;
+}
+
+.btn-logout:hover {
+  background: var(--nav-blue);
+  color: #fff;
+}
+
+/* ------------------------------------------------------------
+   Mobile toggle
+   ------------------------------------------------------------ */
+.navbar-toggle {
+  display: none;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px;
+  background: transparent;
+  border: 1px solid var(--nav-border);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.hamburger-line {
+  width: 22px;
+  height: 2px;
+  background: var(--nav-text-dark);
+  border-radius: 2px;
+}
+
+/* ------------------------------------------------------------
+   Responsive — Tablet
+   ------------------------------------------------------------ */
+@media (max-width: 1024px) {
+  .nav-link {
     padding: 6px 10px;
-    border-radius: 4px;
-    display: inline-block;
-    font-size: 0.9rem;
-    transition: background-color 0.2s ease, color 0.2s ease;
+    font-size: 12px;
+  }
+  .logo-title {
+    font-size: 15px;
+  }
 }
 
-/* Hover effect */
-.nav-item a:hover {
-    background-color: var(--nav-hover-bg);
-    color: var(--nav-hover-text);
-}
+/* ------------------------------------------------------------
+   Responsive — Mobile
+   ------------------------------------------------------------ */
+@media (max-width: 768px) {
+  .navbar-container {
+    padding: 12px 16px;
+    flex-wrap: wrap;
+  }
 
-/* Utility: make navbar fixed to top (optional) */
-.navbar.fixed-left {
-    position: fixed;
-    top: 0;
-    left: 0;
+  .navbar-toggle {
+    display: flex;
+  }
+
+  .navbar-nav {
+    display: none;
+    flex-basis: 100%;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--nav-border);
+  }
+
+  .navbar-nav.open {
+    display: flex;
+  }
+
+  .nav-links {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 4px;
     width: 100%;
-    z-index: 1000;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  }
+
+  .nav-link {
+    padding: 12px 14px;
+    font-size: 14px;
+    width: 100%;
+    text-align: left;
+  }
+
+  .nav-actions {
+    border-left: none;
+    border-top: 1px solid var(--nav-border);
+    padding-left: 0;
+    padding-top: 12px;
+  }
+
+  .btn-logout {
+    width: 100%;
+    padding: 12px;
+    font-size: 14px;
+  }
 }
