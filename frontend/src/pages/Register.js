@@ -14,9 +14,6 @@ import {
   API_BASE
 } from "../Database/firebase";
 
-// ============================================================
-// LESOTHO FLAG COLORS
-// ============================================================
 const COLORS = {
   blue: "#00209F",
   white: "#FFFFFF",
@@ -51,14 +48,18 @@ const buttonStyle = (bg) => ({
   marginTop: 10
 });
 
-function Register({ onSuccess }) {
+function Register({ onSuccess, getPostAuthRoute }) {
   const location = useLocation();
   const navigate = useNavigate();
 
   const [method, setMethod] = useState("email");
 
-  const [firstName, setFirstName] = useState(location.state?.prefill?.name?.split(" ")[0] || "");
-  const [lastName, setLastName] = useState(location.state?.prefill?.name?.split(" ").slice(1).join(" ") || "");
+  const [firstName, setFirstName] = useState(
+    location.state?.prefill?.name?.split(" ")[0] || ""
+  );
+  const [lastName, setLastName] = useState(
+    location.state?.prefill?.name?.split(" ").slice(1).join(" ") || ""
+  );
   const [email, setEmail] = useState(location.state?.prefill?.email || "");
   const [phone, setPhone] = useState(location.state?.prefill?.phone || "+266");
   const [identityNumber, setIdentityNumber] = useState("");
@@ -85,18 +86,31 @@ function Register({ onSuccess }) {
     }
   }, [method]);
 
+  function resolvePostAuthRoute() {
+    const fromMinistry =
+      typeof getPostAuthRoute === "function" ? getPostAuthRoute() : null;
+    const fromState = location.state?.from?.pathname;
+    return fromMinistry || fromState || "/home-affairs-dashboard";
+  }
+
   async function saveProfileToBackend(firebaseUser, overrides = {}) {
     const token = await firebaseUser.getIdToken();
 
+    const finalFirstName = overrides.firstName || firstName || "";
+    const finalLastName = overrides.lastName || lastName || "";
+    const fullName =
+      overrides.fullName ||
+      `${finalFirstName} ${finalLastName}`.trim() ||
+      firebaseUser.displayName ||
+      "Unknown User";
+
     const body = {
-      nationalId: identityNumber,
-      firstName,
-      lastName,
-      phone: phone || overrides.phone || null,
-      ...overrides
+      full_name: fullName,
+      national_id: identityNumber || null,
+      phone: overrides.phone || phone || null
     };
 
-    const res = await fetch(`${API_BASE}/register/citizen`, {
+    const res = await fetch(`${API_BASE}/register`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -110,10 +124,19 @@ function Register({ onSuccess }) {
 
     sessionStorage.setItem("home-affairs-authenticated", "true");
     sessionStorage.setItem("firebase-uid", firebaseUser.uid);
-    sessionStorage.setItem("account-type", "citizen");
+    sessionStorage.setItem("account-type", data.user?.account_type || "citizen");
+    sessionStorage.setItem("user-profile", JSON.stringify(data.user || {}));
+
+    if (data.isAdmin) {
+      sessionStorage.setItem("is-admin", "true");
+    } else {
+      sessionStorage.removeItem("is-admin");
+    }
 
     onSuccess?.();
-    navigate(location.state?.from?.pathname || "/home-dashboard");
+
+    const nextRoute = resolvePostAuthRoute();
+    navigate(nextRoute, { replace: true });
   }
 
   async function handleEmailRegister(e) {
@@ -137,7 +160,9 @@ function Register({ onSuccess }) {
     setLoading(true);
     try {
       const cred = await createUserWithEmailAndPassword(auth, email, password);
-      await updateProfile(cred.user, { displayName: `${firstName} ${lastName}` });
+      await updateProfile(cred.user, {
+        displayName: `${firstName} ${lastName}`
+      });
       await saveProfileToBackend(cred.user);
     } catch (err) {
       console.error(err);
@@ -162,13 +187,15 @@ function Register({ onSuccess }) {
       const user = cred.user;
 
       const nameParts = (user.displayName || "").split(" ");
-      if (!firstName && nameParts[0]) setFirstName(nameParts[0]);
-      if (!lastName && nameParts.length > 1) setLastName(nameParts.slice(1).join(" "));
+      const firstNameVal = firstName || nameParts[0] || "";
+      const lastNameVal = lastName || nameParts.slice(1).join(" ") || "";
+
+      if (!firstName && firstNameVal) setFirstName(firstNameVal);
+      if (!lastName && lastNameVal) setLastName(lastNameVal);
 
       await saveProfileToBackend(user, {
-        email: user.email,
-        firstName: firstName || nameParts[0],
-        lastName: lastName || nameParts.slice(1).join(" ")
+        firstName: firstNameVal,
+        lastName: lastNameVal
       });
     } catch (err) {
       console.error(err);
@@ -234,7 +261,8 @@ function Register({ onSuccess }) {
       }).catch(() => {});
 
       await saveProfileToBackend(firebaseUser, {
-        phone: firebaseUser.phoneNumber || phone
+        phone: firebaseUser.phoneNumber || phone,
+        fullName: `${firstName} ${lastName}`.trim() || firebaseUser.phoneNumber || "Unknown User"
       });
     } catch (err) {
       console.error(err);
@@ -245,39 +273,45 @@ function Register({ onSuccess }) {
   }
 
   return (
-    <main
-      style={{
-        minHeight: "100vh",
-        display: "grid",
-        placeItems: "center",
-        padding: 24,
-        boxSizing: "border-box",
-        background: COLORS.lightBg,
-        fontFamily: "Arial, sans-serif"
-      }}
-    >
+    <main style={{
+      minHeight: "100vh",
+      display: "grid",
+      placeItems: "center",
+      padding: 24,
+      boxSizing: "border-box",
+      background: COLORS.lightBg,
+      fontFamily: "Arial, sans-serif"
+    }}>
       <div id={RECAPTCHA_CONTAINER_ID}></div>
 
-      <section
-        style={{
-          width: "100%",
-          maxWidth: 660,
-          boxSizing: "border-box",
-          padding: "36px 40px",
-          background: COLORS.white,
-          borderRadius: 14,
-          boxShadow: "0 12px 36px rgba(0, 32, 159, .15)",
-          borderTop: `5px solid ${COLORS.green}`
-        }}
-      >
+      <section style={{
+        width: "100%",
+        maxWidth: 660,
+        boxSizing: "border-box",
+        padding: "36px 40px",
+        background: COLORS.white,
+        borderRadius: 14,
+        boxShadow: "0 12px 36px rgba(0, 32, 159, .15)",
+        borderTop: `5px solid ${COLORS.green}`
+      }}>
         <header style={{ marginBottom: 26 }}>
-          <div style={{ display: "flex", height: "6px", borderRadius: "3px", overflow: "hidden", marginBottom: 18 }}>
+          <div style={{
+            display: "flex", height: "6px", borderRadius: "3px",
+            overflow: "hidden", marginBottom: 18
+          }}>
             <div style={{ flex: 1, background: COLORS.blue }} />
-            <div style={{ flex: 1, background: COLORS.white, borderTop: `1px solid ${COLORS.border}`, borderBottom: `1px solid ${COLORS.border}` }} />
+            <div style={{
+              flex: 1, background: COLORS.white,
+              borderTop: `1px solid ${COLORS.border}`,
+              borderBottom: `1px solid ${COLORS.border}`
+            }} />
             <div style={{ flex: 1, background: COLORS.green }} />
           </div>
 
-          <p style={{ margin: "0 0 8px", color: COLORS.blue, fontSize: 12, fontWeight: 700, letterSpacing: 1.3, textTransform: "uppercase" }}>
+          <p style={{
+            margin: "0 0 8px", color: COLORS.blue, fontSize: 12,
+            fontWeight: 700, letterSpacing: 1.3, textTransform: "uppercase"
+          }}>
             Lesotho Government Services
           </p>
           <h1 style={{ margin: "0 0 8px", color: COLORS.blue, fontSize: 30 }}>
@@ -288,16 +322,10 @@ function Register({ onSuccess }) {
           </p>
         </header>
 
-        <div
-          style={{
-            display: "flex",
-            gap: 8,
-            marginBottom: 22,
-            background: COLORS.lightBg,
-            padding: 4,
-            borderRadius: 8
-          }}
-        >
+        <div style={{
+          display: "flex", gap: 8, marginBottom: 22,
+          background: COLORS.lightBg, padding: 4, borderRadius: 8
+        }}>
           <button
             type="button"
             onClick={() => { setMethod("email"); setError(""); setInfo(""); setOtpSent(false); }}
@@ -307,9 +335,7 @@ function Register({ onSuccess }) {
               color: method === "email" ? "#fff" : COLORS.textMuted,
               fontWeight: 700, cursor: "pointer"
             }}
-          >
-            Email
-          </button>
+          >Email</button>
           <button
             type="button"
             onClick={() => { setMethod("phone"); setError(""); setInfo(""); }}
@@ -319,92 +345,60 @@ function Register({ onSuccess }) {
               color: method === "phone" ? "#fff" : COLORS.textMuted,
               fontWeight: 700, cursor: "pointer"
             }}
-          >
-            Phone OTP
-          </button>
+          >Phone OTP</button>
         </div>
 
         {method === "email" && (
           <form onSubmit={handleEmailRegister}>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))", gap: 18 }}>
+            <div style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))",
+              gap: 18
+            }}>
               <label style={{ color: "#263b35", fontSize: 14, fontWeight: 600 }}>
                 First name
-                <input
-                  type="text"
-                  autoComplete="given-name"
-                  required
-                  value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
-                  style={{ ...fieldStyle, display: "block", marginTop: 7 }}
-                />
+                <input type="text" autoComplete="given-name" required
+                  value={firstName} onChange={(e) => setFirstName(e.target.value)}
+                  style={{ ...fieldStyle, display: "block", marginTop: 7 }} />
               </label>
               <label style={{ color: "#263b35", fontSize: 14, fontWeight: 600 }}>
                 Last name
-                <input
-                  type="text"
-                  autoComplete="family-name"
-                  required
-                  value={lastName}
-                  onChange={(e) => setLastName(e.target.value)}
-                  style={{ ...fieldStyle, display: "block", marginTop: 7 }}
-                />
+                <input type="text" autoComplete="family-name" required
+                  value={lastName} onChange={(e) => setLastName(e.target.value)}
+                  style={{ ...fieldStyle, display: "block", marginTop: 7 }} />
               </label>
               <label style={{ color: "#263b35", fontSize: 14, fontWeight: 600 }}>
                 Email address
-                <input
-                  type="email"
-                  autoComplete="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  style={{ ...fieldStyle, display: "block", marginTop: 7 }}
-                />
+                <input type="email" autoComplete="email" required
+                  value={email} onChange={(e) => setEmail(e.target.value)}
+                  style={{ ...fieldStyle, display: "block", marginTop: 7 }} />
               </label>
               <label style={{ color: "#263b35", fontSize: 14, fontWeight: 600 }}>
                 Phone number
-                <input
-                  type="tel"
-                  autoComplete="tel"
-                  required
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  style={{ ...fieldStyle, display: "block", marginTop: 7 }}
-                />
+                <input type="tel" autoComplete="tel" required
+                  value={phone} onChange={(e) => setPhone(e.target.value)}
+                  style={{ ...fieldStyle, display: "block", marginTop: 7 }} />
               </label>
-              <label style={{ gridColumn: "1 / -1", color: "#263b35", fontSize: 14, fontWeight: 600 }}>
+              <label style={{
+                gridColumn: "1 / -1", color: "#263b35",
+                fontSize: 14, fontWeight: 600
+              }}>
                 ID or passport number
-                <input
-                  type="text"
-                  autoComplete="off"
-                  required
-                  value={identityNumber}
-                  onChange={(e) => setIdentityNumber(e.target.value)}
-                  style={{ ...fieldStyle, display: "block", marginTop: 7 }}
-                />
+                <input type="text" autoComplete="off" required
+                  value={identityNumber} onChange={(e) => setIdentityNumber(e.target.value)}
+                  style={{ ...fieldStyle, display: "block", marginTop: 7 }} />
               </label>
               <label style={{ color: "#263b35", fontSize: 14, fontWeight: 600 }}>
                 Password
-                <input
-                  type="password"
-                  autoComplete="new-password"
-                  minLength={8}
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  style={{ ...fieldStyle, display: "block", marginTop: 7 }}
-                />
+                <input type="password" autoComplete="new-password" minLength={8} required
+                  value={password} onChange={(e) => setPassword(e.target.value)}
+                  style={{ ...fieldStyle, display: "block", marginTop: 7 }} />
               </label>
               <label style={{ color: "#263b35", fontSize: 14, fontWeight: 600 }}>
                 Confirm password
-                <input
-                  type="password"
-                  autoComplete="new-password"
-                  minLength={8}
-                  required
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  style={{ ...fieldStyle, display: "block", marginTop: 7 }}
-                />
+                <input type="password" autoComplete="new-password" minLength={8} required
+                  value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)}
+                  style={{ ...fieldStyle, display: "block", marginTop: 7 }} />
               </label>
             </div>
 
@@ -422,71 +416,62 @@ function Register({ onSuccess }) {
 
         {method === "phone" && (
           <form onSubmit={otpSent ? handleVerifyOtp : handleSendOtp}>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))", gap: 18 }}>
+            <div style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))",
+              gap: 18
+            }}>
               <label style={{ color: "#263b35", fontSize: 14, fontWeight: 600 }}>
                 First name
-                <input
-                  type="text"
-                  required
-                  disabled={otpSent}
-                  value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
-                  style={{ ...fieldStyle, display: "block", marginTop: 7 }}
-                />
+                <input type="text" required disabled={otpSent}
+                  value={firstName} onChange={(e) => setFirstName(e.target.value)}
+                  style={{ ...fieldStyle, display: "block", marginTop: 7 }} />
               </label>
               <label style={{ color: "#263b35", fontSize: 14, fontWeight: 600 }}>
                 Last name
-                <input
-                  type="text"
-                  required
-                  disabled={otpSent}
-                  value={lastName}
-                  onChange={(e) => setLastName(e.target.value)}
-                  style={{ ...fieldStyle, display: "block", marginTop: 7 }}
-                />
+                <input type="text" required disabled={otpSent}
+                  value={lastName} onChange={(e) => setLastName(e.target.value)}
+                  style={{ ...fieldStyle, display: "block", marginTop: 7 }} />
               </label>
-              <label style={{ gridColumn: "1 / -1", color: "#263b35", fontSize: 14, fontWeight: 600 }}>
+              <label style={{
+                gridColumn: "1 / -1", color: "#263b35",
+                fontSize: 14, fontWeight: 600
+              }}>
                 ID or passport number
-                <input
-                  type="text"
-                  required
-                  disabled={otpSent}
-                  value={identityNumber}
-                  onChange={(e) => setIdentityNumber(e.target.value)}
-                  style={{ ...fieldStyle, display: "block", marginTop: 7 }}
-                />
+                <input type="text" required disabled={otpSent}
+                  value={identityNumber} onChange={(e) => setIdentityNumber(e.target.value)}
+                  style={{ ...fieldStyle, display: "block", marginTop: 7 }} />
               </label>
-              <label style={{ gridColumn: "1 / -1", color: "#263b35", fontSize: 14, fontWeight: 600 }}>
+              <label style={{
+                gridColumn: "1 / -1", color: "#263b35",
+                fontSize: 14, fontWeight: 600
+              }}>
                 Phone number
-                <input
-                  type="tel"
-                  required
-                  disabled={otpSent}
+                <input type="tel" required disabled={otpSent}
                   placeholder="+26658000001"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  style={{ ...fieldStyle, display: "block", marginTop: 7 }}
-                />
+                  value={phone} onChange={(e) => setPhone(e.target.value)}
+                  style={{ ...fieldStyle, display: "block", marginTop: 7 }} />
               </label>
               {otpSent && (
-                <label style={{ gridColumn: "1 / -1", color: "#263b35", fontSize: 14, fontWeight: 600 }}>
+                <label style={{
+                  gridColumn: "1 / -1", color: "#263b35",
+                  fontSize: 14, fontWeight: 600
+                }}>
                   Enter OTP
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    autoComplete="one-time-code"
-                    required
-                    placeholder="123456"
-                    value={otp}
-                    onChange={(e) => setOtp(e.target.value)}
-                    style={{ ...fieldStyle, display: "block", marginTop: 7 }}
-                  />
+                  <input type="text" inputMode="numeric" autoComplete="one-time-code"
+                    required placeholder="123456"
+                    value={otp} onChange={(e) => setOtp(e.target.value)}
+                    style={{ ...fieldStyle, display: "block", marginTop: 7 }} />
                 </label>
               )}
             </div>
 
-            {error && <p role="alert" style={{ color: COLORS.error, fontSize: 14, marginTop: 12 }}>{error}</p>}
-            {info && !error && <p style={{ color: COLORS.green, fontSize: 14, marginTop: 12 }}>{info}</p>}
+            {error && (
+              <p role="alert" style={{ color: COLORS.error, fontSize: 14, marginTop: 12 }}>{error}</p>
+            )}
+            {info && !error && (
+              <p style={{ color: COLORS.green, fontSize: 14, marginTop: 12 }}>{info}</p>
+            )}
 
             <button type="submit" disabled={loading} style={buttonStyle(COLORS.green)}>
               {loading ? "Please wait..." : otpSent ? "Verify OTP & Create account" : "Send OTP"}
@@ -498,45 +483,30 @@ function Register({ onSuccess }) {
                 onClick={() => { setOtpSent(false); setOtp(""); setInfo(""); }}
                 style={{
                   ...buttonStyle("transparent"),
-                  color: COLORS.blue,
-                  border: `1px solid ${COLORS.blue}`
+                  color: COLORS.blue, border: `1px solid ${COLORS.blue}`
                 }}
-              >
-                Use different number
-              </button>
+              >Use different number</button>
             )}
           </form>
         )}
 
-        <div
-          style={{
-            display: "flex", alignItems: "center", gap: 12,
-            margin: "22px 0", color: COLORS.textMuted, fontSize: 13
-          }}
-        >
+        <div style={{
+          display: "flex", alignItems: "center", gap: 12,
+          margin: "22px 0", color: COLORS.textMuted, fontSize: 13
+        }}>
           <div style={{ flex: 1, height: 1, background: COLORS.border }} />
           <span>OR</span>
           <div style={{ flex: 1, height: 1, background: COLORS.border }} />
         </div>
 
         <button
-          type="button"
-          onClick={handleGoogleRegister}
-          disabled={loading}
+          type="button" onClick={handleGoogleRegister} disabled={loading}
           style={{
-            width: "100%",
-            padding: 12,
-            border: `1px solid ${COLORS.border}`,
-            borderRadius: 7,
-            background: "#fff",
-            color: "#333",
-            fontSize: 15,
-            fontWeight: 600,
-            cursor: "pointer",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 10
+            width: "100%", padding: 12,
+            border: `1px solid ${COLORS.border}`, borderRadius: 7,
+            background: "#fff", color: "#333", fontSize: 15,
+            fontWeight: 600, cursor: "pointer",
+            display: "flex", alignItems: "center", justifyContent: "center", gap: 10
           }}
         >
           <svg width="18" height="18" viewBox="0 0 48 48">
@@ -548,9 +518,13 @@ function Register({ onSuccess }) {
           Sign up with Google
         </button>
 
-        <p style={{ margin: "22px 0 0", textAlign: "center", color: COLORS.textMuted, fontSize: 14 }}>
+        <p style={{
+          margin: "22px 0 0", textAlign: "center",
+          color: COLORS.textMuted, fontSize: 14
+        }}>
           Already have an account?{" "}
-          <Link to="/login" state={location.state} style={{ color: COLORS.blue, fontWeight: 700, textDecoration: "none" }}>
+          <Link to="/login" state={location.state}
+            style={{ color: COLORS.blue, fontWeight: 700, textDecoration: "none" }}>
             Sign in
           </Link>
         </p>
@@ -561,10 +535,12 @@ function Register({ onSuccess }) {
 
 function prettyError(err) {
   const code = err?.code || "";
-  if (code.includes("email-already-in-use")) return "That email is already registered. Try signing in.";
+  if (code.includes("email-already-in-use"))
+    return "That email is already registered. Try signing in.";
   if (code.includes("weak-password")) return "Password is too weak.";
   if (code.includes("invalid-email")) return "Invalid email address.";
-  if (code.includes("invalid-phone-number")) return "Invalid phone number format. Use +266...";
+  if (code.includes("invalid-phone-number"))
+    return "Invalid phone number format. Use +266...";
   if (code.includes("popup-closed-by-user")) return "Google sign-up cancelled.";
   if (code.includes("invalid-verification-code")) return "Invalid OTP code.";
   return err?.message || "Something went wrong. Please try again.";

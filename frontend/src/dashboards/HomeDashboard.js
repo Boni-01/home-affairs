@@ -1,203 +1,305 @@
-import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import React from "react";
+import { Link, useNavigate } from "react-router-dom";
 
 // ============================================================
 // LESOTHO FLAG COLORS
 // ============================================================
 const COLORS = {
   blue: "#00209F",
+  blueDark: "#001a80",
+  blueLight: "#e6ebf9",
   white: "#FFFFFF",
   green: "#009543",
+  greenDark: "#007a36",
+  greenLight: "#e6f6ee",
   black: "#000000",
   lightBg: "#F4F7FB",
   border: "#CBD5E1",
   textDark: "#1e293b",
-  textMuted: "#64748B",
-  error: "#B3261E"
+  textMid: "#526174",
+  textMuted: "#64748B"
 };
 
 // ============================================================
-// AVAILABLE DASHBOARDS
+// MINISTRIES DATA
 // ============================================================
-const DASHBOARDS = [
+const MINISTRIES = [
   {
-    title: "Applications",
-    description: "Start a new application or track one you have already submitted.",
-    href: "/dashboard/applications",
-    icon: "📄",
+    id: "home-affairs",
+    name: "Home Affairs",
+    description:
+      "National ID, birth certificates, marriage, and civil registration services.",
+    icon: "🏛️",
+    route: "/home-affairs-dashboard",
     color: COLORS.blue
   },
   {
-    title: "Appointments",
-    description: "Book or review appointments for Home Affairs services.",
-    href: "/dashboard/appointments",
-    icon: "📅",
+    id: "passport",
+    name: "Passport Services",
+    description:
+      "Passport applications, renewals, and travel document services.",
+    icon: "🛂",
+    route: "/passport-office-dashboard",
     color: COLORS.green
   },
   {
-    title: "Documents",
-    description: "View documents and supporting information for your applications.",
-    href: "/dashboard/documents",
-    icon: "🗂️",
+    id: "traffic",
+    name: "Traffic & Transport",
+    description:
+      "Driver's licences, vehicle registration, and roadworthiness certificates.",
+    icon: "🚗",
+    route: "/traffic-dashboard",
     color: COLORS.blue
   },
   {
-    title: "Payments",
-    description: "Review fees and payment information for your services.",
-    href: "/dashboard/payments",
-    icon: "💳",
+    id: "finance",
+    name: "Finance",
+    description:
+      "Government payments, tax refunds, and procurement services.",
+    icon: "💰",
+    route: "/finance-dashboard",
     color: COLORS.green
   },
   {
-    title: "My Profile",
-    description: "View and update your personal and contact information.",
-    href: "/dashboard/profile",
-    icon: "👤",
+    id: "pensions",
+    name: "Pensions",
+    description:
+      "Pension applications, payments, and beneficiary verification.",
+    icon: "👴",
+    route: "/pensions-dashboard",
     color: COLORS.blue
   },
   {
-    title: "Notifications",
-    description: "Read messages and updates about your applications.",
-    href: "/dashboard/notifications",
-    icon: "🔔",
+    id: "police",
+    name: "Police Services",
+    description:
+      "Non-emergency reports, police clearance, and community safety.",
+    icon: "🚔",
+    route: "/police-dashboard",
     color: COLORS.green
   }
 ];
 
-function HomeDashboard() {
-  const [userName, setUserName] = useState("");
-  const [accountType, setAccountType] = useState("");
+// ============================================================
+// FEATURES DATA
+// ============================================================
+const FEATURES = [
+  {
+    icon: "🪪",
+    title: "One Verified Identity",
+    description:
+      "Your National ID connects every government service — no more repeating yourself."
+  },
+  {
+    icon: "📱",
+    title: "Access From Anywhere",
+    description:
+      "Apply, track, and manage your services from any phone, tablet, or computer."
+  },
+  {
+    icon: "🔔",
+    title: "Real-Time Updates",
+    description:
+      "Get SMS, email, or in-app notifications when your application status changes."
+  },
+  {
+    icon: "🔒",
+    title: "Secure & Private",
+    description:
+      "Your data is protected and only shared with authorised departments for your requests."
+  }
+];
 
-  // Load user data from sessionStorage
-  useEffect(() => {
-    try {
-      const profileRaw = sessionStorage.getItem("user-profile");
-      const type = sessionStorage.getItem("account-type");
+function HomeDashboard({ isAuthenticated }) {
+  const navigate = useNavigate();
 
-      if (profileRaw) {
-        const profile = JSON.parse(profileRaw);
-        const name =
-          profile.first_name ||
-          profile.name ||
-          (profile.firstName && profile.lastName
-            ? `${profile.firstName} ${profile.lastName}`
-            : "");
-        setUserName(name);
-      }
+  // ------------------------------------------------------------
+  // When user clicks a ministry card, remember the choice and
+  // either go straight there (if logged in) or send them to login.
+  // ------------------------------------------------------------
+  const handleMinistryClick = (ministry) => {
+    sessionStorage.setItem("selected-ministry", ministry.id);
 
-      if (type) setAccountType(type);
-    } catch (err) {
-      console.warn("Could not read profile from sessionStorage:", err);
+    if (isAuthenticated) {
+      navigate(ministry.route);
+    } else {
+      navigate("/login", { state: { from: { pathname: ministry.route } } });
     }
-  }, []);
-
-  const today = new Date().toLocaleDateString("en-LS", {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric"
-  });
+  };
 
   return (
     <main style={styles.page}>
       {/* ============================================================
-          WELCOME HEADER
+          HERO
           ============================================================ */}
-      <section style={styles.header}>
-        <div style={styles.headerContent}>
-          <p style={styles.headerEyebrow}>Lesotho Government Services</p>
-          <h1 style={styles.headerTitle}>
-            {userName ? `Welcome back, ${userName}` : "Home Dashboard"}
-          </h1>
-          <p style={styles.headerSubtitle}>
-            {accountType
-              ? `You are signed in as a ${accountType}.`
-              : "Select a dashboard to manage your services and account."}
-          </p>
-          <p style={styles.headerDate}>{today}</p>
-        </div>
-
-        {/* Flag stripe accent */}
+      <section style={styles.hero}>
         <div style={styles.flagStripe}>
           <div style={{ flex: 1, background: COLORS.blue }} />
-          <div
-            style={{
-              flex: 1,
-              background: COLORS.white,
-              borderTop: `1px solid ${COLORS.border}`,
-              borderBottom: `1px solid ${COLORS.border}`
-            }}
-          />
+          <div style={{ flex: 1, background: COLORS.white }} />
           <div style={{ flex: 1, background: COLORS.green }} />
         </div>
+
+        <div style={styles.heroContent}>
+          <span style={styles.heroBadge}>
+            🇱🇸 Kingdom of Lesotho · Integrated Digital Services
+          </span>
+
+          <h1 style={styles.heroTitle}>
+            All Government Services,
+            <br />
+            One Digital Platform
+          </h1>
+
+          <p style={styles.heroSubtitle}>
+            Apply for identity documents, passports, driver's licences, and
+            more — track every application in real time and access services
+            from any department through one secure account.
+          </p>
+
+          <div style={styles.heroCTA}>
+            {isAuthenticated ? (
+              <button
+                onClick={() => navigate("/home-dashboard")}
+                style={styles.btnPrimary}
+              >
+                Go to Dashboard
+                <span style={{ marginLeft: 8 }}>→</span>
+              </button>
+            ) : (
+              <>
+                <Link to="/register" style={styles.btnPrimary}>
+                  Create Your Account
+                  <span style={{ marginLeft: 8 }}>→</span>
+                </Link>
+                <Link to="/login" style={styles.btnSecondary}>
+                  Sign In
+                </Link>
+              </>
+            )}
+          </div>
+
+          <div style={styles.heroTrust}>
+            <div style={styles.trustItem}>
+              <strong style={styles.trustValue}>6</strong>
+              <span style={styles.trustLabel}>Ministries Connected</span>
+            </div>
+            <div style={styles.trustDivider} />
+            <div style={styles.trustItem}>
+              <strong style={styles.trustValue}>24/7</strong>
+              <span style={styles.trustLabel}>Online Access</span>
+            </div>
+            <div style={styles.trustDivider} />
+            <div style={styles.trustItem}>
+              <strong style={styles.trustValue}>100%</strong>
+              <span style={styles.trustLabel}>Secure & Private</span>
+            </div>
+          </div>
+        </div>
       </section>
 
       {/* ============================================================
-          QUICK STATS (Optional — remove if not needed)
+          ABOUT
           ============================================================ */}
-      <section style={styles.statsRow}>
-        <div style={styles.statCard}>
-          <p style={styles.statLabel}>Active Applications</p>
-          <p style={styles.statValue}>0</p>
-        </div>
-        <div style={styles.statCard}>
-          <p style={styles.statLabel}>Upcoming Appointments</p>
-          <p style={styles.statValue}>0</p>
-        </div>
-        <div style={styles.statCard}>
-          <p style={styles.statLabel}>Unread Notifications</p>
-          <p style={styles.statValue}>0</p>
+      <section style={styles.about}>
+        <div style={styles.aboutInner}>
+          <p style={styles.sectionEyebrow}>About This System</p>
+          <h2 style={styles.sectionTitle}>
+            One Citizen Profile. Every Government Service.
+          </h2>
+          <p style={styles.sectionText}>
+            The Integrated Government Services System of Lesotho connects the
+            Ministry of Home Affairs, Passport Services, Traffic, Finance,
+            Pensions, and the Lesotho Mounted Police Service into one secure
+            digital ecosystem.
+          </p>
+          <p style={styles.sectionText}>
+            Instead of visiting multiple offices and submitting the same
+            documents again and again, citizens can now apply, pay, book
+            appointments, and track every request from a single verified
+            account.
+          </p>
+
+          <div style={styles.featuresGrid}>
+            {FEATURES.map((feature) => (
+              <div key={feature.title} style={styles.featureCard}>
+                <span style={styles.featureIcon}>{feature.icon}</span>
+                <h3 style={styles.featureTitle}>{feature.title}</h3>
+                <p style={styles.featureDesc}>{feature.description}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
       {/* ============================================================
-          DASHBOARD CARDS
+          MINISTRIES
           ============================================================ */}
-      <section aria-label="Available dashboards" style={styles.section}>
-        <h2 style={styles.sectionTitle}>Quick Actions</h2>
-        <div style={styles.grid}>
-          {DASHBOARDS.map(({ title, description, href, icon, color }) => (
-            <Link
-              key={title}
-              to={href}
-              style={{
-                ...styles.card,
-                borderTop: `4px solid ${color}`
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = "translateY(-4px)";
-                e.currentTarget.style.boxShadow =
-                  "0 12px 32px rgba(0, 32, 159, 0.12)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = "translateY(0)";
-                e.currentTarget.style.boxShadow =
-                  "0 2px 8px rgba(0, 32, 159, 0.06)";
-              }}
-            >
-              <span aria-hidden="true" style={styles.cardIcon}>
-                {icon}
-              </span>
-              <h3 style={styles.cardTitle}>{title}</h3>
-              <p style={styles.cardDescription}>{description}</p>
-              <span style={{ ...styles.cardCta, color }}>
-                Open →
-              </span>
-            </Link>
-          ))}
+      <section style={styles.ministries}>
+        <div style={styles.ministriesInner}>
+          <p style={styles.sectionEyebrow}>Choose Your Ministry</p>
+          <h2 style={styles.sectionTitle}>
+            Which service do you need today?
+          </h2>
+          <p style={styles.sectionSubtitle}>
+            Select a ministry below to log in or create an account and access
+            its services.
+          </p>
+
+          <div style={styles.ministriesGrid}>
+            {MINISTRIES.map((ministry) => (
+              <button
+                key={ministry.id}
+                onClick={() => handleMinistryClick(ministry)}
+                style={{
+                  ...styles.ministryCard,
+                  borderTop: `4px solid ${ministry.color}`
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = "translateY(-4px)";
+                  e.currentTarget.style.boxShadow =
+                    "0 12px 32px rgba(0, 32, 159, 0.14)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = "translateY(0)";
+                  e.currentTarget.style.boxShadow =
+                    "0 2px 8px rgba(0, 32, 159, 0.06)";
+                }}
+              >
+                <span style={styles.ministryIcon}>{ministry.icon}</span>
+                <h3 style={styles.ministryName}>{ministry.name}</h3>
+                <p style={styles.ministryDesc}>{ministry.description}</p>
+                <span style={{ ...styles.ministryCta, color: ministry.color }}>
+                  Open services →
+                </span>
+              </button>
+            ))}
+          </div>
         </div>
       </section>
 
       {/* ============================================================
-          FOOTER INFO
+          CTA BANNER
           ============================================================ */}
-      <section style={styles.infoBox}>
-        <p style={styles.infoText}>
-          This is the Lesotho Integrated Government Services portal. Your data is
-          protected and shared only with authorised departments for the purpose
-          of processing your applications.
-        </p>
-      </section>
+      {!isAuthenticated && (
+        <section style={styles.ctaBanner}>
+          <div style={styles.ctaBannerInner}>
+            <h2 style={styles.ctaBannerTitle}>Ready to get started?</h2>
+            <p style={styles.ctaBannerText}>
+              Create your free account in under a minute and access all
+              government services from one place.
+            </p>
+            <div style={styles.ctaBannerButtons}>
+              <Link to="/register" style={styles.btnPrimaryGreen}>
+                Create Account
+                <span style={{ marginLeft: 8 }}>→</span>
+              </Link>
+              <Link to="/login" style={styles.btnOutlineGreen}>
+                Sign In
+              </Link>
+            </div>
+          </div>
+        </section>
+      )}
     </main>
   );
 }
@@ -207,164 +309,302 @@ function HomeDashboard() {
 // ============================================================
 const styles = {
   page: {
-    minHeight: "100vh",
-    background: COLORS.lightBg,
-    padding: "32px 24px 64px",
     fontFamily: "Arial, Helvetica, sans-serif",
-    color: COLORS.textDark
+    color: COLORS.textDark,
+    background: COLORS.white
   },
 
-  // ----------------------------------------------------------
-  // Header
-  // ----------------------------------------------------------
-  header: {
-    maxWidth: 1120,
-    margin: "0 auto 32px",
-    background: "#fff",
-    borderRadius: 14,
-    boxShadow: "0 2px 12px rgba(0, 32, 159, 0.06)",
-    overflow: "hidden"
-  },
-  headerContent: {
-    padding: "32px 36px 28px"
-  },
-  headerEyebrow: {
-    margin: "0 0 8px",
-    color: COLORS.blue,
-    fontSize: 12,
-    fontWeight: 700,
-    letterSpacing: 1.4,
-    textTransform: "uppercase"
-  },
-  headerTitle: {
-    margin: "0 0 10px",
-    color: COLORS.blue,
-    fontSize: 30,
-    fontWeight: 700
-  },
-  headerSubtitle: {
-    margin: "0 0 12px",
-    color: COLORS.textMuted,
-    fontSize: 15,
-    lineHeight: 1.5
-  },
-  headerDate: {
-    margin: 0,
-    color: COLORS.textMuted,
-    fontSize: 13,
-    fontStyle: "italic"
+  // ------------------------------------------------------------
+  // HERO
+  // ------------------------------------------------------------
+  hero: {
+    background: `linear-gradient(135deg, ${COLORS.blue} 0%, ${COLORS.blueDark} 100%)`,
+    color: "#fff",
+    paddingBottom: 80
   },
   flagStripe: {
     display: "flex",
     height: 6
   },
-
-  // ----------------------------------------------------------
-  // Stats row
-  // ----------------------------------------------------------
-  statsRow: {
-    maxWidth: 1120,
-    margin: "0 auto 32px",
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-    gap: 16
+  heroContent: {
+    maxWidth: 980,
+    margin: "0 auto",
+    padding: "80px 24px 0",
+    textAlign: "center"
   },
-  statCard: {
-    background: "#fff",
-    borderRadius: 12,
-    padding: "20px 22px",
-    boxShadow: "0 2px 8px rgba(0, 32, 159, 0.06)",
-    borderLeft: `4px solid ${COLORS.blue}`
+  heroBadge: {
+    display: "inline-block",
+    padding: "8px 16px",
+    background: "rgba(255,255,255,0.12)",
+    border: "1px solid rgba(255,255,255,0.2)",
+    borderRadius: 999,
+    fontSize: 13,
+    fontWeight: 600,
+    letterSpacing: 0.5,
+    marginBottom: 24,
+    color: "#fff"
   },
-  statLabel: {
-    margin: "0 0 6px",
-    fontSize: 12,
-    color: COLORS.textMuted,
-    textTransform: "uppercase",
-    letterSpacing: 0.6,
-    fontWeight: 600
-  },
-  statValue: {
-    margin: 0,
-    fontSize: 28,
+  heroTitle: {
+    margin: "0 0 24px",
+    fontSize: "clamp(32px, 5vw, 56px)",
     fontWeight: 700,
-    color: COLORS.blue
+    lineHeight: 1.15,
+    letterSpacing: "-1px"
   },
-
-  // ----------------------------------------------------------
-  // Section
-  // ----------------------------------------------------------
-  section: {
-    maxWidth: 1120,
-    margin: "0 auto 32px"
+  heroSubtitle: {
+    maxWidth: 720,
+    margin: "0 auto 36px",
+    fontSize: 17,
+    lineHeight: 1.65,
+    color: "rgba(255,255,255,0.85)"
   },
-  sectionTitle: {
-    margin: "0 0 16px",
-    fontSize: 18,
-    color: COLORS.textDark,
+  heroCTA: {
+    display: "flex",
+    flexWrap: "wrap",
+    gap: 14,
+    justifyContent: "center",
+    marginBottom: 56
+  },
+  btnPrimary: {
+    display: "inline-flex",
+    alignItems: "center",
+    padding: "14px 28px",
+    background: "#fff",
+    color: COLORS.blue,
+    textDecoration: "none",
+    borderRadius: 8,
+    fontSize: 15,
+    fontWeight: 700,
+    border: 0,
+    cursor: "pointer",
+    fontFamily: "inherit"
+  },
+  btnSecondary: {
+    display: "inline-flex",
+    alignItems: "center",
+    padding: "14px 28px",
+    background: "rgba(255,255,255,0.1)",
+    color: "#fff",
+    border: "1px solid rgba(255,255,255,0.3)",
+    textDecoration: "none",
+    borderRadius: 8,
+    fontSize: 15,
     fontWeight: 700
   },
-  grid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
-    gap: 20
+  heroTrust: {
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 24,
+    flexWrap: "wrap",
+    paddingTop: 32,
+    borderTop: "1px solid rgba(255,255,255,0.15)"
+  },
+  trustItem: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    gap: 4
+  },
+  trustValue: {
+    fontSize: 24,
+    fontWeight: 700,
+    color: "#fff"
+  },
+  trustLabel: {
+    fontSize: 12,
+    color: "rgba(255,255,255,0.7)",
+    textTransform: "uppercase",
+    letterSpacing: 0.8
+  },
+  trustDivider: {
+    width: 1,
+    height: 32,
+    background: "rgba(255,255,255,0.2)"
   },
 
-  // ----------------------------------------------------------
-  // Card
-  // ----------------------------------------------------------
-  card: {
-    display: "block",
-    padding: "22px 24px 20px",
-    border: `1px solid ${COLORS.border}`,
-    borderRadius: 12,
-    background: "#fff",
-    textDecoration: "none",
-    color: "inherit",
-    boxShadow: "0 2px 8px rgba(0, 32, 159, 0.06)",
-    transition: "all 0.2s ease",
-    cursor: "pointer"
+  // ------------------------------------------------------------
+  // ABOUT
+  // ------------------------------------------------------------
+  about: {
+    background: COLORS.white,
+    padding: "80px 24px"
   },
-  cardIcon: {
-    fontSize: 30,
+  aboutInner: {
+    maxWidth: 1120,
+    margin: "0 auto",
+    textAlign: "center"
+  },
+  sectionEyebrow: {
+    margin: "0 0 12px",
+    color: COLORS.blue,
+    fontSize: 12,
+    fontWeight: 700,
+    letterSpacing: 1.6,
+    textTransform: "uppercase"
+  },
+  sectionTitle: {
+    margin: "0 0 20px",
+    fontSize: "clamp(26px, 3.5vw, 36px)",
+    fontWeight: 700,
+    color: COLORS.textDark,
+    lineHeight: 1.2,
+    letterSpacing: "-0.5px"
+  },
+  sectionText: {
+    maxWidth: 720,
+    margin: "0 auto 16px",
+    fontSize: 15,
+    lineHeight: 1.75,
+    color: COLORS.textMid
+  },
+  sectionSubtitle: {
+    maxWidth: 640,
+    margin: "0 auto 40px",
+    fontSize: 15,
+    lineHeight: 1.6,
+    color: COLORS.textMuted
+  },
+  featuresGrid: {
+    marginTop: 48,
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+    gap: 20,
+    textAlign: "left"
+  },
+  featureCard: {
+    padding: "24px 22px",
+    background: COLORS.lightBg,
+    borderRadius: 12,
+    border: `1px solid ${COLORS.border}`,
+    borderLeft: `4px solid ${COLORS.green}`
+  },
+  featureIcon: {
+    fontSize: 28,
     display: "block",
     marginBottom: 12
   },
-  cardTitle: {
+  featureTitle: {
+    margin: "0 0 8px",
+    fontSize: 16,
+    fontWeight: 700,
+    color: COLORS.blue
+  },
+  featureDesc: {
+    margin: 0,
+    fontSize: 13,
+    lineHeight: 1.6,
+    color: COLORS.textMuted
+  },
+
+  // ------------------------------------------------------------
+  // MINISTRIES
+  // ------------------------------------------------------------
+  ministries: {
+    background: COLORS.lightBg,
+    padding: "80px 24px"
+  },
+  ministriesInner: {
+    maxWidth: 1120,
+    margin: "0 auto",
+    textAlign: "center"
+  },
+  ministriesGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+    gap: 20,
+    textAlign: "left"
+  },
+  ministryCard: {
+    display: "flex",
+    flexDirection: "column",
+    padding: "26px 24px 22px",
+    background: "#fff",
+    border: `1px solid ${COLORS.border}`,
+    borderRadius: 12,
+    boxShadow: "0 2px 8px rgba(0, 32, 159, 0.06)",
+    transition: "all 0.2s ease",
+    cursor: "pointer",
+    textAlign: "left",
+    fontFamily: "inherit"
+  },
+  ministryIcon: {
+    fontSize: 32,
+    display: "block",
+    marginBottom: 14
+  },
+  ministryName: {
     margin: "0 0 8px",
     fontSize: 17,
     fontWeight: 700,
     color: COLORS.blue
   },
-  cardDescription: {
-    margin: "0 0 16px",
+  ministryDesc: {
+    margin: "0 0 18px",
     fontSize: 13,
-    lineHeight: 1.55,
-    color: COLORS.textMuted
+    lineHeight: 1.6,
+    color: COLORS.textMuted,
+    flexGrow: 1
   },
-  cardCta: {
+  ministryCta: {
     fontSize: 13,
     fontWeight: 700,
     letterSpacing: 0.3
   },
 
-  // ----------------------------------------------------------
-  // Info box
-  // ----------------------------------------------------------
-  infoBox: {
-    maxWidth: 1120,
-    margin: "0 auto",
-    padding: "18px 22px",
-    background: "#fff",
-    borderRadius: 10,
-    borderLeft: `4px solid ${COLORS.green}`,
-    boxShadow: "0 2px 8px rgba(0, 32, 159, 0.04)"
+  // ------------------------------------------------------------
+  // CTA BANNER
+  // ------------------------------------------------------------
+  ctaBanner: {
+    background: COLORS.green,
+    color: "#fff",
+    padding: "64px 24px"
   },
-  infoText: {
-    margin: 0,
-    fontSize: 13,
-    color: COLORS.textMuted,
-    lineHeight: 1.6
+  ctaBannerInner: {
+    maxWidth: 800,
+    margin: "0 auto",
+    textAlign: "center"
+  },
+  ctaBannerTitle: {
+    margin: "0 0 12px",
+    fontSize: "clamp(24px, 3vw, 32px)",
+    fontWeight: 700,
+    letterSpacing: "-0.5px"
+  },
+  ctaBannerText: {
+    margin: "0 0 32px",
+    fontSize: 15,
+    lineHeight: 1.6,
+    color: "rgba(255,255,255,0.9)"
+  },
+  ctaBannerButtons: {
+    display: "flex",
+    flexWrap: "wrap",
+    gap: 14,
+    justifyContent: "center"
+  },
+  btnPrimaryGreen: {
+    display: "inline-flex",
+    alignItems: "center",
+    padding: "14px 28px",
+    background: "#fff",
+    color: COLORS.green,
+    textDecoration: "none",
+    borderRadius: 8,
+    fontSize: 15,
+    fontWeight: 700
+  },
+  btnOutlineGreen: {
+    display: "inline-flex",
+    alignItems: "center",
+    padding: "14px 28px",
+    background: "transparent",
+    color: "#fff",
+    border: "1px solid rgba(255,255,255,0.5)",
+    textDecoration: "none",
+    borderRadius: 8,
+    fontSize: 15,
+    fontWeight: 700
   }
 };
 

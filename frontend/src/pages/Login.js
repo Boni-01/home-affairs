@@ -13,9 +13,6 @@ import {
   API_BASE
 } from "../Database/firebase";
 
-// ============================================================
-// LESOTHO FLAG COLORS
-// ============================================================
 const COLORS = {
   blue: "#00209F",
   white: "#FFFFFF",
@@ -51,23 +48,19 @@ const buttonStyle = (bg) => ({
   marginTop: "8px"
 });
 
-function Login({ onSuccess }) {
+function Login({ onSuccess, getPostAuthRoute }) {
   const location = useLocation();
   const navigate = useNavigate();
 
   const [mode, setMode] = useState("email");
-
-  // Email
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  // Phone
   const [phone, setPhone] = useState("+266");
   const [otp, setOtp] = useState("");
   const [otpSent, setOtpSent] = useState(false);
   const [confirmationResult, setConfirmationResult] = useState(null);
 
-  // UI
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [info, setInfo] = useState("");
@@ -83,6 +76,13 @@ function Login({ onSuccess }) {
       );
     }
   }, [mode]);
+
+  function resolvePostAuthRoute() {
+    const fromMinistry =
+      typeof getPostAuthRoute === "function" ? getPostAuthRoute() : null;
+    const fromState = location.state?.from?.pathname;
+    return fromMinistry || fromState || "/home-affairs-dashboard";
+  }
 
   async function completeLogin(firebaseUser) {
     const token = await firebaseUser.getIdToken();
@@ -106,13 +106,22 @@ function Login({ onSuccess }) {
       throw new Error(data.error || "Login failed");
     }
 
+    // Persist
     sessionStorage.setItem("home-affairs-authenticated", "true");
-    sessionStorage.setItem("firebase-uid", data.user.firebaseUid);
-    sessionStorage.setItem("account-type", data.user.accountType);
-    sessionStorage.setItem("user-profile", JSON.stringify(data.profile || {}));
+    sessionStorage.setItem("firebase-uid", data.user.firebase_uid);
+    sessionStorage.setItem("account-type", data.user.account_type);
+    sessionStorage.setItem("user-profile", JSON.stringify(data.user || {}));
+
+    if (data.isAdmin) {
+      sessionStorage.setItem("is-admin", "true");
+    } else {
+      sessionStorage.removeItem("is-admin");
+    }
 
     onSuccess?.();
-    navigate(location.state?.from?.pathname || "/home-dashboard");
+
+    const nextRoute = resolvePostAuthRoute();
+    navigate(nextRoute, { replace: true });
   }
 
   async function handleEmailLogin(e) {
@@ -201,16 +210,14 @@ function Login({ onSuccess }) {
   }
 
   return (
-    <main
-      style={{
-        minHeight: "100vh",
-        display: "grid",
-        placeItems: "center",
-        padding: "24px",
-        background: COLORS.lightBg,
-        fontFamily: "Arial, sans-serif"
-      }}
-    >
+    <main style={{
+      minHeight: "100vh",
+      display: "grid",
+      placeItems: "center",
+      padding: "24px",
+      background: COLORS.lightBg,
+      fontFamily: "Arial, sans-serif"
+    }}>
       <div id={RECAPTCHA_CONTAINER_ID}></div>
 
       <section
@@ -227,9 +234,16 @@ function Login({ onSuccess }) {
         }}
       >
         <header style={{ marginBottom: "24px", textAlign: "center" }}>
-          <div style={{ display: "flex", height: "6px", borderRadius: "3px", overflow: "hidden", marginBottom: "18px" }}>
+          <div style={{
+            display: "flex", height: "6px", borderRadius: "3px",
+            overflow: "hidden", marginBottom: "18px"
+          }}>
             <div style={{ flex: 1, background: COLORS.blue }} />
-            <div style={{ flex: 1, background: COLORS.white, borderTop: `1px solid ${COLORS.border}`, borderBottom: `1px solid ${COLORS.border}` }} />
+            <div style={{
+              flex: 1, background: COLORS.white,
+              borderTop: `1px solid ${COLORS.border}`,
+              borderBottom: `1px solid ${COLORS.border}`
+            }} />
             <div style={{ flex: 1, background: COLORS.green }} />
           </div>
 
@@ -241,48 +255,30 @@ function Login({ onSuccess }) {
           </p>
         </header>
 
-        <div
-          style={{
-            display: "flex",
-            gap: "8px",
-            marginBottom: "24px",
-            background: COLORS.lightBg,
-            padding: "4px",
-            borderRadius: "8px"
-          }}
-        >
+        <div style={{
+          display: "flex", gap: "8px", marginBottom: "24px",
+          background: COLORS.lightBg, padding: "4px", borderRadius: "8px"
+        }}>
           <button
             type="button"
             onClick={() => { setMode("email"); setError(""); setInfo(""); }}
             style={{
-              flex: 1,
-              padding: "10px",
-              border: 0,
-              borderRadius: "6px",
+              flex: 1, padding: "10px", border: 0, borderRadius: "6px",
               background: mode === "email" ? COLORS.blue : "transparent",
               color: mode === "email" ? "#fff" : COLORS.textMuted,
-              fontWeight: 700,
-              cursor: "pointer"
+              fontWeight: 700, cursor: "pointer"
             }}
-          >
-            Email
-          </button>
+          >Email</button>
           <button
             type="button"
             onClick={() => { setMode("phone"); setError(""); setInfo(""); }}
             style={{
-              flex: 1,
-              padding: "10px",
-              border: 0,
-              borderRadius: "6px",
+              flex: 1, padding: "10px", border: 0, borderRadius: "6px",
               background: mode === "phone" ? COLORS.green : "transparent",
               color: mode === "phone" ? "#fff" : COLORS.textMuted,
-              fontWeight: 700,
-              cursor: "pointer"
+              fontWeight: 700, cursor: "pointer"
             }}
-          >
-            Phone OTP
-          </button>
+          >Phone OTP</button>
         </div>
 
         {mode === "email" && (
@@ -292,43 +288,28 @@ function Login({ onSuccess }) {
                 Email address
               </label>
               <input
-                id="email"
-                type="email"
-                autoComplete="email"
-                placeholder="you@example.com"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                id="email" type="email" autoComplete="email"
+                placeholder="you@example.com" required
+                value={email} onChange={(e) => setEmail(e.target.value)}
                 style={fieldStyle}
               />
             </div>
-
             <div style={{ marginBottom: "16px" }}>
               <label htmlFor="password" style={{ display: "block", fontWeight: 600, color: "#263648" }}>
                 Password
               </label>
               <input
-                id="password"
-                type="password"
-                autoComplete="current-password"
-                placeholder="Enter your password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                id="password" type="password" autoComplete="current-password"
+                placeholder="Enter your password" required
+                value={password} onChange={(e) => setPassword(e.target.value)}
                 style={fieldStyle}
               />
             </div>
-
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                gap: "12px",
-                marginBottom: "20px",
-                fontSize: "14px"
-              }}
-            >
+            <div style={{
+              display: "flex", justifyContent: "space-between",
+              alignItems: "center", gap: "12px",
+              marginBottom: "20px", fontSize: "14px"
+            }}>
               <label style={{ display: "inline-flex", alignItems: "center", gap: "8px", color: "#475569" }}>
                 <input type="checkbox" name="rememberMe" /> Remember me
               </label>
@@ -336,7 +317,6 @@ function Login({ onSuccess }) {
                 Forgot password?
               </a>
             </div>
-
             <button type="submit" disabled={loading} style={buttonStyle(COLORS.blue)}>
               {loading ? "Signing in..." : "Sign in"}
             </button>
@@ -350,90 +330,58 @@ function Login({ onSuccess }) {
                 Phone number
               </label>
               <input
-                id="phone"
-                type="tel"
-                autoComplete="tel"
-                placeholder="+26658000001"
-                required
-                disabled={otpSent}
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
+                id="phone" type="tel" autoComplete="tel"
+                placeholder="+26658000001" required disabled={otpSent}
+                value={phone} onChange={(e) => setPhone(e.target.value)}
                 style={fieldStyle}
               />
             </div>
-
             {otpSent && (
               <div style={{ marginBottom: "16px" }}>
                 <label htmlFor="otp" style={{ display: "block", fontWeight: 600, color: "#263648" }}>
                   Enter OTP
                 </label>
                 <input
-                  id="otp"
-                  type="text"
-                  inputMode="numeric"
-                  autoComplete="one-time-code"
-                  placeholder="123456"
-                  required
-                  value={otp}
-                  onChange={(e) => setOtp(e.target.value)}
+                  id="otp" type="text" inputMode="numeric"
+                  autoComplete="one-time-code" placeholder="123456"
+                  required value={otp} onChange={(e) => setOtp(e.target.value)}
                   style={fieldStyle}
                 />
               </div>
             )}
-
             <button type="submit" disabled={loading} style={buttonStyle(COLORS.green)}>
               {loading ? "Please wait..." : otpSent ? "Verify OTP & Sign in" : "Send OTP"}
             </button>
-
             {otpSent && (
               <button
                 type="button"
                 onClick={() => { setOtpSent(false); setOtp(""); setInfo(""); }}
                 style={{
                   ...buttonStyle("transparent"),
-                  color: COLORS.blue,
-                  border: `1px solid ${COLORS.blue}`
+                  color: COLORS.blue, border: `1px solid ${COLORS.blue}`
                 }}
-              >
-                Use different number
-              </button>
+              >Use different number</button>
             )}
           </form>
         )}
 
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "12px",
-            margin: "22px 0",
-            color: COLORS.textMuted,
-            fontSize: "13px"
-          }}
-        >
+        <div style={{
+          display: "flex", alignItems: "center", gap: "12px",
+          margin: "22px 0", color: COLORS.textMuted, fontSize: "13px"
+        }}>
           <div style={{ flex: 1, height: "1px", background: COLORS.border }} />
           <span>OR</span>
           <div style={{ flex: 1, height: "1px", background: COLORS.border }} />
         </div>
 
         <button
-          type="button"
-          onClick={handleGoogleLogin}
-          disabled={loading}
+          type="button" onClick={handleGoogleLogin} disabled={loading}
           style={{
-            width: "100%",
-            padding: "12px",
-            border: `1px solid ${COLORS.border}`,
-            borderRadius: "6px",
-            background: "#fff",
-            color: "#333",
-            fontSize: "15px",
-            fontWeight: 600,
-            cursor: "pointer",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: "10px"
+            width: "100%", padding: "12px",
+            border: `1px solid ${COLORS.border}`, borderRadius: "6px",
+            background: "#fff", color: "#333", fontSize: "15px",
+            fontWeight: 600, cursor: "pointer",
+            display: "flex", alignItems: "center", justifyContent: "center", gap: "10px"
           }}
         >
           <svg width="18" height="18" viewBox="0 0 48 48">
@@ -458,11 +406,7 @@ function Login({ onSuccess }) {
 
         <p style={{ margin: "24px 0 0", color: COLORS.textMuted, textAlign: "center", fontSize: "14px" }}>
           Don&apos;t have an account?{" "}
-          <Link
-            to="/register"
-            state={location.state}
-            style={{ color: COLORS.blue, fontWeight: 700, textDecoration: "none" }}
-          >
+          <Link to="/register" state={location.state} style={{ color: COLORS.blue, fontWeight: 700, textDecoration: "none" }}>
             Create an account
           </Link>
         </p>

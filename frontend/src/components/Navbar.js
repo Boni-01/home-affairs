@@ -2,38 +2,24 @@ import React, { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import "./Navbar.css";
 
-// ============================================================
-// LESOTHO FLAG COLORS
-// ============================================================
-const COLORS = {
-  blue: "#00209F",
-  white: "#FFFFFF",
-  green: "#009543",
-  black: "#000000",
-  lightBg: "#F4F7FB",
-  border: "#CBD5E1",
-  textMuted: "#64748B"
-};
-
 function Navbar({ isAuthenticated, onLogout }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
   const handleLogout = () => {
-    // Clear session storage
     sessionStorage.removeItem("home-affairs-authenticated");
     sessionStorage.removeItem("firebase-uid");
     sessionStorage.removeItem("account-type");
     sessionStorage.removeItem("user-profile");
+    sessionStorage.removeItem("selected-ministry");
 
     if (onLogout) onLogout();
-    navigate("/login");
+    navigate("/");
     setMobileOpen(false);
   };
 
   const handleNavClick = () => setMobileOpen(false);
-
   const isActive = (path) => location.pathname === path;
 
   return (
@@ -55,7 +41,7 @@ function Navbar({ isAuthenticated, onLogout }) {
           </span>
         </Link>
 
-        {/* Mobile menu toggle */}
+        {/* Mobile toggle */}
         <button
           className="navbar-toggle"
           aria-label="Toggle navigation menu"
@@ -67,20 +53,11 @@ function Navbar({ isAuthenticated, onLogout }) {
           <span className="hamburger-line" />
         </button>
 
-        {/* Navigation links */}
+        {/* Nav links */}
         <nav className={`navbar-nav ${mobileOpen ? "open" : ""}`}>
           {isAuthenticated ? (
             <>
               <ul className="nav-links">
-                <li>
-                  <Link
-                    to="/home-dashboard"
-                    className={`nav-link ${isActive("/home-dashboard") ? "active" : ""}`}
-                    onClick={handleNavClick}
-                  >
-                    Home Dashboard
-                  </Link>
-                </li>
                 <li>
                   <Link
                     to="/home-affairs-dashboard"
