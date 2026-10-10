@@ -2875,7 +2875,18 @@ DB_NAME=lesotho_gov
 FIREBASE_SERVICE_ACCOUNT=./FirebaseAccountKey.json
 Important: Change DB_PASSWORD to your own MySQL root password.
 
-Important: Leave FIREBASE_SERVICE_ACCOUNT=./FirebaseAccountKey.json as-is — the relative path works on any machine.
+Important: Change FIREBASE_SERVICE_ACCOUNT=./FirebaseAccountKey.json to the path you chose when cloning this repository to your machine machine.
+
+ How to do this?
+ 1.Open File explorer
+ 2.Head to the the Workspace/cloned repository folder(Home-Affairs)
+ 3.In that directory, locate the backend folder
+ 4.Head to the address bar above the folder (Document > Home-Affairs >Backend)
+ 5.Right click and copy the address 
+ 6.Paste at the right of the FIREBASE_SERVICE... 
+ 7.Remember to include the \FirebaseAccountKey.json after backend if it does not suggest.
+ 8.Change the backward slashes to forward slashes and save the .env file
+
 
 # Admin Account
 The only admin is:
