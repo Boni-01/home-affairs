@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import flagImage from "../Flag.png"; // Adjust path if Flag.png is in a subfolder (e.g., "./assets/Flag.png")
+import flagImage from "./Flag.png"; // Adjust path if Flag.png is in a subfolder (e.g., "./assets/Flag.png")
 import "./Navbar.css";
 
 function Navbar({ isAuthenticated, onLogout }) {
