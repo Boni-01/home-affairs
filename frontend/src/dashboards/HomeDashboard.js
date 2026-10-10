@@ -211,6 +211,9 @@ function HomeDashboard({ isAuthenticated }) {
           HERO
           ============================================================ */}
       <section style={styles.hero}>
+        {/* Rounded background image inside the blue pane */}
+        <div style={styles.heroImageShape} aria-hidden="true" />
+
         <div style={styles.flagStripe}>
           <div style={{ flex: 1, background: COLORS.blue }} />
           <div style={{ flex: 1, background: COLORS.white }} />
@@ -406,15 +409,39 @@ const styles = {
   // HERO
   // ------------------------------------------------------------
   hero: {
+    position: "relative",
     background: `linear-gradient(135deg, ${COLORS.blue} 0%, ${COLORS.blueDark} 100%)`,
     color: "#fff",
-    paddingBottom: 80
+    paddingBottom: 80,
+    overflow: "hidden"
+  },
+  // Rounded image shape placed behind the hero text
+  heroImageShape: {
+    position: "absolute",
+    top: "50%",
+    left: "50%",
+    transform: "translate(-50%, -50%)",
+    width: "92%",
+    maxWidth: 1180,
+    height: "88%",
+    backgroundImage: "url('/bgImage.jpg')",
+    backgroundSize: "cover",
+    backgroundPosition: "center",
+    backgroundRepeat: "no-repeat",
+    borderRadius: "48px",
+    opacity: 0.28,
+    zIndex: 0,
+    pointerEvents: "none"
   },
   flagStripe: {
     display: "flex",
-    height: 6
+    height: 6,
+    position: "relative",
+    zIndex: 2
   },
   heroContent: {
+    position: "relative",
+    zIndex: 2,
     maxWidth: 980,
     margin: "0 auto",
     padding: "80px 24px 0",
