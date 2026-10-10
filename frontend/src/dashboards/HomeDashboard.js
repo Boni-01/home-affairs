@@ -2,6 +2,84 @@ import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 // ============================================================
+// SVG ICONS
+// ============================================================
+const Icons = {
+  // Ministries
+  HomeAffairs: () => (
+    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 21h18" />
+      <path d="M6 18v-7" />
+      <path d="M10 18v-7" />
+      <path d="M14 18v-7" />
+      <path d="M18 18v-7" />
+      <path d="M12 3L2 9h20L12 3z" />
+    </svg>
+  ),
+  Passport: () => (
+    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="4" width="18" height="16" rx="2" />
+      <circle cx="12" cy="10" r="3" />
+      <path d="M7 17h10" />
+    </svg>
+  ),
+  Traffic: () => (
+    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2" />
+      <circle cx="7" cy="17" r="2" />
+      <path d="M9 17h6" />
+      <circle cx="17" cy="17" r="2" />
+    </svg>
+  ),
+  Finance: () => (
+    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="2" y="6" width="20" height="12" rx="2" />
+      <circle cx="12" cy="12" r="2" />
+      <path d="M6 12h.01M18 12h.01" />
+    </svg>
+  ),
+  Pensions: () => (
+    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <path d="M19 11l2 2 4-4" />
+    </svg>
+  ),
+  Police: () => (
+    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+    </svg>
+  ),
+
+  // Features
+  Identity: () => (
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="4" width="18" height="16" rx="2" />
+      <circle cx="9" cy="10" r="2" />
+      <path d="M15 8h2M15 12h2M7 16h10" />
+    </svg>
+  ),
+  Mobile: () => (
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="5" y="2" width="14" height="20" rx="2" ry="2" />
+      <path d="M12 18h.01" />
+    </svg>
+  ),
+  Bell: () => (
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+      <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+    </svg>
+  ),
+  Shield: () => (
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+    </svg>
+  )
+};
+
+// ============================================================
 // LESOTHO FLAG COLORS
 // ============================================================
 const COLORS = {
@@ -29,7 +107,7 @@ const MINISTRIES = [
     name: "Home Affairs",
     description:
       "National ID, birth certificates, marriage, and civil registration services.",
-    icon: "🏛️",
+    icon: Icons.HomeAffairs,
     route: "/home-affairs-dashboard",
     color: COLORS.blue
   },
@@ -38,7 +116,7 @@ const MINISTRIES = [
     name: "Passport Services",
     description:
       "Passport applications, renewals, and travel document services.",
-    icon: "🛂",
+    icon: Icons.Passport,
     route: "/passport-office-dashboard",
     color: COLORS.green
   },
@@ -47,7 +125,7 @@ const MINISTRIES = [
     name: "Traffic & Transport",
     description:
       "Driver's licences, vehicle registration, and roadworthiness certificates.",
-    icon: "🚗",
+    icon: Icons.Traffic,
     route: "/traffic-dashboard",
     color: COLORS.blue
   },
@@ -56,7 +134,7 @@ const MINISTRIES = [
     name: "Finance",
     description:
       "Government payments, tax refunds, and procurement services.",
-    icon: "💰",
+    icon: Icons.Finance,
     route: "/finance-dashboard",
     color: COLORS.green
   },
@@ -65,7 +143,7 @@ const MINISTRIES = [
     name: "Pensions",
     description:
       "Pension applications, payments, and beneficiary verification.",
-    icon: "👴",
+    icon: Icons.Pensions,
     route: "/pensions-dashboard",
     color: COLORS.blue
   },
@@ -74,7 +152,7 @@ const MINISTRIES = [
     name: "Police Services",
     description:
       "Non-emergency reports, police clearance, and community safety.",
-    icon: "🚔",
+    icon: Icons.Police,
     route: "/police-dashboard",
     color: COLORS.green
   }
@@ -85,25 +163,25 @@ const MINISTRIES = [
 // ============================================================
 const FEATURES = [
   {
-    icon: "🪪",
+    icon: Icons.Identity,
     title: "One Verified Identity",
     description:
       "Your National ID connects every government service — no more repeating yourself."
   },
   {
-    icon: "📱",
+    icon: Icons.Mobile,
     title: "Access From Anywhere",
     description:
       "Apply, track, and manage your services from any phone, tablet, or computer."
   },
   {
-    icon: "🔔",
+    icon: Icons.Bell,
     title: "Real-Time Updates",
     description:
       "Get SMS, email, or in-app notifications when your application status changes."
   },
   {
-    icon: "🔒",
+    icon: Icons.Shield,
     title: "Secure & Private",
     description:
       "Your data is protected and only shared with authorised departments for your requests."
@@ -141,7 +219,7 @@ function HomeDashboard({ isAuthenticated }) {
 
         <div style={styles.heroContent}>
           <span style={styles.heroBadge}>
-            🇱🇸 Kingdom of Lesotho · Integrated Digital Services
+            Kingdom of Lesotho · Integrated Digital Services
           </span>
 
           <h1 style={styles.heroTitle}>
@@ -220,13 +298,18 @@ function HomeDashboard({ isAuthenticated }) {
           </p>
 
           <div style={styles.featuresGrid}>
-            {FEATURES.map((feature) => (
-              <div key={feature.title} style={styles.featureCard}>
-                <span style={styles.featureIcon}>{feature.icon}</span>
-                <h3 style={styles.featureTitle}>{feature.title}</h3>
-                <p style={styles.featureDesc}>{feature.description}</p>
-              </div>
-            ))}
+            {FEATURES.map((feature) => {
+              const IconComponent = feature.icon;
+              return (
+                <div key={feature.title} style={styles.featureCard}>
+                  <span style={styles.featureIcon}>
+                    <IconComponent />
+                  </span>
+                  <h3 style={styles.featureTitle}>{feature.title}</h3>
+                  <p style={styles.featureDesc}>{feature.description}</p>
+                </div>
+              );
+            })}
           </div>
         </div>
       </section>
@@ -246,33 +329,38 @@ function HomeDashboard({ isAuthenticated }) {
           </p>
 
           <div style={styles.ministriesGrid}>
-            {MINISTRIES.map((ministry) => (
-              <button
-                key={ministry.id}
-                onClick={() => handleMinistryClick(ministry)}
-                style={{
-                  ...styles.ministryCard,
-                  borderTop: `4px solid ${ministry.color}`
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = "translateY(-4px)";
-                  e.currentTarget.style.boxShadow =
-                    "0 12px 32px rgba(0, 32, 159, 0.14)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = "translateY(0)";
-                  e.currentTarget.style.boxShadow =
-                    "0 2px 8px rgba(0, 32, 159, 0.06)";
-                }}
-              >
-                <span style={styles.ministryIcon}>{ministry.icon}</span>
-                <h3 style={styles.ministryName}>{ministry.name}</h3>
-                <p style={styles.ministryDesc}>{ministry.description}</p>
-                <span style={{ ...styles.ministryCta, color: ministry.color }}>
-                  Open services →
-                </span>
-              </button>
-            ))}
+            {MINISTRIES.map((ministry) => {
+              const IconComponent = ministry.icon;
+              return (
+                <button
+                  key={ministry.id}
+                  onClick={() => handleMinistryClick(ministry)}
+                  style={{
+                    ...styles.ministryCard,
+                    borderTop: `4px solid ${ministry.color}`
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = "translateY(-4px)";
+                    e.currentTarget.style.boxShadow =
+                      "0 12px 32px rgba(0, 32, 159, 0.14)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = "translateY(0)";
+                    e.currentTarget.style.boxShadow =
+                      "0 2px 8px rgba(0, 32, 159, 0.06)";
+                  }}
+                >
+                  <span style={{ ...styles.ministryIcon, color: ministry.color }}>
+                    <IconComponent />
+                  </span>
+                  <h3 style={styles.ministryName}>{ministry.name}</h3>
+                  <p style={styles.ministryDesc}>{ministry.description}</p>
+                  <span style={{ ...styles.ministryCta, color: ministry.color }}>
+                    Open services →
+                  </span>
+                </button>
+              );
+            })}
           </div>
         </div>
       </section>
@@ -480,9 +568,11 @@ const styles = {
     borderLeft: `4px solid ${COLORS.green}`
   },
   featureIcon: {
-    fontSize: 28,
-    display: "block",
-    marginBottom: 12
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 12,
+    color: COLORS.green
   },
   featureTitle: {
     margin: "0 0 8px",
@@ -529,8 +619,8 @@ const styles = {
     fontFamily: "inherit"
   },
   ministryIcon: {
-    fontSize: 32,
-    display: "block",
+    display: "inline-flex",
+    alignItems: "center",
     marginBottom: 14
   },
   ministryName: {
