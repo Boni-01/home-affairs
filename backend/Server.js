@@ -59,7 +59,7 @@ const db = mysql.createPool({
 // ------------------------------------------------------------
 // CONSTANTS
 // ------------------------------------------------------------
-const ADMIN_EMAIL = "kramohlabi7@gmail.com";
+const ADMIN_EMAILS = ["kramohlabi7@gmail.com", "sehlohotsiu7@gmail.com"];
 const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:3001";
 
 // ------------------------------------------------------------
@@ -207,7 +207,7 @@ async function verifyToken(req, res, next) {
       [req.uid]
     );
     req.dbUser = rows[0] || null;
-    req.isAdmin = req.email === ADMIN_EMAIL;
+    req.isAdmin = ADMIN_EMAILS.includes(req.email);
 
     if (req.isAdmin && req.dbUser &&
         (req.dbUser.role !== "admin" || req.dbUser.account_type !== "admin")) {
@@ -8021,7 +8021,7 @@ app.listen(PORT, () => {
   console.log("Lesotho Government Services API");
   console.log("====================================================");
   console.log(`Server running on http://localhost:${PORT}`);
-  console.log(`Admin email: ${ADMIN_EMAIL}`);
+  console.log(`Admin emails: ${ADMIN_EMAILS.join(", ")}`);
   console.log(`Stamp loaded: ${fs.existsSync(POLICE_STAMP_PATH) ? "yes" : "NO (missing police_stamp.png)"}`);
   console.log("====================================================");
 });
