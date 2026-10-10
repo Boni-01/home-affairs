@@ -340,7 +340,7 @@ MySQL connected -> lesotho_gov
 Lesotho Government Services API
 ====================================================
 Server running on http://localhost:3001
-Admin email: kramohlabi7@gmail.com
+Admin emailS: kramohlabi7@gmail.com, sehlohotsiu7@gmail.com
 ====================================================
 ```
 ### Terminal 2 — Frontend
@@ -2889,10 +2889,11 @@ Important: Change FIREBASE_SERVICE_ACCOUNT=./FirebaseAccountKey.json to the path
 
 
 # Admin Account
-The only admin is:
+The System admins are:
 
 ```text
-Email: kramohlabi7@gmail.com
+Emails: kramohlabi7@gmail.com, sehlohotsiu7@gmail.com
+
 When you log in with this email:
 ```
 
