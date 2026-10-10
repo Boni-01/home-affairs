@@ -1,45 +1,44 @@
-#Lesotho Integrated Government Services System
-Project: Integrated Government Services System for Lesotho
-Course: BIHC3110 — Human Computer Interaction
-Institution: Limkokwing University of Creative Technology — Lesotho
-Team: 5 members
+# Lesotho Integrated Government Services System
 
-Table of Contents
-What This Project Is
+**Project:** Integrated Government Services System for Lesotho  
+**Course:** BIHC3110 — Human Computer Interaction  
+**Institution:** Limkokwing University of Creative Technology — Lesotho  
+**Team:** 5 members
 
-Tech Stack
+An integrated digital public-service platform concept for Lesotho, bringing multiple government services into one system.
 
-Architecture Overview
+## Quick Links
+- [Project repository on GitHub](https://github.com/Boni-01/home-affairs)
+- [Frontend (local)](http://localhost:3000)
+- [Backend health check (local)](http://localhost:3001/api/health)
+- [Node.js](https://nodejs.org/)
+- [MySQL Community Downloads](https://dev.mysql.com/downloads/)
+- [MySQL Workbench](https://dev.mysql.com/downloads/workbench/)
+- [Git](https://git-scm.com/)
+- [Visual Studio Code](https://code.visualstudio.com/)
 
-Prerequisites
+## Table of Contents
+- [What This Project Is](#what-this-project-is)
+- [What's Built So Far](#whats-built-so-far)
+- [Tech Stack](#tech-stack)
+- [Architecture Overview](#architecture-overview)
+- [Prerequisites](#prerequisites)
+- [First-Time Setup](#first-time-setup)
+- [How to Run the Project](#how-to-run-the-project)
+- [Database Setup](#database-setup)
+- [Firebase Setup](#firebase-setup)
+- [Admin Account](#admin-account)
+- [Project Structure](#project-structure)
+- [Feature Guide](#feature-guide)
+- [API Reference](#api-reference)
+- [Git Workflow](#git-workflow)
+- [Troubleshooting](#troubleshooting)
+- [Security Notes](#security-notes)
+- [What's Coming Next](#whats-coming-next)
+- [Team Responsibilities](#team-responsibilities)
+- [Need Help?](#need-help)
 
-First-Time Setup
-
-How to Run the Project
-
-Database Setup
-
-Firebase Setup
-
-Admin Account
-
-Project Structure
-
-What's Built So Far
-
-Feature Guide
-
-API Reference
-
-Git Workflow
-
-Troubleshooting
-
-Security Notes
-
-What's Coming Next
-
-What This Project Is
+# What This Project Is
 An Integrated Digital Public Service System for Lesotho that connects:
 
 Home Affairs (NICR, Immigration, LRMIS)
@@ -56,7 +55,7 @@ Police (non-emergency reporting, case management)
 
 Core concept: One verified citizen profile, reused across all government services — no more resubmitting the same documents to different departments.
 
-What's Built So Far
+# What's Built So Far
 Complete authentication (Email, Google, Phone OTP)
 
 Auto-assigned National IDs (LS########)
@@ -91,7 +90,7 @@ Complaint submission and response
 
 PDF passport download with profile photo
 
-Traffic module
+### Traffic module
 
 Driver's licence applications (learner, full, renewal, replacement, correction)
 
@@ -109,7 +108,7 @@ Licence clearance requests
 
 PDF driver's licence download with profile photo
 
-Police Services module
+### Police Services module
 
 Non-emergency crime reporting (theft, lost items, fraud, cybercrime, missing persons)
 
@@ -127,7 +126,7 @@ Police letters (acknowledgement, affidavit, loss report, confirmation, witness s
 
 Feedback submission
 
-Finance module
+### Finance module
 
 Tax-related requests (clearance, declaration)
 
@@ -141,7 +140,7 @@ Government payment processing
 
 Enquiry and complaint tickets
 
-Pensions module
+### Pensions module
 
 Pension registration (PODCPF, Old Age Pension)
 
@@ -185,8 +184,8 @@ Profile management with photo upload
 
 PDF document downloads
 
-Tech Stack
-Frontend
+# Tech Stack
+### Frontend
 React (Create React App)
 
 React Router for navigation
@@ -197,7 +196,7 @@ jsPDF + html2canvas (certificate and document PDF export)
 
 Inline CSS with Lesotho flag colors
 
-Backend
+### Backend
 Node.js + Express (single-file server: Server.js)
 
 MySQL for all data (users, applications, services, documents, audit logs)
@@ -208,18 +207,18 @@ Multer for file uploads (documents + photos)
 
 pdf-lib for PDF manipulation (police document stamping)
 
-Auth
+### Auth
 Firebase Authentication handles login/registration
 
 MySQL stores profile data linked by firebase_uid
 
-Database
+### Database
 Single database: lesotho_gov
 
 60+ tables covering users, applications, documents, services, form fields, and module-specific data
 
-Architecture Overview
-text
+# Architecture Overview
+```text
 +---------------------------------------------------------------+
 |  FRONTEND (React @ localhost:3000)                            |
 |  +---------------------------+  +---------------------------+  |
@@ -264,33 +263,38 @@ text
 |  - pension_* tables                                           |
 |  - notifications, audit_logs, application_status_history      |
 +---------------------------------------------------------------+
-Prerequisites
+```
+# Prerequisites
 Install these on your machine before pulling the repo:
 
-Tool	Version	Download
-Node.js	18+	https://nodejs.org/
-npm	Comes with Node	—
-MySQL	8.0+	https://dev.mysql.com/downloads/
-MySQL Workbench	Latest	https://dev.mysql.com/downloads/workbench/
-Git	Latest	https://git-scm.com/
-VS Code	Latest	https://code.visualstudio.com/
-First-Time Setup
+| Tool | Version | Download |
+| --- | --- | --- |
+| Node.js | 18+ | https://nodejs.org/ |
+| npm | Comes with Node | — |
+| MySQL | 8.0+ | https://dev.mysql.com/downloads/ |
+| MySQL Workbench | Latest | https://dev.mysql.com/downloads/workbench/ |
+| Git | Latest | https://git-scm.com/ |
+| VS Code | Latest | https://code.visualstudio.com/ |
+# First-Time Setup
 Follow these steps exactly in order the first time you clone the repo.
 
-Step 1: Clone the repository
-bash
+### Step 1: Clone the repository
+```bash
 git clone https://github.com/Boni-01/home-affairs.git
 cd home-affairs
-Step 2: Install frontend dependencies
-bash
+```
+### Step 2: Install frontend dependencies
+```bash
 cd frontend
 npm install
 npm install jspdf html2canvas
-Step 3: Install backend dependencies
-bash
+```
+### Step 3: Install backend dependencies
+```bash
 cd ../backend
 npm install express cors dotenv mysql2 firebase-admin multer pdf-lib
-Step 4: Get the secret files from the team lead
+```
+### Step 4: Get the secret files from the team lead
 Two files are NOT in Git (security reasons). Ask the team lead to send them privately (WhatsApp DM, Discord DM, or Google Drive — never in the group chat):
 
 .env — Backend environment variables
@@ -299,33 +303,36 @@ FirebaseAccountKey.json — Firebase Admin SDK key
 
 Place both files inside the backend/ folder:
 
-text
+```text
 backend/
 ├── Server.js
 ├── package.json
 ├── .env                        <- add this
 ├── FirebaseAccountKey.json     <- add this
 └── node_modules/
-Step 5: Set up MySQL database
+```
+### Step 5: Set up MySQL database
 See the Database Setup section below — it contains the full SQL you need to run.
 
-Step 6: Run both servers
+### Step 6: Run both servers
 See the How to Run the Project section below.
 
-How to Run the Project
+# How to Run the Project
 You need three things running at the same time:
 
-#	What	Where	Port
-1	MySQL server	Background service	3306
-2	Backend API	Terminal 1	3001
-3	Frontend	Terminal 2	3000
-Terminal 1 — Backend
-bash
+| # | What | Where | Port |
+| --- | --- | --- | --- |
+| 1 | MySQL server | Background service | 3306 |
+| 2 | Backend API | Terminal 1 | 3001 |
+| 3 | Frontend | Terminal 2 | 3000 |
+### Terminal 1 — Backend
+```bash
 cd backend
 npm start
+```
 Expected output:
 
-text
+```text
 injected env (7) from .env
 Firebase Admin initialized
 MySQL connected -> lesotho_gov
@@ -335,16 +342,19 @@ Lesotho Government Services API
 Server running on http://localhost:3001
 Admin email: kramohlabi7@gmail.com
 ====================================================
-Terminal 2 — Frontend
-bash
+```
+### Terminal 2 — Frontend
+```bash
 cd frontend
 npm start
+```
 Expected output:
 
-text
+```text
 Compiled successfully!
 Local: http://localhost:3000
-Verify everything works
+```
+### Verify everything works
 Open in your browser:
 
 Frontend: http://localhost:3000
@@ -353,35 +363,39 @@ Backend health check: http://localhost:3001/api/health
 
 The health check should return:
 
-json
+```json
 { "status": "ok", "db": "connected", "firebase": "connected" }
-Database Setup
-Step 1: Start MySQL
+```
+# Database Setup
+### Step 1: Start MySQL
 If using XAMPP: Open XAMPP Control Panel and click Start next to MySQL.
 
 If using MySQL service (Windows):
 
-bash
+```bash
 net start MySQL80
 If using MySQL service (Mac):
+```
 
-bash
+```bash
 brew services start mysql
-Step 2: Run the Complete SQL Schema
+```
+### Step 2: Run the Complete SQL Schema
 Open MySQL Workbench or Command Prompt and run the following SQL.
 
 Option A — Save as file and run from CLI:
 
 Save the SQL below as backend/database/lesotho_gov_complete.sql, then:
 
-bash
+```bash
 mysql -u root -p < backend/database/lesotho_gov_complete.sql
+```
 Option B — Copy/paste directly into MySQL Workbench:
 
 Open Workbench, connect to your local MySQL, paste the SQL below, then click the lightning bolt.
 
-Complete SQL Schema
-sql
+### Complete SQL Schema
+```sql
 -- ============================================================
 -- LESOTHO INTEGRATED GOVERNMENT SERVICES
 -- COMPLETE DATABASE — Single file, single database
@@ -2818,22 +2832,25 @@ CREATE TABLE traffic_complaints (
 -- ============================================================
 
 SELECT 'Database lesotho_gov created successfully with all modules.' AS status;
-Step 3: Verify
-sql
+```
+### Step 3: Verify
+```sql
 USE lesotho_gov;
 SHOW TABLES;
-Step 4: Add the photo_path column (if your DB predates the photo feature)
+```
+### Step 4: Add the photo_path column (if your DB predates the photo feature)
 If you have an older database, run:
 
-sql
+```sql
 USE lesotho_gov;
+```
 
 ALTER TABLE users
   ADD COLUMN photo_path VARCHAR(500) DEFAULT NULL
   AFTER national_id;
 If you get "Duplicate column name 'photo_path'", skip this step.
 
-Firebase Setup
+# Firebase Setup
 You do NOT need to create a Firebase project. We use one shared project. You only need to:
 
 Get the FirebaseAccountKey.json from the team lead
@@ -2844,9 +2861,10 @@ Make sure the .env file points to it correctly
 
 The .env file should look like:
 
-env
+```env
 PORT=3001
 BACKEND_URL=http://localhost:3001
+```
 
 DB_HOST=localhost
 DB_PORT=3306
@@ -2859,12 +2877,13 @@ Important: Change DB_PASSWORD to your own MySQL root password.
 
 Important: Leave FIREBASE_SERVICE_ACCOUNT=./FirebaseAccountKey.json as-is — the relative path works on any machine.
 
-Admin Account
+# Admin Account
 The only admin is:
 
-text
+```text
 Email: kramohlabi7@gmail.com
 When you log in with this email:
+```
 
 The backend automatically sets role = 'admin' and account_type = 'admin'
 
@@ -2872,7 +2891,7 @@ The frontend automatically redirects you to /admin/home-affairs
 
 You see the Administrator Dashboard instead of the citizen dashboard
 
-How to Test Admin Access
+### How to Test Admin Access
 Log in with kramohlabi7@gmail.com
 
 You should land on /admin/home-affairs
@@ -2881,14 +2900,15 @@ You should see the review queue
 
 If it doesn't work:
 
-sql
+```sql
 USE lesotho_gov;
 UPDATE users
 SET role = 'admin', account_type = 'admin'
 WHERE email = 'kramohlabi7@gmail.com';
 Then log out and log back in.
+```
 
-How Citizens Are Handled
+### How Citizens Are Handled
 Everyone else who registers:
 
 Gets role = 'client' and account_type = 'citizen'
@@ -2899,8 +2919,8 @@ Sees the Home Affairs Citizen Dashboard
 
 Cannot access /api/admin/* (returns 403 Forbidden)
 
-Project Structure
-text
+# Project Structure
+```text
 home-affairs/
 ├── backend/
 │   ├── Server.js                    # Complete backend API
@@ -2955,7 +2975,8 @@ home-affairs/
 │   └── package.json
 │
 └── README.md
-What's Built So Far
+```
+# What's Built So Far
 Authentication
 Email + password registration
 
@@ -3108,7 +3129,7 @@ Finance Admin
 
 Pensions Admin
 
-Database
+### Database
 Single database: lesotho_gov
 
 Full schema with 60+ tables
@@ -3123,7 +3144,7 @@ Audit logging
 
 Photo storage
 
-Feature Guide
+# Feature Guide
 For Citizens
 1. Register
 Go to http://localhost:3000/register
@@ -3301,186 +3322,199 @@ Handle government debts
 
 Respond to enquiries
 
-API Reference
+# API Reference
 All authenticated endpoints require:
 
-text
+```text
 Authorization: Bearer <firebase-id-token>
-Auth
-Method	Path	Purpose
-POST	/api/register	Create citizen account (auto-assigns National ID)
-POST	/api/login	Login (verifies token, returns user)
-GET	/api/me	Get current user
-POST	/api/me/photo	Upload profile photo
-Home Affairs
-Method	Path	Purpose
-GET	/api/services	List all services (optionally ?module=NICR)
-GET	/api/services/:id	Get service + form fields
-POST	/api/applications	Submit new application (multipart form)
-GET	/api/applications/my	List current user's applications
-GET	/api/applications/:id	Get full application detail
-GET	/api/certificates/:id	Get certificate data for PDF
-GET	/api/notifications	List user's notifications
-POST	/api/notifications/:id/read	Mark as read
-Passport
-Method	Path	Purpose
-GET	/api/passport/services	List passport services
-GET	/api/passport/services/:id	Get service + form fields
-POST	/api/passport/applications	Submit application
-GET	/api/passport/applications/my	List user's applications
-GET	/api/passport/applications/:id	Get full detail
-DELETE	/api/passport/applications/:id	Delete application
-GET	/api/passport/notifications	List notifications
-POST	/api/passport/complaints	Submit complaint
-GET	/api/passport/complaints/my	List user's complaints
-GET	/api/passport/certificates/:id	Get passport for PDF
-Traffic
-Method	Path	Purpose
-GET	/api/traffic/categories	List categories
-POST	/api/traffic/applications	Submit application
-GET	/api/traffic/applications/my	List user's applications
-GET	/api/traffic/applications/:id	Get full detail
-DELETE	/api/traffic/applications/:id	Delete application
-GET	/api/traffic/licences/my	List user's licences
-GET	/api/traffic/vehicles/my	List user's vehicles
-GET	/api/traffic/fines/my	List user's fines
-POST	/api/traffic/fines/:id/pay	Pay a fine
-GET	/api/traffic/clearances/my	List clearances
-GET	/api/traffic/notifications	List notifications
-POST	/api/traffic/complaints	Submit complaint
-GET	/api/traffic/complaints/my	List user's complaints
-GET	/api/traffic/payments/my	List payments
-GET	/api/traffic/driving-schools	List driving schools
-GET	/api/traffic/track/:reference	Track by reference
-Police
-Method	Path	Purpose
-GET	/api/police/categories	List categories
-POST	/api/police/applications	Submit application
-GET	/api/police/applications/my	List user's applications
-GET	/api/police/applications/:id	Get full detail
-DELETE	/api/police/applications/:id	Delete application
-GET	/api/police/notifications	List notifications
-POST	/api/police/feedback	Submit feedback
-GET	/api/police/feedback/my	List feedback
-GET	/api/police/letter-templates	List letter templates
-POST	/api/police/letters	Issue a letter
-GET	/api/police/letters/my	List user's letters
-POST	/api/police/certified-documents	Submit document for certification
-GET	/api/police/certified-documents/my	List certified documents
-Finance
-Method	Path	Purpose
-GET	/api/finance/services	List services
-POST	/api/finance/requests	Submit request
-GET	/api/finance/requests/my	List user's requests
-GET	/api/finance/requests/:id	Get full detail
-DELETE	/api/finance/requests/:id	Delete request
-GET	/api/finance/payments/my	List payments
-POST	/api/finance/tickets	Submit enquiry
-GET	/api/finance/tickets/my	List tickets
-GET	/api/finance/notifications	List notifications
-GET	/api/finance/suppliers/my	List suppliers
-Pensions
-Method	Path	Purpose
-GET	/api/pensions/programmes	List programmes
-GET	/api/pensions/me	Get member profile
-POST	/api/pensions/register	Register as member
-POST	/api/pensions/applications	Submit application
-GET	/api/pensions/applications/my	List applications
-GET	/api/pensions/applications/:id	Get full detail
-DELETE	/api/pensions/applications/:id	Delete application
-GET	/api/pensions/contributions/my	List contributions
-GET	/api/pensions/payments/my	List payments
-GET	/api/pensions/estimate/my	Get benefit estimate
-POST	/api/pensions/enquiries	Submit enquiry
-GET	/api/pensions/enquiries/my	List enquiries
-GET	/api/pensions/notifications	List notifications
+```
+### Auth
+| Method | Path | Purpose |
+| --- | --- | --- |
+| POST | /api/register | Create citizen account (auto-assigns National ID) |
+| POST | /api/login | Login (verifies token, returns user) |
+| GET | /api/me | Get current user |
+| POST | /api/me/photo | Upload profile photo |
+### Home Affairs
+| Method | Path | Purpose |
+| --- | --- | --- |
+| GET | /api/services | List all services (optionally ?module=NICR) |
+| GET | /api/services/:id | Get service + form fields |
+| POST | /api/applications | Submit new application (multipart form) |
+| GET | /api/applications/my | List current user's applications |
+| GET | /api/applications/:id | Get full application detail |
+| GET | /api/certificates/:id | Get certificate data for PDF |
+| GET | /api/notifications | List user's notifications |
+| POST | /api/notifications/:id/read | Mark as read |
+### Passport
+| Method | Path | Purpose |
+| --- | --- | --- |
+| GET | /api/passport/services | List passport services |
+| GET | /api/passport/services/:id | Get service + form fields |
+| POST | /api/passport/applications | Submit application |
+| GET | /api/passport/applications/my | List user's applications |
+| GET | /api/passport/applications/:id | Get full detail |
+| DELETE | /api/passport/applications/:id | Delete application |
+| GET | /api/passport/notifications | List notifications |
+| POST | /api/passport/complaints | Submit complaint |
+| GET | /api/passport/complaints/my | List user's complaints |
+| GET | /api/passport/certificates/:id | Get passport for PDF |
+### Traffic
+| Method | Path | Purpose |
+| --- | --- | --- |
+| GET | /api/traffic/categories | List categories |
+| POST | /api/traffic/applications | Submit application |
+| GET | /api/traffic/applications/my | List user's applications |
+| GET | /api/traffic/applications/:id | Get full detail |
+| DELETE | /api/traffic/applications/:id | Delete application |
+| GET | /api/traffic/licences/my | List user's licences |
+| GET | /api/traffic/vehicles/my | List user's vehicles |
+| GET | /api/traffic/fines/my | List user's fines |
+| POST | /api/traffic/fines/:id/pay | Pay a fine |
+| GET | /api/traffic/clearances/my | List clearances |
+| GET | /api/traffic/notifications | List notifications |
+| POST | /api/traffic/complaints | Submit complaint |
+| GET | /api/traffic/complaints/my | List user's complaints |
+| GET | /api/traffic/payments/my | List payments |
+| GET | /api/traffic/driving-schools | List driving schools |
+| GET | /api/traffic/track/:reference | Track by reference |
+### Police
+| Method | Path | Purpose |
+| --- | --- | --- |
+| GET | /api/police/categories | List categories |
+| POST | /api/police/applications | Submit application |
+| GET | /api/police/applications/my | List user's applications |
+| GET | /api/police/applications/:id | Get full detail |
+| DELETE | /api/police/applications/:id | Delete application |
+| GET | /api/police/notifications | List notifications |
+| POST | /api/police/feedback | Submit feedback |
+| GET | /api/police/feedback/my | List feedback |
+| GET | /api/police/letter-templates | List letter templates |
+| POST | /api/police/letters | Issue a letter |
+| GET | /api/police/letters/my | List user's letters |
+| POST | /api/police/certified-documents | Submit document for certification |
+| GET | /api/police/certified-documents/my | List certified documents |
+### Finance
+| Method | Path | Purpose |
+| --- | --- | --- |
+| GET | /api/finance/services | List services |
+| POST | /api/finance/requests | Submit request |
+| GET | /api/finance/requests/my | List user's requests |
+| GET | /api/finance/requests/:id | Get full detail |
+| DELETE | /api/finance/requests/:id | Delete request |
+| GET | /api/finance/payments/my | List payments |
+| POST | /api/finance/tickets | Submit enquiry |
+| GET | /api/finance/tickets/my | List tickets |
+| GET | /api/finance/notifications | List notifications |
+| GET | /api/finance/suppliers/my | List suppliers |
+### Pensions
+| Method | Path | Purpose |
+| --- | --- | --- |
+| GET | /api/pensions/programmes | List programmes |
+| GET | /api/pensions/me | Get member profile |
+| POST | /api/pensions/register | Register as member |
+| POST | /api/pensions/applications | Submit application |
+| GET | /api/pensions/applications/my | List applications |
+| GET | /api/pensions/applications/:id | Get full detail |
+| DELETE | /api/pensions/applications/:id | Delete application |
+| GET | /api/pensions/contributions/my | List contributions |
+| GET | /api/pensions/payments/my | List payments |
+| GET | /api/pensions/estimate/my | Get benefit estimate |
+| POST | /api/pensions/enquiries | Submit enquiry |
+| GET | /api/pensions/enquiries/my | List enquiries |
+| GET | /api/pensions/notifications | List notifications |
 Admin (requires admin role)
-Method	Path	Purpose
-GET	/api/admin/stats	Home Affairs dashboard metrics
-GET	/api/admin/applications	Home Affairs queue with filters
-POST	/api/admin/applications/:id/status	Update application status
-GET	/api/passport/admin/stats	Passport dashboard metrics
-GET	/api/passport/admin/applications	Passport queue
-POST	/api/passport/admin/applications/:id/status	Update passport status
-POST	/api/passport/admin/applications/:id/issue	Issue passport
-POST	/api/passport/admin/applications/:id/biometrics	Record biometrics
-POST	/api/passport/admin/applications/:id/appointment	Schedule appointment
-POST	/api/passport/admin/applications/:id/payment	Record payment
-GET	/api/passport/admin/complaints	List complaints
-POST	/api/passport/admin/complaints/:id/respond	Respond to complaint
-GET	/api/traffic/admin/stats	Traffic dashboard metrics
-GET	/api/traffic/admin/applications	Traffic queue
-POST	/api/traffic/admin/applications/:id/status	Update traffic status
-POST	/api/traffic/admin/applications/:id/issue-licence	Issue licence
-POST	/api/traffic/admin/applications/:id/register-vehicle	Register vehicle
-POST	/api/traffic/admin/applications/:id/test-booking	Schedule test
-POST	/api/traffic/admin/applications/:id/payment	Record payment
-GET	/api/traffic/admin/fines	List fines
-POST	/api/traffic/admin/fines	Create fine
-POST	/api/traffic/admin/fines/:id/payment	Mark fine paid
-GET	/api/traffic/admin/clearances	List clearances
-POST	/api/traffic/admin/clearances/:id/update	Update clearance
-GET	/api/traffic/admin/complaints	List complaints
-POST	/api/traffic/admin/complaints/:id/respond	Respond to complaint
-GET	/api/traffic/admin/driving-schools	List schools
-POST	/api/traffic/admin/driving-schools/:id/status	Update school status
-GET	/api/traffic/admin/payments	List payments
-GET	/api/police/admin/stats	Police dashboard metrics
-GET	/api/police/admin/applications	Police queue
-POST	/api/police/admin/applications/:id/status	Update police status
-POST	/api/police/admin/applications/:id/payment	Record payment
-POST	/api/police/admin/applications/:id/appointment	Schedule appointment
-POST	/api/police/admin/evidence/:id/verify	Verify evidence
-GET	/api/police/admin/feedback	List feedback
-GET	/api/police/admin/certified-documents	List certified documents
-POST	/api/police/admin/certified-documents/:id/certify	Certify document
-POST	/api/police/admin/certified-documents/:id/status	Update status
-GET	/api/police/admin/letters	List letters
-GET	/api/finance/admin/stats	Finance dashboard metrics
-GET	/api/finance/admin/requests	Finance queue
-POST	/api/finance/admin/requests/:id/status	Update finance status
-GET	/api/finance/admin/suppliers	List suppliers
-POST	/api/finance/admin/suppliers/:id/status	Update supplier status
-GET	/api/finance/admin/invoices	List invoices
-POST	/api/finance/admin/invoices/:id/status	Update invoice status
-GET	/api/finance/admin/refunds	List refunds
-POST	/api/finance/admin/refunds/:id/status	Update refund status
-GET	/api/finance/admin/payments	List payments
-POST	/api/finance/admin/payments	Record payment
-GET	/api/finance/admin/tickets	List tickets
-POST	/api/finance/admin/tickets/:id/respond	Respond to ticket
-GET	/api/pensions/admin/stats	Pensions dashboard metrics
-GET	/api/pensions/admin/applications	Pensions queue
-POST	/api/pensions/admin/applications/:id/status	Update pension status
-POST	/api/pensions/admin/applications/:id/assessment	Record assessment
-GET	/api/pensions/admin/members	List members
-POST	/api/pensions/admin/members/:id/status	Update member status
-POST	/api/pensions/admin/contributions	Record contribution
-GET	/api/pensions/admin/payments	List payments
-POST	/api/pensions/admin/payments	Record payment
-GET	/api/pensions/admin/debts	List debts
-POST	/api/pensions/admin/debts/:id/status	Update debt status
-GET	/api/pensions/admin/enquiries	List enquiries
-POST	/api/pensions/admin/enquiries/:id/respond	Respond to enquiry
-Git Workflow
+| Method | Path | Purpose |
+| --- | --- | --- |
+| GET | /api/admin/stats | Home Affairs dashboard metrics |
+| GET | /api/admin/applications | Home Affairs queue with filters |
+| POST | /api/admin/applications/:id/status | Update application status |
+| GET | /api/passport/admin/stats | Passport dashboard metrics |
+| GET | /api/passport/admin/applications | Passport queue |
+| POST | /api/passport/admin/applications/:id/status | Update passport status |
+| POST | /api/passport/admin/applications/:id/issue | Issue passport |
+| POST | /api/passport/admin/applications/:id/biometrics | Record biometrics |
+| POST | /api/passport/admin/applications/:id/appointment | Schedule appointment |
+| POST | /api/passport/admin/applications/:id/payment | Record payment |
+| GET | /api/passport/admin/complaints | List complaints |
+| POST | /api/passport/admin/complaints/:id/respond | Respond to complaint |
+| GET | /api/traffic/admin/stats | Traffic dashboard metrics |
+| GET | /api/traffic/admin/applications | Traffic queue |
+| POST | /api/traffic/admin/applications/:id/status | Update traffic status |
+| POST | /api/traffic/admin/applications/:id/issue-licence | Issue licence |
+| POST | /api/traffic/admin/applications/:id/register-vehicle | Register vehicle |
+| POST | /api/traffic/admin/applications/:id/test-booking | Schedule test |
+| POST | /api/traffic/admin/applications/:id/payment | Record payment |
+| GET | /api/traffic/admin/fines | List fines |
+| POST | /api/traffic/admin/fines | Create fine |
+| POST | /api/traffic/admin/fines/:id/payment | Mark fine paid |
+| GET | /api/traffic/admin/clearances | List clearances |
+| POST | /api/traffic/admin/clearances/:id/update | Update clearance |
+| GET | /api/traffic/admin/complaints | List complaints |
+| POST | /api/traffic/admin/complaints/:id/respond | Respond to complaint |
+| GET | /api/traffic/admin/driving-schools | List schools |
+| POST | /api/traffic/admin/driving-schools/:id/status | Update school status |
+| GET | /api/traffic/admin/payments | List payments |
+| GET | /api/police/admin/stats | Police dashboard metrics |
+| GET | /api/police/admin/applications | Police queue |
+| POST | /api/police/admin/applications/:id/status | Update police status |
+| POST | /api/police/admin/applications/:id/payment | Record payment |
+| POST | /api/police/admin/applications/:id/appointment | Schedule appointment |
+| POST | /api/police/admin/evidence/:id/verify | Verify evidence |
+| GET | /api/police/admin/feedback | List feedback |
+| GET | /api/police/admin/certified-documents | List certified documents |
+| POST | /api/police/admin/certified-documents/:id/certify | Certify document |
+| POST | /api/police/admin/certified-documents/:id/status | Update status |
+| GET | /api/police/admin/letters | List letters |
+| GET | /api/finance/admin/stats | Finance dashboard metrics |
+| GET | /api/finance/admin/requests | Finance queue |
+| POST | /api/finance/admin/requests/:id/status | Update finance status |
+| GET | /api/finance/admin/suppliers | List suppliers |
+| POST | /api/finance/admin/suppliers/:id/status | Update supplier status |
+| GET | /api/finance/admin/invoices | List invoices |
+| POST | /api/finance/admin/invoices/:id/status | Update invoice status |
+| GET | /api/finance/admin/refunds | List refunds |
+| POST | /api/finance/admin/refunds/:id/status | Update refund status |
+| GET | /api/finance/admin/payments | List payments |
+| POST | /api/finance/admin/payments | Record payment |
+| GET | /api/finance/admin/tickets | List tickets |
+| POST | /api/finance/admin/tickets/:id/respond | Respond to ticket |
+| GET | /api/pensions/admin/stats | Pensions dashboard metrics |
+| GET | /api/pensions/admin/applications | Pensions queue |
+| POST | /api/pensions/admin/applications/:id/status | Update pension status |
+| POST | /api/pensions/admin/applications/:id/assessment | Record assessment |
+| GET | /api/pensions/admin/members | List members |
+| POST | /api/pensions/admin/members/:id/status | Update member status |
+| POST | /api/pensions/admin/contributions | Record contribution |
+| GET | /api/pensions/admin/payments | List payments |
+| POST | /api/pensions/admin/payments | Record payment |
+| GET | /api/pensions/admin/debts | List debts |
+| POST | /api/pensions/admin/debts/:id/status | Update debt status |
+| GET | /api/pensions/admin/enquiries | List enquiries |
+| POST | /api/pensions/admin/enquiries/:id/respond | Respond to enquiry |
+# Git Workflow
 First time
-bash
+```bash
 git clone https://github.com/Boni-01/home-affairs.git
 cd home-affairs
-Every time you start working
-bash
+### Every time you start working
+```bash
 git pull origin main
-Create your own branch
-bash
+### Create your own branch
+```bash
 git checkout -b feature/your-name-task
-After making changes
-bash
+### After making changes
+```bash
 git add .
 git commit -m "Clear description of what you changed"
 git push origin feature/your-name-task
+```
+```
+```
 Then open a Pull Request on GitHub.
+```
 
-IMPORTANT — Never Commit
+### IMPORTANT — Never Commit
 The following are already in .gitignore and must never be committed:
 
 backend/.env
@@ -3491,45 +3525,52 @@ backend/uploads/
 
 node_modules/
 
-Troubleshooting
+# Troubleshooting
 Cannot find module 'dotenv'
 You forgot to install backend dependencies:
 
-bash
+```bash
 cd backend
 npm install express cors dotenv mysql2 firebase-admin multer pdf-lib
 Cannot read properties of undefined (reading 'cert')
 Your Server.js is using old Firebase Admin API. Pull the latest:
+```
 
-bash
+```bash
 git pull origin main
 ER_ACCESS_DENIED_ERROR / Access denied for user 'root'
 Your MySQL password in .env is wrong. Check by running:
+```
 
-bash
+```bash
 mysql -u root -p
 Then update .env:
+```
 
-text
+```text
 DB_PASSWORD=your_actual_password
 ER_BAD_DB_ERROR: Unknown database 'lesotho_gov'
 You haven't created the database:
+```
 
-bash
+```bash
 mysql -u root -p < backend/database/lesotho_gov_complete.sql
 Table 'lesotho_gov.users' doesn't exist
 The schema wasn't loaded. Run:
+```
 
-bash
+```bash
 mysql -u root -p < backend/database/lesotho_gov_complete.sql
 Unknown column 'photo_path'
 Run the migration:
+```
 
-sql
+```sql
 USE lesotho_gov;
 ALTER TABLE users ADD COLUMN photo_path VARCHAR(500) DEFAULT NULL AFTER national_id;
 auth/network-request-failed
 Your network is blocking Firebase. Fix by:
+```
 
 Change DNS to 1.1.1.1 and 8.8.8.8
 
@@ -3564,71 +3605,79 @@ The photo_url in the API response starts with http://localhost:3001/
 
 If the URL is relative, update .env:
 
-text
+```text
 BACKEND_URL=http://localhost:3001
 localhost:3000 refused to connect
 Frontend isn't running:
+```
 
-bash
+```bash
 cd frontend
 npm start
 localhost:3001 refused to connect
 Backend isn't running:
+```
 
-bash
+```bash
 cd backend
 npm start
 Port already in use
 Windows:
+```
 
-bash
+```bash
 netstat -ano | findstr :3000
 taskkill /PID <PID> /F
 Mac/Linux:
+```
 
-bash
+```bash
 lsof -i :3000
 kill -9 <PID>
 Can't log in as admin
 Make sure:
+```
 
 You're using exactly kramohlabi7@gmail.com
 
 Run this SQL:
 
-sql
+```sql
 UPDATE users SET role = 'admin', account_type = 'admin'
 WHERE email = 'kramohlabi7@gmail.com';
 Log out and log back in
+```
 
 PDF generation fails
 Make sure the frontend has jspdf and html2canvas installed:
 
-bash
+```bash
 cd frontend
 npm install jspdf html2canvas
 Police document certification fails
 Make sure the backend has pdf-lib installed:
+```
 
-bash
+```bash
 cd backend
 npm install pdf-lib
 Also ensure police_stamp.png exists in the backend folder for the stamp image.
+```
 
-Security Notes
-Never Commit These Files
+# Security Notes
+### Never Commit These Files
 .env (backend environment variables)
 
 FirebaseAccountKey.json (Firebase Admin SDK key)
 
 uploads/ (user documents and photos)
 
-Never Share These Files
+### Never Share These Files
 Firebase private key — share only via private DM, never in group chat
 
 .env with real passwords — same
 
-If the Firebase Key Leaks
+### If the Firebase Key Leaks
 Go to Google Cloud Console then IAM then Service Accounts
 
 Delete the exposed key
@@ -3639,7 +3688,7 @@ Distribute privately
 
 Update .gitignore to be sure it's excluded
 
-What's Stored Where
+### What's Stored Where
 Data	Stored In	Public?
 Email, password	Firebase Auth	No
 Full name, phone, National ID	MySQL users table	No
@@ -3649,7 +3698,7 @@ Applications, statuses	MySQL	No
 Certificates	Generated on-the-fly (PDF)	No
 Note: In development, /uploads/* is served publicly. In production, this would need authentication.
 
-What's Coming Next
+# What's Coming Next
 Cross-module integration (single citizen profile reused everywhere)
 
 Payment integration (mock payment gateway)
@@ -3664,7 +3713,7 @@ Advanced reporting and analytics
 
 Mobile application
 
-Team Responsibilities
+# Team Responsibilities
 Member	Student Number	Primary Focus
 Lehakoe Panyane	901019088	Backend, Firebase Auth
 Sehloho Tsiu	901018558	MySQL schema, data modelling
@@ -3673,7 +3722,7 @@ Katleho Ramohlabi	901018965	Officer dashboards, admin
 Malefu Mokitimi	901018843	Evaluation, documentation
 All members: contribute to their own branch, submit PRs, and participate in the presentation.
 
-Need Help?
+# Need Help?
 First: check the Troubleshooting section
 
 Then: paste the full error in the group chat
