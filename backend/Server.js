@@ -10,7 +10,12 @@ const path = require("path");
 const fs = require("fs");
 const mysql = require("mysql2/promise");
 const multer = require("multer");
-const nodemailer = require("nodemailer");
+let nodemailer = null;
+try {
+  nodemailer = require("nodemailer");
+} catch (err) {
+  console.warn("Nodemailer is not installed. Run npm install in backend to enable email alerts.");
+}
 
 const { PDFDocument, rgb } = require("pdf-lib");
 
@@ -69,10 +74,10 @@ const GMAIL_USER = process.env.GMAIL_USER;
 const GMAIL_APP_PASSWORD = process.env.GMAIL_APP_PASSWORD;
 const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:3001";
 const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:3000";
-const gmailTransporter = GMAIL_USER && GMAIL_APP_PASSWORD
+const gmailTransporter = nodemailer && GMAIL_USER && GMAIL_APP_PASSWORD
   ? nodemailer.createTransport({
       service: "gmail",
-      auth: { user: GMAIL_USER, pass: GMAIL_APP_PASSWORD }
+      auth: { user: GMAIL_USER, pass: GMAIL_APP_PASSWORD.replace(/\s+/g, "") }
     })
   : null;
 

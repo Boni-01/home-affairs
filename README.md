@@ -2877,6 +2877,12 @@ Important: Change DB_PASSWORD to your own MySQL root password.
 
 For admin email alerts, configure the Gmail account that sends notifications in `backend/.env`. Create a Google App Password for the sender account (two-step verification must be enabled); do not use the account's normal password:
 
+Install backend dependencies from the repository root:
+
+```powershell
+npm --prefix backend install
+```
+
 ```env
 GMAIL_USER=your-admin@gmail.com
 GMAIL_APP_PASSWORD=your_google_app_password
