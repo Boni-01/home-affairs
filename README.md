@@ -2875,6 +2875,17 @@ DB_NAME=lesotho_gov
 FIREBASE_SERVICE_ACCOUNT=./FirebaseAccountKey.json
 Important: Change DB_PASSWORD to your own MySQL root password.
 
+For admin email alerts, configure a Resend API key and a verified sender address in `backend/.env`:
+
+```env
+RESEND_API_KEY=your_resend_api_key
+EMAIL_FROM=Government Services <notifications@your-verified-domain.example>
+ADMIN_NOTIFICATION_EMAILS=admin1@example.com,admin2@example.com
+FRONTEND_URL=http://localhost:3000
+```
+
+`ADMIN_NOTIFICATION_EMAILS` is optional and defaults to the admin addresses configured in the backend. Without `RESEND_API_KEY` and `EMAIL_FROM`, citizen submissions still succeed, but email alerts are skipped.
+
 Important: Change FIREBASE_SERVICE_ACCOUNT=./FirebaseAccountKey.json to the path you chose when cloning this repository to your machine machine.
 
  How to do this?

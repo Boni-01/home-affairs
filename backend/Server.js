@@ -60,7 +60,52 @@ const db = mysql.createPool({
 // CONSTANTS
 // ------------------------------------------------------------
 const ADMIN_EMAILS = ["kramohlabi7@gmail.com", "sehlohotsiu7@gmail.com"];
+const ADMIN_NOTIFICATION_EMAILS = (process.env.ADMIN_NOTIFICATION_EMAILS || ADMIN_EMAILS.join(","))
+  .split(",")
+  .map(email => email.trim())
+  .filter(Boolean);
+const RESEND_API_KEY = process.env.RESEND_API_KEY;
+const EMAIL_FROM = process.env.EMAIL_FROM;
 const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:3001";
+const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:3000";
+
+async function notifyAdminsOfApplication({ office, referenceNumber, serviceName, adminPath }) {
+  if (!RESEND_API_KEY || !EMAIL_FROM || !ADMIN_NOTIFICATION_EMAILS.length) {
+    console.warn("Admin email notification skipped: configure RESEND_API_KEY and EMAIL_FROM.");
+    return;
+  }
+
+  const dashboardUrl = `${FRONTEND_URL.replace(/\/+$/, "")}${adminPath}`;
+  const text = [
+    "A new citizen request is awaiting review.",
+    `Office: ${office}`,
+    `Service: ${serviceName}`,
+    `Reference: ${referenceNumber}`,
+    `Admin dashboard: ${dashboardUrl}`
+  ].join("\n");
+
+  try {
+    const response = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${RESEND_API_KEY}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        from: EMAIL_FROM,
+        to: ADMIN_NOTIFICATION_EMAILS,
+        subject: `[${office}] New request: ${referenceNumber}`,
+        text
+      })
+    });
+
+    if (!response.ok) {
+      console.error("Admin email notification failed:", await response.text());
+    }
+  } catch (err) {
+    console.error("Admin email notification failed:", err.message);
+  }
+}
 
 // ------------------------------------------------------------
 // FILE UPLOAD — base directories
@@ -639,6 +684,12 @@ app.post(
         "applications", appId, { reference: ref }, req.ip);
 
       await conn.commit();
+      await notifyAdminsOfApplication({
+        office: "Home Affairs",
+        referenceNumber: ref,
+        serviceName: service.service_name,
+        adminPath: "/admin/home-affairs"
+      });
       res.status(201).json({
         success: true, applicationId: appId,
         referenceNumber: ref, status: "submitted"
@@ -1162,6 +1213,12 @@ app.post(
       );
 
       await conn.commit();
+      await notifyAdminsOfApplication({
+        office: "Passport Office",
+        referenceNumber: ref,
+        serviceName: service.service_name,
+        adminPath: "/admin/passport"
+      });
       res.status(201).json({
         success: true,
         applicationId: appId,
@@ -2141,6 +2198,12 @@ app.post(
       );
 
       await conn.commit();
+      await notifyAdminsOfApplication({
+        office: "Police Services",
+        referenceNumber: ref,
+        serviceName: title || applicationType.replace(/_/g, " "),
+        adminPath: "/admin/police"
+      });
 
       await logAudit(
         req.dbUser.user_id,
@@ -3102,6 +3165,12 @@ app.post(
       );
 
       await conn.commit();
+      await notifyAdminsOfApplication({
+        office: "Police Services",
+        referenceNumber: ref,
+        serviceName: `Document certification: ${document_title}`,
+        adminPath: "/admin/police"
+      });
 
       await logAudit(
         req.dbUser.user_id,
@@ -3986,6 +4055,13 @@ app.post(
         { reference: ref, requestType },
         req.ip
       );
+
+      await notifyAdminsOfApplication({
+        office: "Finance",
+        referenceNumber: ref,
+        serviceName: service.service_name,
+        adminPath: "/admin/finance"
+      });
 
       res.status(201).json({
         success: true,
@@ -5146,6 +5222,12 @@ app.post("/api/pensions/register", verifyToken, async (req, res) => {
     );
 
     await conn.commit();
+    await notifyAdminsOfApplication({
+      office: "Pensions",
+      referenceNumber: ref,
+      serviceName: "Pension registration",
+      adminPath: "/admin/pensions"
+    });
     res.status(201).json({
       success: true,
       memberId,
@@ -5293,6 +5375,12 @@ app.post(
       );
 
       await conn.commit();
+      await notifyAdminsOfApplication({
+        office: "Pensions",
+        referenceNumber: ref,
+        serviceName: application_type.replace(/_/g, " "),
+        adminPath: "/admin/pensions"
+      });
       res.status(201).json({
         success: true,
         applicationId: appId,
@@ -7060,6 +7148,13 @@ app.post(
         { reference: ref, applicationType },
         req.ip
       );
+
+      await notifyAdminsOfApplication({
+        office: "Traffic and Transport",
+        referenceNumber: ref,
+        serviceName: title || applicationType.replace(/_/g, " "),
+        adminPath: "/admin/traffic"
+      });
 
       res.status(201).json({
         success: true,
