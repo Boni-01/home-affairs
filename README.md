@@ -2875,23 +2875,6 @@ DB_NAME=lesotho_gov
 FIREBASE_SERVICE_ACCOUNT=./FirebaseAccountKey.json
 Important: Change DB_PASSWORD to your own MySQL root password.
 
-For admin email alerts, configure the Gmail account that sends notifications in `backend/.env`. Create a Google App Password for the sender account (two-step verification must be enabled); do not use the account's normal password:
-
-Install backend dependencies from the repository root:
-
-```powershell
-npm --prefix backend install
-```
-
-```env
-GMAIL_USER=your-admin@gmail.com
-GMAIL_APP_PASSWORD=your_google_app_password
-ADMIN_NOTIFICATION_EMAILS=admin1@gmail.com,admin2@gmail.com
-FRONTEND_URL=http://localhost:3000
-```
-
-`ADMIN_NOTIFICATION_EMAILS` is optional and defaults to the admin addresses configured in the backend. Without `GMAIL_USER` and `GMAIL_APP_PASSWORD`, citizen submissions still succeed, but email alerts are skipped.
-
 Important: Change FIREBASE_SERVICE_ACCOUNT=./FirebaseAccountKey.json to the path you chose when cloning this repository to your machine machine.
 
  How to do this?
