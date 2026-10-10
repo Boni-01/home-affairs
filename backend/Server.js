@@ -1993,6 +1993,7 @@ async function generatePoliceReference(conn, application_type) {
   const prefix =
     application_type === "police_clearance"            ? "CLR" :
     application_type === "police_report_request"       ? "PRQ" :
+    application_type === "affidavit"                   ? "AFF" :
     application_type === "police_conduct_complaint"    ? "CMP" :
     application_type === "missing_person_report"       ? "MPR" :
     application_type === "traffic_incident"            ? "TRF" :

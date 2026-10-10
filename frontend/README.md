@@ -1463,6 +1463,7 @@ INSERT INTO police_service_categories (category_code, category_name, description
 ('TRAFFIC','Traffic Incident','Reporting a road traffic incident'),
 ('CLEARANCE','Police Clearance','Applying for a police clearance certificate'),
 ('POLICE_REPORT','Police Report Request','Requesting an eligible copy of a police report'),
+('AFFIDAVIT','Affidavit Request','Requesting an affidavit or sworn statement of facts'),
 ('COMPLAINT','Complaint Against Police','Reporting alleged misconduct or dissatisfaction with police service'),
 ('WITNESS','Witness Information','Providing details of an incident or potential witnesses'),
 ('EVIDENCE','Additional Evidence','Uploading documents, photos or additional information'),
@@ -1478,7 +1479,7 @@ CREATE TABLE police_applications (
     application_type ENUM(
         'crime_report','theft_report','lost_item_report','missing_person_report',
         'fraud_report','cybercrime_report','traffic_incident','police_clearance',
-        'police_report_request','police_conduct_complaint','witness_information',
+        'police_report_request','affidavit','police_conduct_complaint','witness_information',
         'additional_evidence','feedback'
     ) NOT NULL,
     title VARCHAR(200) NOT NULL,
