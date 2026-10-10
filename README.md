@@ -1,293 +1,387 @@
-# 📘 Lesotho Integrated Government Services System
+Lesotho Integrated Government Services System
+Project: Integrated Government Services System for Lesotho
+Course: BIHC3110 — Human Computer Interaction
+Institution: Limkokwing University of Creative Technology — Lesotho
+Team: 5 members
 
-**Project:** Integrated Government Services System for Lesotho  
-**Course:** BIHC3110 — Human Computer Interaction  
-**Institution:** Limkokwing University of Creative Technology — Lesotho  
-**Team:** 5 members
+Table of Contents
+What This Project Is
 
----
+Tech Stack
 
-## 📖 Table of Contents
+Architecture Overview
 
-1. [What This Project Is](#what-this-project-is)
-2. [Tech Stack](#tech-stack)
-3. [Architecture Overview](#architecture-overview)
-4. [Prerequisites](#prerequisites)
-5. [First-Time Setup](#first-time-setup)
-6. [How to Run the Project](#how-to-run-the-project)
-7. [Database Setup](#database-setup)
-8. [Firebase Setup](#firebase-setup)
-9. [Admin Account](#admin-account)
-10. [Project Structure](#project-structure)
-11. [What's Built So Far](#whats-built-so-far)
-12. [Feature Guide](#feature-guide)
-13. [API Reference](#api-reference)
-14. [Git Workflow](#git-workflow)
-15. [Troubleshooting](#troubleshooting)
-16. [Security Notes](#security-notes)
-17. [What's Coming Next](#whats-coming-next)
+Prerequisites
 
----
+First-Time Setup
 
-## What This Project Is
+How to Run the Project
 
-An **Integrated Digital Public Service System** for Lesotho that connects:
+Database Setup
 
-- 🏛️ **Home Affairs** (NICR, Immigration, LRMIS)
-- 🛂 **Passport Services** (applications, tracking, collection)
-- 🚗 **Traffic** (driver's licences, vehicle registration)
-- 💰 **Finance** (payments, tax refunds, procurement)
-- 👴 **Pensions** (beneficiary verification, payments)
-- 🚔 **Police** (non-emergency reporting, case management)
+Firebase Setup
 
-**Core concept:** One verified citizen profile, reused across all government services — no more resubmitting the same documents to different departments.
+Admin Account
 
-### What's Built So Far
+Project Structure
 
-- ✅ **Complete authentication** (Email, Google, Phone OTP)
-- ✅ **Auto-assigned National IDs** (`LS########`)
-- ✅ **Home Affairs module** (NICR, Immigration, LRMIS)
-  - Service catalogue loaded from database
-  - Dynamic application forms per service
-  - Document uploads
-  - Application tracking & notifications
-  - Real-looking certificates and IDs
-  - **PDF export** of certificates
-  - **Profile photo upload** (shows on ID card and certificates)
-- ✅ **Admin dashboard** for reviewing and processing applications
-- ✅ **Citizen dashboard** with cards, tabs, and profile
+What's Built So Far
 
----
+Feature Guide
 
-## Tech Stack
+API Reference
 
-### Frontend
-- **React** (Create React App)
-- **React Router** for navigation
-- **Firebase Auth** (Email/Password, Google, Phone OTP)
-- **jsPDF + html2canvas** (certificate PDF export)
-- Inline CSS with Lesotho flag colors
+Git Workflow
 
-### Backend
-- **Node.js + Express** (single-file server: `Server.js`)
-- **MySQL** for all data (users, applications, services, documents, audit logs)
-- **Firebase Admin SDK** for verifying ID tokens
-- **Multer** for file uploads (documents + photos)
+Troubleshooting
 
-### Auth
-- **Firebase Authentication** handles login/registration
-- **MySQL** stores profile data linked by `firebase_uid`
+Security Notes
 
-### Database
-- Single database: `lesotho_gov`
-- 25+ tables covering users, applications, documents, services, form fields, and module-specific data
+What's Coming Next
 
----
+What This Project Is
+An Integrated Digital Public Service System for Lesotho that connects:
 
-## Architecture Overview
+Home Affairs (NICR, Immigration, LRMIS)
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│  FRONTEND (React @ localhost:3000)                          │
-│  ┌─────────────────────┐  ┌─────────────────────────────┐  │
-│  │ Citizen Dashboard   │  │ Admin Dashboard             │  │
-│  │ • Apply for services│  │ • Review applications       │  │
-│  │ • Track applications│  │ • Update statuses           │  │
-│  │ • Upload photo      │  │ • View applicant photos     │  │
-│  │ • Download PDFs     │  │                             │  │
-│  └─────────────────────┘  └─────────────────────────────┘  │
-└─────────────────────────────────────────────────────────────┘
-                    │ Firebase ID token in Authorization header
-                    ▼
-┌─────────────────────────────────────────────────────────────┐
-│  BACKEND (Express @ localhost:3001)                         │
-│  • /api/register, /api/login, /api/me                       │
-│  • /api/services, /api/services/:id                         │
-│  • /api/applications (POST, GET, GET my)                    │
-│  • /api/me/photo (upload)                                   │
-│  • /api/certificates/:id (fetch for PDF)                    │
-│  • /api/admin/* (admin only)                                │
-│  • /uploads/* (static files)                                │
-└─────────────────────────────────────────────────────────────┘
-                    │
-                    ▼
-┌─────────────────────────────────────────────────────────────┐
-│  MYSQL (lesotho_gov)                                        │
-│  • users, citizen_national_ids                              │
-│  • applications, application_field_values, documents        │
-│  • service_catalog, service_form_fields                     │
-│  • civil_records, immigration_applications, livestock_*     │
-│  • notifications, audit_logs, application_status_history    │
-└─────────────────────────────────────────────────────────────┘
-```
+Passport Services (applications, tracking, collection)
 
----
+Traffic (driver's licences, vehicle registration)
 
-## Prerequisites
+Finance (payments, tax refunds, procurement)
 
-Install these on your machine **before** pulling the repo:
+Pensions (beneficiary verification, payments)
 
-| Tool | Version | Download |
-|---|---|---|
-| Node.js | 18+ | https://nodejs.org/ |
-| npm | Comes with Node | — |
-| MySQL | 8.0+ | https://dev.mysql.com/downloads/ |
-| MySQL Workbench | Latest | https://dev.mysql.com/downloads/workbench/ |
-| Git | Latest | https://git-scm.com/ |
-| VS Code | Latest | https://code.visualstudio.com/ |
+Police (non-emergency reporting, case management)
 
----
+Core concept: One verified citizen profile, reused across all government services — no more resubmitting the same documents to different departments.
 
-## First-Time Setup
+What's Built So Far
+Complete authentication (Email, Google, Phone OTP)
 
-Follow these steps **exactly in order** the first time you clone the repo.
+Auto-assigned National IDs (LS########)
 
-### Step 1: Clone the repository
+Home Affairs module (NICR, Immigration, LRMIS)
 
-```bash
+Service catalogue loaded from database
+
+Dynamic application forms per service
+
+Document uploads
+
+Application tracking and notifications
+
+Real-looking certificates and IDs
+
+PDF export of certificates
+
+Profile photo upload (shows on ID card and certificates)
+
+Passport Services module
+
+Tiered passport applications (Standard, Urgent, Express, Emergency, Official, Diplomatic)
+
+Application tracking with status updates
+
+Biometrics capture and appointment scheduling
+
+Payment recording
+
+Complaint submission and response
+
+PDF passport download with profile photo
+
+Traffic module
+
+Driver's licence applications (learner, full, renewal, replacement, correction)
+
+Vehicle registration (new, imported, second-hand local/foreign, transfer)
+
+Roadworthiness and fitness inspections
+
+Public motor vehicle permits
+
+Driving school and instructor registration
+
+Traffic fine management and online payment
+
+Licence clearance requests
+
+PDF driver's licence download with profile photo
+
+Police Services module
+
+Non-emergency crime reporting (theft, lost items, fraud, cybercrime, missing persons)
+
+Police clearance applications
+
+Police report requests
+
+Witness information submission
+
+Complaint submission and response
+
+Document certification with automatic stamping
+
+Police letters (acknowledgement, affidavit, loss report, confirmation, witness statement)
+
+Feedback submission
+
+Finance module
+
+Tax-related requests (clearance, declaration)
+
+Supplier/vendor registration
+
+Invoice and payment claims
+
+Tax refund requests
+
+Government payment processing
+
+Enquiry and complaint tickets
+
+Pensions module
+
+Pension registration (PODCPF, Old Age Pension)
+
+Benefit applications (retirement, resignation, termination, retrenchment, disability, death, old age)
+
+Contribution tracking
+
+Payment recording and history
+
+Government debt deductions
+
+Enquiry and complaint management
+
+Admin dashboards for all modules
+
+Application review and processing
+
+Status updates (approve, reject, request info, etc.)
+
+Document verification
+
+Payment recording
+
+Appointment scheduling
+
+Complaint responses
+
+Audit logs
+
+Citizen dashboards for all modules
+
+Card-based service selection
+
+Tabbed navigation
+
+Application tracking
+
+Notification system
+
+Profile management with photo upload
+
+PDF document downloads
+
+Tech Stack
+Frontend
+React (Create React App)
+
+React Router for navigation
+
+Firebase Auth (Email/Password, Google, Phone OTP)
+
+jsPDF + html2canvas (certificate and document PDF export)
+
+Inline CSS with Lesotho flag colors
+
+Backend
+Node.js + Express (single-file server: Server.js)
+
+MySQL for all data (users, applications, services, documents, audit logs)
+
+Firebase Admin SDK for verifying ID tokens
+
+Multer for file uploads (documents + photos)
+
+pdf-lib for PDF manipulation (police document stamping)
+
+Auth
+Firebase Authentication handles login/registration
+
+MySQL stores profile data linked by firebase_uid
+
+Database
+Single database: lesotho_gov
+
+60+ tables covering users, applications, documents, services, form fields, and module-specific data
+
+Architecture Overview
+text
++---------------------------------------------------------------+
+|  FRONTEND (React @ localhost:3000)                            |
+|  +---------------------------+  +---------------------------+  |
+|  | Citizen Dashboards        |  | Admin Dashboards          |  |
+|  | - Apply for services      |  | - Review applications     |  |
+|  | - Track applications      |  | - Update statuses         |  |
+|  | - Upload photo            |  | - View applicant photos   |  |
+|  | - Download PDFs           |  | - Process documents       |  |
+|  +---------------------------+  +---------------------------+  |
++---------------------------------------------------------------+
+                             |
+              Firebase ID token in Authorization header
+                             |
+                             v
++---------------------------------------------------------------+
+|  BACKEND (Express @ localhost:3001)                           |
+|  - /api/register, /api/login, /api/me                         |
+|  - /api/services, /api/services/:id                           |
+|  - /api/applications (POST, GET, GET my)                      |
+|  - /api/me/photo (upload)                                     |
+|  - /api/certificates/:id (fetch for PDF)                      |
+|  - /api/passport/*                                            |
+|  - /api/traffic/*                                             |
+|  - /api/police/*                                              |
+|  - /api/finance/*                                             |
+|  - /api/pensions/*                                            |
+|  - /api/admin/* (admin only)                                  |
+|  - /uploads/* (static files)                                  |
++---------------------------------------------------------------+
+                             |
+                             v
++---------------------------------------------------------------+
+|  MYSQL (lesotho_gov)                                          |
+|  - users, citizen_national_ids                                |
+|  - applications, application_field_values, documents          |
+|  - service_catalog, service_form_fields                       |
+|  - civil_records, immigration_applications, livestock_*       |
+|  - passport_* tables                                          |
+|  - traffic_* tables                                           |
+|  - police_* tables                                            |
+|  - finance_* tables                                           |
+|  - pension_* tables                                           |
+|  - notifications, audit_logs, application_status_history      |
++---------------------------------------------------------------+
+Prerequisites
+Install these on your machine before pulling the repo:
+
+Tool	Version	Download
+Node.js	18+	https://nodejs.org/
+npm	Comes with Node	—
+MySQL	8.0+	https://dev.mysql.com/downloads/
+MySQL Workbench	Latest	https://dev.mysql.com/downloads/workbench/
+Git	Latest	https://git-scm.com/
+VS Code	Latest	https://code.visualstudio.com/
+First-Time Setup
+Follow these steps exactly in order the first time you clone the repo.
+
+Step 1: Clone the repository
+bash
 git clone https://github.com/Boni-01/home-affairs.git
 cd home-affairs
-```
-
-### Step 2: Install frontend dependencies
-
-```bash
+Step 2: Install frontend dependencies
+bash
 cd frontend
 npm install
 npm install jspdf html2canvas
-```
-
-### Step 3: Install backend dependencies
-
-```bash
+Step 3: Install backend dependencies
+bash
 cd ../backend
-npm install express cors dotenv mysql2 firebase-admin multer
-```
+npm install express cors dotenv mysql2 firebase-admin multer pdf-lib
+Step 4: Get the secret files from the team lead
+Two files are NOT in Git (security reasons). Ask the team lead to send them privately (WhatsApp DM, Discord DM, or Google Drive — never in the group chat):
 
-### Step 4: Get the secret files from the team lead
+.env — Backend environment variables
 
-Two files are **NOT in Git** (security reasons). Ask the team lead to send them privately (WhatsApp DM, Discord DM, or Google Drive — never in the group chat):
+FirebaseAccountKey.json — Firebase Admin SDK key
 
-1. **`.env`** — Backend environment variables
-2. **`FirebaseAccountKey.json`** — Firebase Admin SDK key
+Place both files inside the backend/ folder:
 
-Place both files inside the **`backend/`** folder:
-
-```
+text
 backend/
 ├── Server.js
 ├── package.json
-├── .env                        ← add this
-├── FirebaseAccountKey.json     ← add this
+├── .env                        <- add this
+├── FirebaseAccountKey.json     <- add this
 └── node_modules/
-```
+Step 5: Set up MySQL database
+See the Database Setup section below — it contains the full SQL you need to run.
 
-### Step 5: Set up MySQL database
+Step 6: Run both servers
+See the How to Run the Project section below.
 
-See the [Database Setup](#database-setup) section below — it contains the **full SQL** you need to run.
+How to Run the Project
+You need three things running at the same time:
 
-### Step 6: Run both servers
-
-See the [How to Run the Project](#how-to-run-the-project) section below.
-
----
-
-## How to Run the Project
-
-You need **three things running at the same time**:
-
-| # | What | Where | Port |
-|---|---|---|---|
-| 1 | MySQL server | Background service | 3306 |
-| 2 | Backend API | Terminal 1 | 3001 |
-| 3 | Frontend | Terminal 2 | 3000 |
-
-### Terminal 1 — Backend
-
-```bash
+#	What	Where	Port
+1	MySQL server	Background service	3306
+2	Backend API	Terminal 1	3001
+3	Frontend	Terminal 2	3000
+Terminal 1 — Backend
+bash
 cd backend
 npm start
-```
-
 Expected output:
 
-```
-◇ injected env (7) from .env
+text
+injected env (7) from .env
 Firebase Admin initialized
-MySQL connected → lesotho_gov
+MySQL connected -> lesotho_gov
 ====================================================
 Lesotho Government Services API
 ====================================================
 Server running on http://localhost:3001
 Admin email: kramohlabi7@gmail.com
 ====================================================
-```
-
-### Terminal 2 — Frontend
-
-```bash
+Terminal 2 — Frontend
+bash
 cd frontend
 npm start
-```
-
 Expected output:
 
-```
+text
 Compiled successfully!
 Local: http://localhost:3000
-```
-
-### Verify everything works
-
+Verify everything works
 Open in your browser:
-- **Frontend:** http://localhost:3000
-- **Backend health check:** http://localhost:3001/api/health
+
+Frontend: http://localhost:3000
+
+Backend health check: http://localhost:3001/api/health
 
 The health check should return:
 
-```json
+json
 { "status": "ok", "db": "connected", "firebase": "connected" }
-```
+Database Setup
+Step 1: Start MySQL
+If using XAMPP: Open XAMPP Control Panel and click Start next to MySQL.
 
----
+If using MySQL service (Windows):
 
-## Database Setup
-
-### Step 1: Start MySQL
-
-**If using XAMPP:** Open XAMPP Control Panel → Click **Start** next to MySQL.
-
-**If using MySQL service (Windows):**
-
-```bash
+bash
 net start MySQL80
-```
+If using MySQL service (Mac):
 
-**If using MySQL service (Mac):**
-
-```bash
+bash
 brew services start mysql
-```
+Step 2: Run the Complete SQL Schema
+Open MySQL Workbench or Command Prompt and run the following SQL.
 
-### Step 2: Run the Complete SQL Schema
+Option A — Save as file and run from CLI:
 
-Open **MySQL Workbench** or **Command Prompt** and run the following SQL.
+Save the SQL below as backend/database/lesotho_gov_complete.sql, then:
 
-**Option A — Save as file and run from CLI:**
-
-Save the SQL below as `backend/database/lesotho_gov_complete.sql`, then:
-
-```bash
+bash
 mysql -u root -p < backend/database/lesotho_gov_complete.sql
-```
+Option B — Copy/paste directly into MySQL Workbench:
 
-**Option B — Copy/paste directly into MySQL Workbench:**
+Open Workbench, connect to your local MySQL, paste the SQL below, then click the lightning bolt.
 
-Open Workbench → connect to your local MySQL → paste the SQL below → click the lightning bolt ⚡.
-
-### 📄 Complete SQL Schema
-
-```sql
+Complete SQL Schema
+sql
 -- ============================================================
 -- LESOTHO INTEGRATED GOVERNMENT SERVICES
 -- COMPLETE DATABASE — Single file, single database
@@ -303,7 +397,7 @@ CREATE DATABASE lesotho_gov
 USE lesotho_gov;
 
 -- ============================================================
--- SECTION 1: USERS & AUTHENTICATION
+-- SECTION 1: USERS AND AUTHENTICATION
 -- ============================================================
 
 -- 1.1 Users (main login table)
@@ -1114,74 +1208,1643 @@ CREATE TABLE livestock_transfers (
 );
 
 -- ============================================================
--- DONE — 25 tables created
+-- SECTION 10: PASSPORT OFFICE MODULE
 -- ============================================================
-```
 
-### Step 3: Verify
+-- 10.1 Passport services catalogue
+CREATE TABLE passport_services (
+    service_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    service_code VARCHAR(40) NOT NULL UNIQUE,
+    service_name VARCHAR(150) NOT NULL,
+    description TEXT,
+    application_type ENUM('first_time','renewal','replacement') NOT NULL,
+    processing_tier ENUM('standard','urgent','express','emergency','official','diplomatic') NOT NULL DEFAULT 'standard',
+    fee_amount DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+    currency CHAR(3) NOT NULL DEFAULT 'LSL',
+    processing_days INT NOT NULL DEFAULT 21,
+    requires_appointment TINYINT(1) NOT NULL DEFAULT 1,
+    requires_biometrics TINYINT(1) NOT NULL DEFAULT 1,
+    requires_payment TINYINT(1) NOT NULL DEFAULT 1,
+    requires_approval TINYINT(1) NOT NULL DEFAULT 0,
+    eligibility_note VARCHAR(500),
+    active TINYINT(1) NOT NULL DEFAULT 1,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 
-```sql
+-- 10.2 Passport form fields
+CREATE TABLE passport_service_fields (
+    field_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    service_id BIGINT UNSIGNED NOT NULL,
+    field_key VARCHAR(60) NOT NULL,
+    label VARCHAR(200) NOT NULL,
+    field_type ENUM('text','number','date','select','textarea','email','tel') NOT NULL,
+    options_json JSON,
+    required TINYINT(1) NOT NULL DEFAULT 1,
+    help_text VARCHAR(255),
+    placeholder VARCHAR(150),
+    sort_order INT NOT NULL DEFAULT 0,
+    FOREIGN KEY (service_id) REFERENCES passport_services(service_id) ON DELETE CASCADE,
+    UNIQUE KEY uniq_pp_field (service_id, field_key)
+);
+
+-- 10.3 Passport applications
+CREATE TABLE passport_applications (
+    application_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    reference_number VARCHAR(40) NOT NULL UNIQUE,
+    user_id BIGINT UNSIGNED NOT NULL,
+    service_id BIGINT UNSIGNED NOT NULL,
+    application_type ENUM('first_time','renewal','replacement') NOT NULL,
+    passport_type ENUM('ordinary','official','diplomatic','other') NOT NULL DEFAULT 'ordinary',
+    status ENUM(
+        'submitted','under_review','more_information_required',
+        'awaiting_payment','awaiting_appointment','awaiting_biometrics',
+        'approved','in_production','ready_for_collection',
+        'collected','rejected','cancelled'
+    ) NOT NULL DEFAULT 'submitted',
+    admin_notes TEXT,
+    rejection_reason TEXT,
+    passport_photo_path VARCHAR(500),
+    submitted_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    decision_at DATETIME,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (service_id) REFERENCES passport_services(service_id),
+    INDEX idx_pp_user (user_id),
+    INDEX idx_pp_status (status)
+);
+
+-- 10.4 Passport application values
+CREATE TABLE passport_application_values (
+    value_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    application_id BIGINT UNSIGNED NOT NULL,
+    field_key VARCHAR(60) NOT NULL,
+    field_value TEXT,
+    FOREIGN KEY (application_id) REFERENCES passport_applications(application_id) ON DELETE CASCADE,
+    INDEX idx_pp_val_app (application_id)
+);
+
+-- 10.5 Passport documents
+CREATE TABLE passport_documents (
+    document_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    application_id BIGINT UNSIGNED NOT NULL,
+    document_type VARCHAR(60) NOT NULL,
+    original_filename VARCHAR(255) NOT NULL,
+    storage_path VARCHAR(500) NOT NULL,
+    mime_type VARCHAR(100),
+    size_bytes INT,
+    verification_status ENUM('pending','verified','rejected') DEFAULT 'pending',
+    verification_notes TEXT,
+    uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (application_id) REFERENCES passport_applications(application_id) ON DELETE CASCADE,
+    INDEX idx_pp_doc_app (application_id)
+);
+
+-- 10.6 Passport appointments
+CREATE TABLE passport_appointments (
+    appointment_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    application_id BIGINT UNSIGNED NOT NULL,
+    appointment_date DATETIME NOT NULL,
+    appointment_type ENUM('document_verification','biometrics','collection','other') NOT NULL DEFAULT 'biometrics',
+    appointment_status ENUM('booked','confirmed','attended','missed','cancelled','rescheduled') NOT NULL DEFAULT 'booked',
+    office_location VARCHAR(200),
+    admin_notes TEXT,
+    attendance_recorded_at DATETIME,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (application_id) REFERENCES passport_applications(application_id) ON DELETE CASCADE,
+    INDEX idx_pp_appt_date (appointment_date),
+    INDEX idx_pp_appt_status (appointment_status)
+);
+
+-- 10.7 Passport biometrics
+CREATE TABLE passport_biometrics (
+    biometric_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    application_id BIGINT UNSIGNED NOT NULL,
+    fingerprints_captured TINYINT(1) NOT NULL DEFAULT 0,
+    photograph_captured TINYINT(1) NOT NULL DEFAULT 0,
+    signature_captured TINYINT(1) NOT NULL DEFAULT 0,
+    enrolment_status ENUM('pending','scheduled','completed','incomplete','failed') NOT NULL DEFAULT 'pending',
+    enrolment_reference VARCHAR(150),
+    enrolment_date DATETIME,
+    notes TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (application_id) REFERENCES passport_applications(application_id) ON DELETE CASCADE
+);
+
+-- 10.8 Passport payments
+CREATE TABLE passport_payments (
+    payment_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    application_id BIGINT UNSIGNED NOT NULL,
+    fee_type VARCHAR(100) NOT NULL,
+    amount DECIMAL(12,2) NOT NULL,
+    currency CHAR(3) NOT NULL DEFAULT 'LSL',
+    payment_method ENUM('cash','bank_transfer','card','mobile_money','other'),
+    transaction_reference VARCHAR(150) UNIQUE,
+    payment_status ENUM('pending','paid','failed','refunded') NOT NULL DEFAULT 'pending',
+    payment_date DATETIME,
+    verified_at DATETIME,
+    payment_notes TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (application_id) REFERENCES passport_applications(application_id) ON DELETE CASCADE
+);
+
+-- 10.9 Issued passports
+CREATE TABLE passports (
+    passport_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    application_id BIGINT UNSIGNED NOT NULL UNIQUE,
+    passport_number VARCHAR(100) UNIQUE,
+    passport_type ENUM('ordinary','official','diplomatic','other') NOT NULL DEFAULT 'ordinary',
+    issue_date DATE,
+    expiry_date DATE,
+    production_status ENUM('not_started','in_production','produced','ready_for_collection','collected','cancelled') NOT NULL DEFAULT 'not_started',
+    collection_date DATETIME,
+    collection_confirmation VARCHAR(150),
+    collection_notes TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (application_id) REFERENCES passport_applications(application_id) ON DELETE CASCADE
+);
+
+-- 10.10 Passport status history
+CREATE TABLE passport_status_history (
+    history_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    application_id BIGINT UNSIGNED NOT NULL,
+    old_status VARCHAR(50),
+    new_status VARCHAR(50) NOT NULL,
+    changed_by_uid VARCHAR(128),
+    changed_by_role ENUM('citizen','officer','admin','system') DEFAULT 'system',
+    change_reason TEXT,
+    changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (application_id) REFERENCES passport_applications(application_id) ON DELETE CASCADE
+);
+
+-- 10.11 Passport notifications
+CREATE TABLE passport_notifications (
+    notification_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT UNSIGNED NOT NULL,
+    application_id BIGINT UNSIGNED,
+    title VARCHAR(200) NOT NULL,
+    message TEXT NOT NULL,
+    channel ENUM('in_app','email','sms') NOT NULL DEFAULT 'in_app',
+    read_at DATETIME,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (application_id) REFERENCES passport_applications(application_id) ON DELETE SET NULL
+);
+
+-- 10.12 Passport complaints
+CREATE TABLE passport_complaints (
+    complaint_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT UNSIGNED NOT NULL,
+    application_id BIGINT UNSIGNED,
+    subject VARCHAR(200) NOT NULL,
+    description TEXT NOT NULL,
+    complaint_status ENUM('submitted','under_review','awaiting_response','resolved','closed') NOT NULL DEFAULT 'submitted',
+    admin_response TEXT,
+    submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    resolved_at DATETIME,
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (application_id) REFERENCES passport_applications(application_id) ON DELETE SET NULL
+);
+
+-- Seed passport services
+INSERT INTO passport_services
+  (service_code, service_name, description, application_type, processing_tier,
+   fee_amount, processing_days, requires_appointment, requires_biometrics,
+   requires_payment, requires_approval, eligibility_note)
+VALUES
+('PP_FIRST_STD','First-time passport — Standard','Standard processing (30 working days). Best value.','first_time','standard',130.00,30,1,1,1,0,'Available to all first-time applicants'),
+('PP_FIRST_URG','First-time passport — Urgent','Urgent processing (10 working days).','first_time','urgent',300.00,10,1,1,1,0,'Extra fee for faster processing'),
+('PP_FIRST_EXP','First-time passport — Express','Express processing (5 working days). Fastest tier.','first_time','express',500.00,5,1,1,1,0,'Highest priority fee tier'),
+('PP_REN_STD','Passport renewal — Standard','Standard renewal (30 working days).','renewal','standard',130.00,30,1,1,1,0,'Requires previous passport'),
+('PP_REN_URG','Passport renewal — Urgent','Urgent renewal (10 working days).','renewal','urgent',300.00,10,1,1,1,0,'Extra fee for faster processing'),
+('PP_REN_EXP','Passport renewal — Express','Express renewal (5 working days).','renewal','express',500.00,5,1,1,1,0,'Highest priority fee tier'),
+('PP_REP_STD','Passport replacement — Standard','Replace lost/stolen/damaged passport (30 working days).','replacement','standard',130.00,30,1,1,1,0,'Police report required for lost/stolen'),
+('PP_REP_URG','Passport replacement — Urgent','Urgent replacement (10 working days).','replacement','urgent',300.00,10,1,1,1,0,'Police report required'),
+('PP_REP_EXP','Passport replacement — Express','Express replacement (5 working days).','replacement','express',500.00,5,1,1,1,0,'Police report required'),
+('PP_EMERGENCY','Emergency passport','Emergency travel within 48 hours (death, medical, urgent work).','replacement','emergency',500.00,2,1,0,1,1,'Requires proof of emergency — subject to approval'),
+('PP_OFFICIAL','Official passport','For government officials on official business.','first_time','official',250.00,21,1,1,1,1,'Requires government authorization letter'),
+('PP_DIPLOMATIC','Diplomatic passport','For diplomats and their dependents.','first_time','diplomatic',500.00,21,1,1,1,1,'Requires Ministry of Foreign Affairs authorization');
+
+-- ============================================================
+-- SECTION 11: POLICE SERVICES MODULE
+-- ============================================================
+
+-- 11.1 Police service categories
+CREATE TABLE police_service_categories (
+    category_id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    category_code VARCHAR(40) NOT NULL UNIQUE,
+    category_name VARCHAR(120) NOT NULL,
+    description TEXT,
+    is_active TINYINT(1) NOT NULL DEFAULT 1,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+INSERT INTO police_service_categories (category_code, category_name, description) VALUES
+('CRIME','Crime Report','Reporting a crime or suspected criminal activity'),
+('THEFT','Theft Report','Reporting stolen property, livestock or possessions'),
+('LOST_ITEM','Lost Item Report','Reporting lost identity documents, phones or other property'),
+('MISSING_PERSON','Missing Person','Reporting a missing person'),
+('FRAUD_CYBER','Fraud and Cybercrime','Reporting suspected fraud, scams or online crime'),
+('TRAFFIC','Traffic Incident','Reporting a road traffic incident'),
+('CLEARANCE','Police Clearance','Applying for a police clearance certificate'),
+('POLICE_REPORT','Police Report Request','Requesting an eligible copy of a police report'),
+('COMPLAINT','Complaint Against Police','Reporting alleged misconduct or dissatisfaction with police service'),
+('WITNESS','Witness Information','Providing details of an incident or potential witnesses'),
+('EVIDENCE','Additional Evidence','Uploading documents, photos or additional information'),
+('FEEDBACK','Feedback','Providing feedback about the service received')
+ON DUPLICATE KEY UPDATE category_name = VALUES(category_name);
+
+-- 11.2 Police applications
+CREATE TABLE police_applications (
+    application_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    reference_number VARCHAR(40) NOT NULL UNIQUE,
+    user_id BIGINT UNSIGNED NOT NULL,
+    category_id INT UNSIGNED NOT NULL,
+    application_type ENUM(
+        'crime_report','theft_report','lost_item_report','missing_person_report',
+        'fraud_report','cybercrime_report','traffic_incident','police_clearance',
+        'police_report_request','police_conduct_complaint','witness_information',
+        'additional_evidence','feedback'
+    ) NOT NULL,
+    title VARCHAR(200) NOT NULL,
+    description TEXT NOT NULL,
+    incident_date DATETIME NULL,
+    incident_location VARCHAR(255),
+    district VARCHAR(100),
+    village_or_area VARCHAR(150),
+    urgency ENUM('low','normal','high','urgent') NOT NULL DEFAULT 'normal',
+    status ENUM(
+        'submitted','received','under_review','more_information_required',
+        'awaiting_payment','referred','in_progress','approved','rejected',
+        'ready_for_collection','completed','cancelled'
+    ) NOT NULL DEFAULT 'submitted',
+    related_report_id BIGINT UNSIGNED NULL,
+    admin_notes TEXT,
+    decision_notes TEXT,
+    rejection_reason TEXT,
+    submitted_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    decision_at DATETIME,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (category_id) REFERENCES police_service_categories(category_id),
+    FOREIGN KEY (related_report_id) REFERENCES police_applications(application_id) ON DELETE SET NULL,
+    INDEX idx_police_app_user (user_id),
+    INDEX idx_police_app_status (status),
+    INDEX idx_police_app_type (application_type),
+    INDEX idx_police_app_date (submitted_at)
+);
+
+-- 11.3 Police application values
+CREATE TABLE police_application_values (
+    value_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    application_id BIGINT UNSIGNED NOT NULL,
+    field_key VARCHAR(80) NOT NULL,
+    field_value TEXT,
+    FOREIGN KEY (application_id) REFERENCES police_applications(application_id) ON DELETE CASCADE,
+    INDEX idx_police_val_app (application_id)
+);
+
+-- 11.4 Police evidence
+CREATE TABLE police_evidence (
+    evidence_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    application_id BIGINT UNSIGNED NOT NULL,
+    uploaded_by BIGINT UNSIGNED NOT NULL,
+    original_filename VARCHAR(255) NOT NULL,
+    storage_path VARCHAR(500) NOT NULL,
+    mime_type VARCHAR(100),
+    file_size_bytes BIGINT UNSIGNED,
+    evidence_description TEXT,
+    verification_status ENUM('pending','verified','rejected') NOT NULL DEFAULT 'pending',
+    uploaded_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (application_id) REFERENCES police_applications(application_id) ON DELETE CASCADE,
+    FOREIGN KEY (uploaded_by) REFERENCES users(user_id) ON DELETE CASCADE,
+    INDEX idx_police_evidence_app (application_id)
+);
+
+-- 11.5 Police persons involved
+CREATE TABLE police_persons (
+    person_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    application_id BIGINT UNSIGNED NOT NULL,
+    person_role ENUM('reporter','victim','witness','suspect','missing_person','other') NOT NULL,
+    full_name VARCHAR(150),
+    contact_phone VARCHAR(30),
+    approximate_age SMALLINT UNSIGNED,
+    identifying_details TEXT,
+    notes TEXT,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (application_id) REFERENCES police_applications(application_id) ON DELETE CASCADE,
+    INDEX idx_police_person_app (application_id)
+);
+
+-- 11.6 Police status history
+CREATE TABLE police_status_history (
+    history_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    application_id BIGINT UNSIGNED NOT NULL,
+    old_status VARCHAR(60),
+    new_status VARCHAR(60) NOT NULL,
+    changed_by_uid VARCHAR(128),
+    changed_by_role ENUM('citizen','officer','admin','system') NOT NULL DEFAULT 'system',
+    change_reason TEXT,
+    changed_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (application_id) REFERENCES police_applications(application_id) ON DELETE CASCADE
+);
+
+-- 11.7 Police appointments
+CREATE TABLE police_appointments (
+    appointment_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    application_id BIGINT UNSIGNED NOT NULL,
+    appointment_date DATETIME NOT NULL,
+    appointment_type ENUM('statement','biometrics','collection','interview','other') NOT NULL DEFAULT 'statement',
+    appointment_status ENUM('booked','confirmed','attended','missed','cancelled','rescheduled') NOT NULL DEFAULT 'booked',
+    office_location VARCHAR(200),
+    admin_notes TEXT,
+    attendance_recorded_at DATETIME,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (application_id) REFERENCES police_applications(application_id) ON DELETE CASCADE,
+    INDEX idx_police_appt_date (appointment_date),
+    INDEX idx_police_appt_status (appointment_status)
+);
+
+-- 11.8 Police payments
+CREATE TABLE police_payments (
+    payment_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    application_id BIGINT UNSIGNED NOT NULL,
+    fee_type VARCHAR(100) NOT NULL,
+    amount DECIMAL(12,2) NOT NULL,
+    currency CHAR(3) NOT NULL DEFAULT 'LSL',
+    payment_method ENUM('cash','bank_transfer','card','mobile_money','other') NOT NULL DEFAULT 'cash',
+    transaction_reference VARCHAR(150) UNIQUE,
+    payment_status ENUM('pending','paid','failed','refunded','cancelled') NOT NULL DEFAULT 'pending',
+    payment_date DATETIME,
+    verified_at DATETIME,
+    payment_notes TEXT,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (application_id) REFERENCES police_applications(application_id) ON DELETE CASCADE,
+    CONSTRAINT chk_police_payment_amount CHECK (amount >= 0),
+    INDEX idx_police_payment_app (application_id)
+);
+
+-- 11.9 Police notifications
+CREATE TABLE police_notifications (
+    notification_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT UNSIGNED NOT NULL,
+    application_id BIGINT UNSIGNED NULL,
+    title VARCHAR(200) NOT NULL,
+    message TEXT NOT NULL,
+    channel ENUM('in_app','email','sms') NOT NULL DEFAULT 'in_app',
+    read_at DATETIME,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (application_id) REFERENCES police_applications(application_id) ON DELETE SET NULL,
+    INDEX idx_police_notif_user (user_id)
+);
+
+-- 11.10 Police feedback
+CREATE TABLE police_feedback (
+    feedback_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT UNSIGNED NOT NULL,
+    application_id BIGINT UNSIGNED NULL,
+    rating TINYINT NOT NULL,
+    comments TEXT,
+    submitted_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT chk_feedback_rating CHECK (rating BETWEEN 1 AND 5),
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (application_id) REFERENCES police_applications(application_id) ON DELETE SET NULL
+);
+
+-- 11.11 Police letters
+CREATE TABLE police_letters (
+    letter_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    reference_number VARCHAR(40) NOT NULL UNIQUE,
+    user_id BIGINT UNSIGNED NOT NULL,
+    application_id BIGINT UNSIGNED NULL,
+    letter_type ENUM(
+        'report_acknowledgement','affidavit','loss_report',
+        'confirmation_of_report','clearance_collection_notice',
+        'witness_statement','general_letter'
+    ) NOT NULL,
+    title VARCHAR(200) NOT NULL,
+    body TEXT NOT NULL,
+    status ENUM('draft','issued','revoked') NOT NULL DEFAULT 'issued',
+    issued_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    revoked_at DATETIME,
+    revoke_reason TEXT,
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (application_id) REFERENCES police_applications(application_id) ON DELETE SET NULL,
+    INDEX idx_police_letter_user (user_id),
+    INDEX idx_police_letter_type (letter_type)
+);
+
+-- 11.12 Police certified documents
+CREATE TABLE police_certified_documents (
+    certified_doc_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    reference_number VARCHAR(40) NOT NULL UNIQUE,
+    user_id BIGINT UNSIGNED NOT NULL,
+    document_title VARCHAR(200) NOT NULL,
+    purpose VARCHAR(255),
+    notes TEXT,
+    original_filename VARCHAR(255) NOT NULL,
+    original_storage_path VARCHAR(500) NOT NULL,
+    original_mime_type VARCHAR(100),
+    original_size_bytes BIGINT UNSIGNED,
+    certified_filename VARCHAR(255),
+    certified_storage_path VARCHAR(500),
+    certified_mime_type VARCHAR(100),
+    certified_size_bytes BIGINT UNSIGNED,
+    status ENUM(
+        'submitted','under_review','more_information_required',
+        'awaiting_payment','certified','rejected','cancelled'
+    ) NOT NULL DEFAULT 'submitted',
+    admin_notes TEXT,
+    rejection_reason TEXT,
+    certifying_officer VARCHAR(150),
+    certified_at DATETIME,
+    submitted_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    INDEX idx_police_certdoc_user (user_id),
+    INDEX idx_police_certdoc_status (status)
+);
+
+-- 11.13 Police certified document payments
+CREATE TABLE police_certified_document_payments (
+    payment_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    certified_doc_id BIGINT UNSIGNED NOT NULL,
+    fee_type VARCHAR(100) NOT NULL DEFAULT 'Certification fee',
+    amount DECIMAL(12,2) NOT NULL,
+    currency CHAR(3) NOT NULL DEFAULT 'LSL',
+    payment_method ENUM('cash','bank_transfer','card','mobile_money','other') NOT NULL DEFAULT 'cash',
+    transaction_reference VARCHAR(150) UNIQUE,
+    payment_status ENUM('pending','paid','failed','refunded','cancelled') NOT NULL DEFAULT 'pending',
+    payment_date DATETIME,
+    verified_at DATETIME,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (certified_doc_id) REFERENCES police_certified_documents(certified_doc_id) ON DELETE CASCADE,
+    CONSTRAINT chk_certdoc_payment_amount CHECK (amount >= 0)
+);
+
+-- 11.14 Police certified document notifications
+CREATE TABLE police_certified_document_notifications (
+    notification_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT UNSIGNED NOT NULL,
+    certified_doc_id BIGINT UNSIGNED NULL,
+    title VARCHAR(200) NOT NULL,
+    message TEXT NOT NULL,
+    channel ENUM('in_app','email','sms') NOT NULL DEFAULT 'in_app',
+    read_at DATETIME,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (certified_doc_id) REFERENCES police_certified_documents(certified_doc_id) ON DELETE SET NULL,
+    INDEX idx_police_certdoc_notif_user (user_id)
+);
+
+-- ============================================================
+-- SECTION 12: FINANCE MODULE
+-- ============================================================
+
+-- 12.1 Finance services
+CREATE TABLE finance_services (
+    service_id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    service_code VARCHAR(40) NOT NULL UNIQUE,
+    service_name VARCHAR(150) NOT NULL,
+    description TEXT,
+    eligibility_rules TEXT,
+    required_documents TEXT,
+    fee_amount DECIMAL(12,2) NULL,
+    fee_currency CHAR(3) NOT NULL DEFAULT 'LSL',
+    procedure_text TEXT,
+    contact_information VARCHAR(255),
+    is_active TINYINT(1) NOT NULL DEFAULT 1,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+INSERT INTO finance_services
+  (service_code, service_name, description, eligibility_rules, required_documents, procedure_text)
+VALUES
+  ('TAX-REQUEST','Tax-related request','Submit a supported tax request, tax-clearance request or declaration.','As specified by the authorised tax service.','Identification and supporting tax documents as required.','Submit and track using the reference number.'),
+  ('TAX-CLEARANCE','Tax clearance request','Submit a request for tax clearance.','Subject to Revenue Services Lesotho requirements.','Identification, tax details and supporting documents as required.','Submit for authorised review. The portal does not itself issue tax clearance.'),
+  ('TAX-DECLARATION','Tax declaration','Submit a tax declaration for a specified tax period.','As specified by the authorised tax service.','Tax identification and declaration details.','Submit and route to RSL for decision.'),
+  ('SUPPLIER-REG','Supplier/vendor registration','Register a business as a supplier for government workflows.','Supplier eligibility and registration must be verified.','Company registration, tax clearance and bank verification evidence as required.','Submit for validation against authorised records.'),
+  ('INVOICE-CLAIM','Invoice / payment claim','Submit an invoice or payment claim through the approved workflow.','Must relate to a valid authorised contract or order.','Invoice, contract, purchase order, delivery note and other required evidence.','Validation checks completeness and routes the claim to the responsible authority.'),
+  ('TAX-REFUND','Tax refund request','Submit and track a tax refund request.','Eligibility and refund amount determined by the authorised tax authority.','Tax identification, tax period, returns and supporting evidence.','Validate and route to RSL/authorised workflow for decision and payment.'),
+  ('GOV-PAYMENT','Government payment','Pay eligible government charges through supported channels.','Only services and payment channels approved for online payment.','Reference number and required payer details.','Payment status is confirmed by the payment provider.'),
+  ('FINANCE-ENQUIRY','Finance enquiry or complaint','Submit an enquiry or complaint about a Finance service.','Available to registered portal users.','Supporting evidence where applicable.','Track the ticket and receive a response through the portal.')
+ON DUPLICATE KEY UPDATE service_name = VALUES(service_name);
+
+-- 12.2 Finance service requests
+CREATE TABLE finance_service_requests (
+    request_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    reference_no VARCHAR(30) NOT NULL UNIQUE,
+    user_id BIGINT UNSIGNED NOT NULL,
+    service_id INT UNSIGNED NOT NULL,
+    request_type ENUM(
+        'TAX_REQUEST','TAX_CLEARANCE','TAX_DECLARATION',
+        'SUPPLIER_REGISTRATION','INVOICE_CLAIM','TAX_REFUND','GENERAL_ENQUIRY'
+    ) NOT NULL,
+    subject VARCHAR(200) NOT NULL,
+    description TEXT,
+    amount DECIMAL(14,2) NULL,
+    currency CHAR(3) NOT NULL DEFAULT 'LSL',
+    status ENUM(
+        'DRAFT','SUBMITTED','VALIDATING','UNDER_REVIEW','ACTION_REQUIRED',
+        'APPROVED','REJECTED','PROCESSING','COMPLETED','CANCELLED'
+    ) NOT NULL DEFAULT 'DRAFT',
+    assigned_admin_id BIGINT UNSIGNED NULL,
+    admin_notes TEXT,
+    decision_notes TEXT,
+    submitted_at DATETIME NULL,
+    completed_at DATETIME NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (service_id) REFERENCES finance_services(service_id),
+    FOREIGN KEY (assigned_admin_id) REFERENCES users(user_id) ON DELETE SET NULL,
+    INDEX idx_fin_req_user_status (user_id, status),
+    INDEX idx_fin_req_type_status (request_type, status),
+    INDEX idx_fin_req_submitted (submitted_at)
+);
+
+-- 12.3 Finance request values
+CREATE TABLE finance_request_values (
+    value_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    request_id BIGINT UNSIGNED NOT NULL,
+    field_key VARCHAR(80) NOT NULL,
+    field_value TEXT,
+    FOREIGN KEY (request_id) REFERENCES finance_service_requests(request_id) ON DELETE CASCADE,
+    INDEX idx_fin_val_req (request_id)
+);
+
+-- 12.4 Finance request documents
+CREATE TABLE finance_request_documents (
+    document_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    request_id BIGINT UNSIGNED NOT NULL,
+    document_type VARCHAR(100) NOT NULL,
+    original_filename VARCHAR(255) NOT NULL,
+    storage_path VARCHAR(500) NOT NULL,
+    mime_type VARCHAR(100),
+    file_size_bytes BIGINT UNSIGNED,
+    uploaded_by BIGINT UNSIGNED NOT NULL,
+    validation_status ENUM('PENDING','PASSED','FAILED','REQUIRES_REVIEW') NOT NULL DEFAULT 'PENDING',
+    validation_notes VARCHAR(500),
+    uploaded_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (request_id) REFERENCES finance_service_requests(request_id) ON DELETE CASCADE,
+    FOREIGN KEY (uploaded_by) REFERENCES users(user_id) ON DELETE CASCADE,
+    INDEX idx_fin_doc_req (request_id, validation_status)
+);
+
+-- 12.5 Finance suppliers
+CREATE TABLE finance_suppliers (
+    supplier_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT UNSIGNED NOT NULL,
+    supplier_code VARCHAR(50) UNIQUE,
+    legal_business_name VARCHAR(200) NOT NULL,
+    trading_name VARCHAR(200),
+    company_registration_no VARCHAR(100),
+    tax_identification_no VARCHAR(100),
+    contact_person VARCHAR(150),
+    business_email VARCHAR(190),
+    business_phone VARCHAR(30),
+    address TEXT,
+    bank_name VARCHAR(150),
+    bank_account_name VARCHAR(200),
+    bank_account_last4 CHAR(4),
+    bank_verification_status ENUM('PENDING','MATCHED','MISMATCH','FAILED','MANUAL_REVIEW') NOT NULL DEFAULT 'PENDING',
+    ifmis_registered TINYINT(1) NOT NULL DEFAULT 0,
+    ifmis_reference VARCHAR(150),
+    validation_status ENUM('NOT_CHECKED','PENDING','VERIFIED','FAILED','ACTION_REQUIRED') NOT NULL DEFAULT 'NOT_CHECKED',
+    registration_status ENUM('DRAFT','SUBMITTED','UNDER_REVIEW','ACTION_REQUIRED','ACCEPTED','REJECTED') NOT NULL DEFAULT 'DRAFT',
+    reviewed_by BIGINT UNSIGNED NULL,
+    reviewed_at DATETIME NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (reviewed_by) REFERENCES users(user_id) ON DELETE SET NULL,
+    INDEX idx_fin_supplier_status (registration_status, validation_status)
+);
+
+-- 12.6 Finance invoice claims
+CREATE TABLE finance_invoice_claims (
+    claim_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    request_id BIGINT UNSIGNED NOT NULL UNIQUE,
+    supplier_id BIGINT UNSIGNED NOT NULL,
+    invoice_number VARCHAR(100) NOT NULL,
+    purchase_order_no VARCHAR(100),
+    contract_reference VARCHAR(100),
+    delivery_note_reference VARCHAR(100),
+    issuing_ministry VARCHAR(150),
+    invoice_date DATE NOT NULL,
+    due_date DATE,
+    amount DECIMAL(14,2) NOT NULL,
+    currency CHAR(3) NOT NULL DEFAULT 'LSL',
+    validation_status ENUM('PENDING','PASSED','FAILED','MISMATCH','MANUAL_REVIEW') NOT NULL DEFAULT 'PENDING',
+    validation_notes TEXT,
+    workflow_status ENUM(
+        'SUBMITTED','VALIDATION_FAILED','UNDER_REVIEW','ACTION_REQUIRED',
+        'FORWARDED_FOR_APPROVAL','APPROVED_BY_AUTHORITY','REJECTED','PAID'
+    ) NOT NULL DEFAULT 'SUBMITTED',
+    external_ifmis_reference VARCHAR(150),
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (request_id) REFERENCES finance_service_requests(request_id) ON DELETE CASCADE,
+    FOREIGN KEY (supplier_id) REFERENCES finance_suppliers(supplier_id)
+);
+
+-- 12.7 Finance tax refunds
+CREATE TABLE finance_tax_refunds (
+    refund_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    request_id BIGINT UNSIGNED NOT NULL UNIQUE,
+    tax_id VARCHAR(100) NOT NULL,
+    tax_period VARCHAR(30) NOT NULL,
+    amount_claimed DECIMAL(14,2) NOT NULL,
+    currency CHAR(3) NOT NULL DEFAULT 'LSL',
+    external_rsl_reference VARCHAR(150),
+    validation_status ENUM('PENDING','PASSED','FAILED','MANUAL_REVIEW') NOT NULL DEFAULT 'PENDING',
+    calculation_source ENUM('EXTERNAL_RSL','MANUAL_AUTHORISED_REVIEW','NOT_CALCULATED') NOT NULL DEFAULT 'NOT_CALCULATED',
+    amount_approved DECIMAL(14,2) NULL,
+    approval_reference VARCHAR(150),
+    workflow_status ENUM(
+        'SUBMITTED','VALIDATING','UNDER_REVIEW','ACTION_REQUIRED',
+        'FORWARDED_TO_RSL','APPROVED_BY_AUTHORITY','REJECTED',
+        'PAYMENT_PROCESSING','PAID'
+    ) NOT NULL DEFAULT 'SUBMITTED',
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (request_id) REFERENCES finance_service_requests(request_id) ON DELETE CASCADE
+);
+
+-- 12.8 Finance tax requests
+CREATE TABLE finance_tax_requests (
+    tax_request_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    request_id BIGINT UNSIGNED NOT NULL UNIQUE,
+    taxpayer_type ENUM('INDIVIDUAL','BUSINESS','OTHER') NOT NULL,
+    tax_id VARCHAR(100),
+    tax_request_type ENUM('GENERAL_TAX','TAX_CLEARANCE','TAX_DECLARATION','OTHER') NOT NULL,
+    tax_period VARCHAR(30),
+    external_rsl_reference VARCHAR(150),
+    validation_status ENUM('PENDING','PASSED','FAILED','MANUAL_REVIEW') NOT NULL DEFAULT 'PENDING',
+    FOREIGN KEY (request_id) REFERENCES finance_service_requests(request_id) ON DELETE CASCADE
+);
+
+-- 12.9 Finance payments
+CREATE TABLE finance_payments (
+    payment_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT UNSIGNED NOT NULL,
+    request_id BIGINT UNSIGNED NULL,
+    transaction_reference VARCHAR(100) NOT NULL UNIQUE,
+    provider_reference VARCHAR(150),
+    payment_purpose ENUM('SERVICE_FEE','GOVERNMENT_PAYMENT','SUPPLIER_DISBURSEMENT','TAX_REFUND') NOT NULL,
+    amount DECIMAL(14,2) NOT NULL,
+    currency CHAR(3) NOT NULL DEFAULT 'LSL',
+    payment_method VARCHAR(60),
+    status ENUM('INITIATED','PENDING','SUCCESS','FAILED','REVERSED','RECONCILIATION_REQUIRED') NOT NULL DEFAULT 'INITIATED',
+    receipt_number VARCHAR(100) UNIQUE,
+    paid_at DATETIME NULL,
+    confirmed_by_provider_at DATETIME NULL,
+    reconciliation_status ENUM('NOT_REQUIRED','PENDING','MATCHED','MISMATCH','MANUAL_REVIEW') NOT NULL DEFAULT 'PENDING',
+    external_system VARCHAR(100),
+    external_reference VARCHAR(150),
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (request_id) REFERENCES finance_service_requests(request_id) ON DELETE SET NULL,
+    INDEX idx_fin_pay_user_status (user_id, status),
+    INDEX idx_fin_pay_reconcile (reconciliation_status)
+);
+
+-- 12.10 Finance tickets (enquiries/complaints)
+CREATE TABLE finance_tickets (
+    ticket_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    ticket_reference VARCHAR(30) NOT NULL UNIQUE,
+    user_id BIGINT UNSIGNED NOT NULL,
+    request_id BIGINT UNSIGNED NULL,
+    category ENUM('DELAYED_PAYMENT','TAX_REFUND','INCORRECT_CHARGE','FAILED_TRANSACTION','SERVICE_ENQUIRY','OTHER') NOT NULL,
+    subject VARCHAR(200) NOT NULL,
+    message TEXT NOT NULL,
+    status ENUM('OPEN','UNDER_REVIEW','WAITING_FOR_USER','RESOLVED','CLOSED') NOT NULL DEFAULT 'OPEN',
+    response_text TEXT,
+    handled_by BIGINT UNSIGNED NULL,
+    opened_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    resolved_at DATETIME NULL,
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (request_id) REFERENCES finance_service_requests(request_id) ON DELETE SET NULL,
+    FOREIGN KEY (handled_by) REFERENCES users(user_id) ON DELETE SET NULL
+);
+
+-- 12.11 Finance status history
+CREATE TABLE finance_status_history (
+    history_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    request_id BIGINT UNSIGNED NOT NULL,
+    old_status VARCHAR(50),
+    new_status VARCHAR(50) NOT NULL,
+    changed_by BIGINT UNSIGNED NULL,
+    note TEXT,
+    changed_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (request_id) REFERENCES finance_service_requests(request_id) ON DELETE CASCADE,
+    FOREIGN KEY (changed_by) REFERENCES users(user_id) ON DELETE SET NULL
+);
+
+-- 12.12 Finance notifications
+CREATE TABLE finance_notifications (
+    notification_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT UNSIGNED NOT NULL,
+    request_id BIGINT UNSIGNED NULL,
+    channel ENUM('IN_APP','EMAIL','SMS') NOT NULL DEFAULT 'IN_APP',
+    title VARCHAR(200) NOT NULL,
+    message TEXT NOT NULL,
+    delivery_status ENUM('QUEUED','SENT','FAILED','READ') NOT NULL DEFAULT 'QUEUED',
+    sent_at DATETIME NULL,
+    read_at DATETIME NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (request_id) REFERENCES finance_service_requests(request_id) ON DELETE SET NULL
+);
+
+-- ============================================================
+-- SECTION 13: PENSIONS MODULE
+-- ============================================================
+
+-- 13.1 Pension programmes
+CREATE TABLE pension_programmes (
+    programme_id SMALLINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    programme_code VARCHAR(30) NOT NULL UNIQUE,
+    programme_name VARCHAR(150) NOT NULL,
+    description TEXT,
+    eligibility_notes TEXT,
+    is_active TINYINT(1) NOT NULL DEFAULT 1,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+INSERT INTO pension_programmes (programme_code, programme_name, description, eligibility_notes)
+VALUES
+('PODCPF','Public Officers Defined Contribution Pension Fund','Defined-contribution pension programme for eligible permanent and pensionable public officers.','Eligibility and benefit calculations must follow applicable Fund rules and authorised records.'),
+('OAP','Old Age Pension','Old Age Pension programme for eligible older citizens.','Eligibility and payment amounts must be confirmed against current official rules.')
+ON DUPLICATE KEY UPDATE programme_name = VALUES(programme_name);
+
+-- 13.2 Pension members
+CREATE TABLE pension_members (
+    member_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT UNSIGNED NOT NULL UNIQUE,
+    programme_id SMALLINT UNSIGNED NOT NULL,
+    member_number VARCHAR(60) UNIQUE,
+    national_id_encrypted VARBINARY(512),
+    date_of_birth DATE,
+    employment_number VARCHAR(80),
+    employer_name VARCHAR(180),
+    employment_start_date DATE,
+    employment_end_date DATE,
+    membership_status ENUM('PENDING_VERIFICATION','ACTIVE','RETIRED','RESIGNED','TERMINATED','DECEASED','SUSPENDED') NOT NULL DEFAULT 'PENDING_VERIFICATION',
+    identity_verification_status ENUM('NOT_CHECKED','PENDING','VERIFIED','FAILED') NOT NULL DEFAULT 'NOT_CHECKED',
+    verified_by BIGINT UNSIGNED,
+    verified_at DATETIME,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (programme_id) REFERENCES pension_programmes(programme_id),
+    FOREIGN KEY (verified_by) REFERENCES users(user_id) ON DELETE SET NULL,
+    INDEX idx_member_status (membership_status, programme_id)
+);
+
+-- 13.3 Pension beneficiaries
+CREATE TABLE pension_beneficiaries (
+    beneficiary_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT UNSIGNED NOT NULL,
+    member_id BIGINT UNSIGNED,
+    relationship_to_member VARCHAR(80),
+    full_name VARCHAR(150) NOT NULL,
+    date_of_birth DATE,
+    identity_reference_encrypted VARBINARY(512),
+    verification_status ENUM('PENDING','VERIFIED','REJECTED') NOT NULL DEFAULT 'PENDING',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (member_id) REFERENCES pension_members(member_id) ON DELETE SET NULL,
+    INDEX idx_beneficiary_member (member_id)
+);
+
+-- 13.4 Pension contributions
+CREATE TABLE pension_contributions (
+    contribution_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    member_id BIGINT UNSIGNED NOT NULL,
+    contribution_period DATE NOT NULL COMMENT 'First day of the relevant month',
+    member_contribution DECIMAL(14,2) NOT NULL DEFAULT 0,
+    employer_contribution DECIMAL(14,2) NOT NULL DEFAULT 0,
+    currency CHAR(3) NOT NULL DEFAULT 'LSL',
+    source_system VARCHAR(80),
+    external_reference VARCHAR(120),
+    reconciliation_status ENUM('PENDING','MATCHED','DISCREPANCY','CONFIRMED') NOT NULL DEFAULT 'PENDING',
+    imported_at DATETIME,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (member_id) REFERENCES pension_members(member_id) ON DELETE CASCADE,
+    UNIQUE KEY uq_member_period_ref (member_id, contribution_period, external_reference),
+    INDEX idx_contribution_period (contribution_period, reconciliation_status)
+);
+
+-- 13.5 Pension applications
+CREATE TABLE pension_applications (
+    application_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    reference_number VARCHAR(40) NOT NULL UNIQUE,
+    applicant_user_id BIGINT UNSIGNED NOT NULL,
+    member_id BIGINT UNSIGNED,
+    programme_id SMALLINT UNSIGNED NOT NULL,
+    application_type ENUM(
+        'REGISTRATION','RETIREMENT_BENEFIT','RESIGNATION_BENEFIT','TERMINATION_BENEFIT',
+        'RETRENCHMENT_BENEFIT','DISABILITY_BENEFIT','DEATH_BENEFIT','OLD_AGE_PENSION',
+        'RECORD_CORRECTION','OTHER'
+    ) NOT NULL,
+    submitted_details JSON,
+    status ENUM(
+        'DRAFT','SUBMITTED','UNDER_REVIEW','MORE_INFORMATION_REQUIRED',
+        'VERIFICATION_PENDING','APPROVED','REJECTED',
+        'PAYMENT_PENDING','PAID','CLOSED','CANCELLED'
+    ) NOT NULL DEFAULT 'DRAFT',
+    submitted_at DATETIME,
+    assigned_admin_id BIGINT UNSIGNED,
+    decision_summary TEXT,
+    decision_reference VARCHAR(120),
+    decided_at DATETIME,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (applicant_user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (member_id) REFERENCES pension_members(member_id) ON DELETE SET NULL,
+    FOREIGN KEY (programme_id) REFERENCES pension_programmes(programme_id),
+    FOREIGN KEY (assigned_admin_id) REFERENCES users(user_id) ON DELETE SET NULL,
+    INDEX idx_pension_app_user_status (applicant_user_id, status),
+    INDEX idx_pension_app_queue (status, application_type, submitted_at)
+);
+
+-- 13.6 Pension application documents
+CREATE TABLE pension_application_documents (
+    document_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    application_id BIGINT UNSIGNED NOT NULL,
+    document_type VARCHAR(100) NOT NULL,
+    original_filename VARCHAR(255) NOT NULL,
+    storage_key VARCHAR(500) NOT NULL,
+    mime_type VARCHAR(120),
+    file_size_bytes BIGINT UNSIGNED,
+    uploaded_by BIGINT UNSIGNED NOT NULL,
+    review_status ENUM('PENDING','ACCEPTED','REJECTED','REPLACEMENT_REQUIRED') NOT NULL DEFAULT 'PENDING',
+    review_notes TEXT,
+    reviewed_by BIGINT UNSIGNED,
+    reviewed_at DATETIME,
+    uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (application_id) REFERENCES pension_applications(application_id) ON DELETE CASCADE,
+    FOREIGN KEY (uploaded_by) REFERENCES users(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (reviewed_by) REFERENCES users(user_id) ON DELETE SET NULL,
+    INDEX idx_pension_doc_review (application_id, review_status)
+);
+
+-- 13.7 Pension benefit assessments
+CREATE TABLE pension_benefit_assessments (
+    assessment_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    application_id BIGINT UNSIGNED NOT NULL,
+    calculation_version VARCHAR(50),
+    gross_amount DECIMAL(14,2),
+    currency CHAR(3) NOT NULL DEFAULT 'LSL',
+    calculation_notes TEXT,
+    calculated_from_source VARCHAR(100),
+    assessed_by BIGINT UNSIGNED,
+    assessed_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    approval_status ENUM('NOT_REVIEWED','PENDING_AUTHORITY','AUTHORISED','DECLINED') NOT NULL DEFAULT 'NOT_REVIEWED',
+    authorised_by BIGINT UNSIGNED,
+    authorised_at DATETIME,
+    external_decision_reference VARCHAR(120),
+    FOREIGN KEY (application_id) REFERENCES pension_applications(application_id) ON DELETE CASCADE,
+    FOREIGN KEY (assessed_by) REFERENCES users(user_id) ON DELETE SET NULL,
+    FOREIGN KEY (authorised_by) REFERENCES users(user_id) ON DELETE SET NULL,
+    INDEX idx_pension_assessment_status (approval_status, assessed_at)
+);
+
+-- 13.8 Pension government debts
+CREATE TABLE pension_government_debts (
+    debt_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    member_id BIGINT UNSIGNED NOT NULL,
+    debt_type ENUM(
+        'SALARY_ADVANCE','SALARY_OVERPAYMENT','NMDS_LOAN_OR_BURSARY',
+        'PUBLIC_SERVICE_BOND','SURCHARGE','INCOME_TAX',
+        'MOTOR_VEHICLE_ADVANCE','OTHER'
+    ) NOT NULL,
+    description TEXT,
+    reference_number VARCHAR(120),
+    amount_recorded DECIMAL(14,2) NOT NULL,
+    currency CHAR(3) NOT NULL DEFAULT 'LSL',
+    source_department VARCHAR(180),
+    source_system VARCHAR(80),
+    verification_status ENUM('PENDING','VERIFIED','DISPUTED','NOT_CONFIRMED','RESOLVED') NOT NULL DEFAULT 'PENDING',
+    recorded_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    verified_by BIGINT UNSIGNED,
+    verified_at DATETIME,
+    FOREIGN KEY (member_id) REFERENCES pension_members(member_id) ON DELETE CASCADE,
+    FOREIGN KEY (verified_by) REFERENCES users(user_id) ON DELETE SET NULL,
+    INDEX idx_pension_debt_member_status (member_id, verification_status)
+);
+
+-- 13.9 Pension deductions
+CREATE TABLE pension_deductions (
+    deduction_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    member_id BIGINT UNSIGNED NOT NULL,
+    debt_id BIGINT UNSIGNED,
+    benefit_assessment_id BIGINT UNSIGNED,
+    deduction_date DATE,
+    amount DECIMAL(14,2) NOT NULL,
+    currency CHAR(3) NOT NULL DEFAULT 'LSL',
+    reason TEXT NOT NULL,
+    authority_reference VARCHAR(120),
+    status ENUM('RECORDED','UNDER_REVIEW','CONFIRMED','DISPUTED','REVERSED') NOT NULL DEFAULT 'RECORDED',
+    source_system VARCHAR(80),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (member_id) REFERENCES pension_members(member_id) ON DELETE CASCADE,
+    FOREIGN KEY (debt_id) REFERENCES pension_government_debts(debt_id) ON DELETE SET NULL,
+    FOREIGN KEY (benefit_assessment_id) REFERENCES pension_benefit_assessments(assessment_id) ON DELETE SET NULL,
+    INDEX idx_pension_deduction_member_date (member_id, deduction_date, status)
+);
+
+-- 13.10 Pension payments
+CREATE TABLE pension_payments (
+    payment_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    application_id BIGINT UNSIGNED,
+    member_id BIGINT UNSIGNED,
+    beneficiary_id BIGINT UNSIGNED,
+    programme_id SMALLINT UNSIGNED NOT NULL,
+    payment_reference VARCHAR(120) NOT NULL UNIQUE,
+    payment_period DATE,
+    amount DECIMAL(14,2) NOT NULL,
+    currency CHAR(3) NOT NULL DEFAULT 'LSL',
+    payment_method ENUM('BANK','MOBILE_MONEY','POST_OFFICE','AUTHORISED_PAY_POINT','OTHER'),
+    status ENUM('SCHEDULED','PENDING','PROCESSING','PAID','FAILED','CANCELLED','RECONCILIATION_REQUIRED') NOT NULL DEFAULT 'PENDING',
+    provider_reference VARCHAR(150),
+    paid_at DATETIME,
+    failure_reason TEXT,
+    source_system VARCHAR(80),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (application_id) REFERENCES pension_applications(application_id) ON DELETE SET NULL,
+    FOREIGN KEY (member_id) REFERENCES pension_members(member_id) ON DELETE SET NULL,
+    FOREIGN KEY (beneficiary_id) REFERENCES pension_beneficiaries(beneficiary_id) ON DELETE SET NULL,
+    FOREIGN KEY (programme_id) REFERENCES pension_programmes(programme_id),
+    INDEX idx_pension_payment_member_period (member_id, payment_period, status),
+    INDEX idx_pension_payment_beneficiary_period (beneficiary_id, payment_period, status)
+);
+
+-- 13.11 Pension enquiries
+CREATE TABLE pension_enquiries (
+    enquiry_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT UNSIGNED NOT NULL,
+    reference_number VARCHAR(40) NOT NULL UNIQUE,
+    related_application_id BIGINT UNSIGNED,
+    related_payment_id BIGINT UNSIGNED,
+    enquiry_type ENUM(
+        'DELAYED_PAYMENT','MISSING_PAYMENT','INCORRECT_DEDUCTION',
+        'CONTRIBUTION_DISCREPANCY','BENEFIT_QUERY','ELIGIBILITY_QUERY',
+        'PROFILE_CORRECTION','COMPLAINT','OTHER'
+    ) NOT NULL,
+    subject VARCHAR(200) NOT NULL,
+    description TEXT NOT NULL,
+    status ENUM('OPEN','UNDER_REVIEW','MORE_INFORMATION_REQUIRED','RESPONDED','RESOLVED','CLOSED') NOT NULL DEFAULT 'OPEN',
+    assigned_admin_id BIGINT UNSIGNED,
+    response TEXT,
+    resolved_at DATETIME,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (related_application_id) REFERENCES pension_applications(application_id) ON DELETE SET NULL,
+    FOREIGN KEY (related_payment_id) REFERENCES pension_payments(payment_id) ON DELETE SET NULL,
+    FOREIGN KEY (assigned_admin_id) REFERENCES users(user_id) ON DELETE SET NULL,
+    INDEX idx_pension_enquiry_queue (status, created_at)
+);
+
+-- 13.12 Pension status history
+CREATE TABLE pension_status_history (
+    history_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    application_id BIGINT UNSIGNED NOT NULL,
+    old_status VARCHAR(50),
+    new_status VARCHAR(50) NOT NULL,
+    changed_by BIGINT UNSIGNED,
+    change_reason TEXT,
+    changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (application_id) REFERENCES pension_applications(application_id) ON DELETE CASCADE,
+    FOREIGN KEY (changed_by) REFERENCES users(user_id) ON DELETE SET NULL,
+    INDEX idx_pension_status_history_app (application_id, changed_at)
+);
+
+-- 13.13 Pension notifications
+CREATE TABLE pension_notifications (
+    notification_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT UNSIGNED NOT NULL,
+    application_id BIGINT UNSIGNED,
+    payment_id BIGINT UNSIGNED,
+    channel ENUM('IN_APP','EMAIL','SMS') NOT NULL DEFAULT 'IN_APP',
+    subject VARCHAR(200) NOT NULL,
+    message TEXT NOT NULL,
+    delivery_status ENUM('QUEUED','SENT','FAILED','READ') NOT NULL DEFAULT 'QUEUED',
+    sent_at DATETIME,
+    read_at DATETIME,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (application_id) REFERENCES pension_applications(application_id) ON DELETE SET NULL,
+    FOREIGN KEY (payment_id) REFERENCES pension_payments(payment_id) ON DELETE SET NULL,
+    INDEX idx_pension_notification_user (user_id, delivery_status, created_at)
+);
+
+-- ============================================================
+-- SECTION 14: TRAFFIC MODULE
+-- ============================================================
+
+-- 14.1 Traffic service categories
+CREATE TABLE traffic_service_categories (
+    category_id SMALLINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    category_code VARCHAR(40) NOT NULL UNIQUE,
+    category_name VARCHAR(150) NOT NULL,
+    description TEXT,
+    icon VARCHAR(50) DEFAULT NULL,
+    sort_order INT NOT NULL DEFAULT 0,
+    is_active TINYINT(1) NOT NULL DEFAULT 1,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+INSERT INTO traffic_service_categories (category_code, category_name, description, icon, sort_order) VALUES
+('DRIVERS_LICENCE','Driver''s Licence Services','Learner, driver licence, renewals, replacements, corrections','car',1),
+('VEHICLE_REGISTRATION','Motor Vehicle Registration','New, imported, second-hand, transfers, plates','truck',2),
+('ROADWORTHINESS','Roadworthiness and Vehicle Fitness','RW/F inspections, certificates, defect tracking','wrench',3),
+('PUBLIC_PERMITS','Public Motor Vehicle Permits','Public transport permits and renewals','bus',4),
+('DRIVING_SCHOOLS','Driving Schools and Instructors','Registration, authorisation, complaints','school',5),
+('FINES_CLEARANCE','Fines and Clearance','Traffic fine payments, clearance certificates','money',6)
+ON DUPLICATE KEY UPDATE category_name = VALUES(category_name);
+
+-- 14.2 Traffic service definitions
+CREATE TABLE traffic_service_definitions (
+    service_def_id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    service_code VARCHAR(60) NOT NULL UNIQUE,
+    category_id SMALLINT UNSIGNED NOT NULL,
+    service_name VARCHAR(200) NOT NULL,
+    description TEXT,
+    fee_amount DECIMAL(12,2) DEFAULT 0.00,
+    processing_days INT DEFAULT 7,
+    requires_documents TINYINT(1) DEFAULT 1,
+    requires_payment TINYINT(1) DEFAULT 1,
+    requires_appointment TINYINT(1) DEFAULT 0,
+    requires_approval TINYINT(1) DEFAULT 1,
+    is_active TINYINT(1) DEFAULT 1,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (category_id) REFERENCES traffic_service_categories(category_id),
+    INDEX idx_traffic_service_category (category_id, is_active)
+);
+
+-- Insert traffic service definitions
+INSERT INTO traffic_service_definitions 
+  (service_code, category_id, service_name, description, fee_amount, processing_days, requires_documents, requires_payment, requires_appointment, requires_approval)
+SELECT 'LEARNER_LICENCE', category_id, 'Learner''s Licence Application', 'Apply for a learner''s driving licence', 50.00, 7, 1, 1, 1, 1
+FROM traffic_service_categories WHERE category_code = 'DRIVERS_LICENCE'
+ON DUPLICATE KEY UPDATE service_name = VALUES(service_name);
+
+INSERT INTO traffic_service_definitions 
+  (service_code, category_id, service_name, description, fee_amount, processing_days, requires_documents, requires_payment, requires_appointment, requires_approval)
+SELECT 'DRIVER_LICENCE', category_id, 'Driver''s Licence Application', 'Apply for a full driver''s licence', 100.00, 14, 1, 1, 1, 1
+FROM traffic_service_categories WHERE category_code = 'DRIVERS_LICENCE'
+ON DUPLICATE KEY UPDATE service_name = VALUES(service_name);
+
+INSERT INTO traffic_service_definitions 
+  (service_code, category_id, service_name, description, fee_amount, processing_days, requires_documents, requires_payment, requires_appointment, requires_approval)
+SELECT 'LICENCE_RENEWAL', category_id, 'Driver''s Licence Renewal', 'Renew an existing driver''s licence', 80.00, 7, 1, 1, 0, 1
+FROM traffic_service_categories WHERE category_code = 'DRIVERS_LICENCE'
+ON DUPLICATE KEY UPDATE service_name = VALUES(service_name);
+
+INSERT INTO traffic_service_definitions 
+  (service_code, category_id, service_name, description, fee_amount, processing_days, requires_documents, requires_payment, requires_appointment, requires_approval)
+SELECT 'LICENCE_REPLACEMENT', category_id, 'Licence Replacement', 'Replace a lost or damaged licence', 100.00, 14, 1, 1, 0, 1
+FROM traffic_service_categories WHERE category_code = 'DRIVERS_LICENCE'
+ON DUPLICATE KEY UPDATE service_name = VALUES(service_name);
+
+INSERT INTO traffic_service_definitions 
+  (service_code, category_id, service_name, description, fee_amount, processing_days, requires_documents, requires_payment, requires_appointment, requires_approval)
+SELECT 'LICENCE_CORRECTION', category_id, 'Licence Correction', 'Correct details on your licence', 50.00, 14, 1, 1, 0, 1
+FROM traffic_service_categories WHERE category_code = 'DRIVERS_LICENCE'
+ON DUPLICATE KEY UPDATE service_name = VALUES(service_name);
+
+INSERT INTO traffic_service_definitions 
+  (service_code, category_id, service_name, description, fee_amount, processing_days, requires_documents, requires_payment, requires_appointment, requires_approval)
+SELECT 'VEHICLE_REGISTRATION', category_id, 'Vehicle Registration', 'Register a new motor vehicle', 150.00, 7, 1, 1, 0, 1
+FROM traffic_service_categories WHERE category_code = 'VEHICLE_REGISTRATION'
+ON DUPLICATE KEY UPDATE service_name = VALUES(service_name);
+
+INSERT INTO traffic_service_definitions 
+  (service_code, category_id, service_name, description, fee_amount, processing_days, requires_documents, requires_payment, requires_appointment, requires_approval)
+SELECT 'IMPORTED_VEHICLE_REGISTRATION', category_id, 'Imported Vehicle Registration', 'Register an imported vehicle', 250.00, 14, 1, 1, 0, 1
+FROM traffic_service_categories WHERE category_code = 'VEHICLE_REGISTRATION'
+ON DUPLICATE KEY UPDATE service_name = VALUES(service_name);
+
+INSERT INTO traffic_service_definitions 
+  (service_code, category_id, service_name, description, fee_amount, processing_days, requires_documents, requires_payment, requires_appointment, requires_approval)
+SELECT 'SECOND_HAND_LOCAL', category_id, 'Second-Hand Vehicle (Local)', 'Register a second-hand vehicle purchased locally', 150.00, 7, 1, 1, 0, 1
+FROM traffic_service_categories WHERE category_code = 'VEHICLE_REGISTRATION'
+ON DUPLICATE KEY UPDATE service_name = VALUES(service_name);
+
+INSERT INTO traffic_service_definitions 
+  (service_code, category_id, service_name, description, fee_amount, processing_days, requires_documents, requires_payment, requires_appointment, requires_approval)
+SELECT 'SECOND_HAND_FOREIGN', category_id, 'Second-Hand Vehicle (Foreign)', 'Register a second-hand vehicle purchased abroad', 250.00, 14, 1, 1, 0, 1
+FROM traffic_service_categories WHERE category_code = 'VEHICLE_REGISTRATION'
+ON DUPLICATE KEY UPDATE service_name = VALUES(service_name);
+
+INSERT INTO traffic_service_definitions 
+  (service_code, category_id, service_name, description, fee_amount, processing_days, requires_documents, requires_payment, requires_appointment, requires_approval)
+SELECT 'SPECIAL_VEHICLE_PERMIT', category_id, 'Special Vehicle Permit', 'Permit for a new vehicle awaiting registration', 100.00, 3, 1, 1, 0, 1
+FROM traffic_service_categories WHERE category_code = 'VEHICLE_REGISTRATION'
+ON DUPLICATE KEY UPDATE service_name = VALUES(service_name);
+
+INSERT INTO traffic_service_definitions 
+  (service_code, category_id, service_name, description, fee_amount, processing_days, requires_documents, requires_payment, requires_appointment, requires_approval)
+SELECT 'NUMBER_PLATE', category_id, 'Number Plate Application', 'Apply for vehicle number plates', 100.00, 7, 1, 1, 0, 1
+FROM traffic_service_categories WHERE category_code = 'VEHICLE_REGISTRATION'
+ON DUPLICATE KEY UPDATE service_name = VALUES(service_name);
+
+INSERT INTO traffic_service_definitions 
+  (service_code, category_id, service_name, description, fee_amount, processing_days, requires_documents, requires_payment, requires_appointment, requires_approval)
+SELECT 'NUMBER_PLATE_REPLACEMENT', category_id, 'Number Plate Replacement', 'Replace lost or damaged number plates', 150.00, 7, 1, 1, 0, 1
+FROM traffic_service_categories WHERE category_code = 'VEHICLE_REGISTRATION'
+ON DUPLICATE KEY UPDATE service_name = VALUES(service_name);
+
+INSERT INTO traffic_service_definitions 
+  (service_code, category_id, service_name, description, fee_amount, processing_days, requires_documents, requires_payment, requires_appointment, requires_approval)
+SELECT 'OWNERSHIP_TRANSFER', category_id, 'Vehicle Ownership Transfer', 'Transfer vehicle ownership', 100.00, 7, 1, 1, 0, 1
+FROM traffic_service_categories WHERE category_code = 'VEHICLE_REGISTRATION'
+ON DUPLICATE KEY UPDATE service_name = VALUES(service_name);
+
+INSERT INTO traffic_service_definitions 
+  (service_code, category_id, service_name, description, fee_amount, processing_days, requires_documents, requires_payment, requires_appointment, requires_approval)
+SELECT 'ROADWORTHINESS_INSPECTION', category_id, 'Roadworthiness Inspection', 'Request a roadworthiness inspection', 80.00, 3, 1, 1, 1, 1
+FROM traffic_service_categories WHERE category_code = 'ROADWORTHINESS'
+ON DUPLICATE KEY UPDATE service_name = VALUES(service_name);
+
+INSERT INTO traffic_service_definitions 
+  (service_code, category_id, service_name, description, fee_amount, processing_days, requires_documents, requires_payment, requires_appointment, requires_approval)
+SELECT 'FITNESS_INSPECTION', category_id, 'Fitness Inspection', 'Request a vehicle fitness inspection', 80.00, 3, 1, 1, 1, 1
+FROM traffic_service_categories WHERE category_code = 'ROADWORTHINESS'
+ON DUPLICATE KEY UPDATE service_name = VALUES(service_name);
+
+INSERT INTO traffic_service_definitions 
+  (service_code, category_id, service_name, description, fee_amount, processing_days, requires_documents, requires_payment, requires_appointment, requires_approval)
+SELECT 'RE_INSPECTION', category_id, 'Re-Inspection', 'Request a re-inspection after repairs', 40.00, 3, 1, 1, 1, 1
+FROM traffic_service_categories WHERE category_code = 'ROADWORTHINESS'
+ON DUPLICATE KEY UPDATE service_name = VALUES(service_name);
+
+INSERT INTO traffic_service_definitions 
+  (service_code, category_id, service_name, description, fee_amount, processing_days, requires_documents, requires_payment, requires_appointment, requires_approval)
+SELECT 'PUBLIC_MOTOR_VEHICLE_PERMIT', category_id, 'Public Motor Vehicle Permit', 'Apply for a public transport permit', 300.00, 21, 1, 1, 1, 1
+FROM traffic_service_categories WHERE category_code = 'PUBLIC_PERMITS'
+ON DUPLICATE KEY UPDATE service_name = VALUES(service_name);
+
+INSERT INTO traffic_service_definitions 
+  (service_code, category_id, service_name, description, fee_amount, processing_days, requires_documents, requires_payment, requires_appointment, requires_approval)
+SELECT 'PERMIT_RENEWAL', category_id, 'Permit Renewal', 'Renew an existing permit', 250.00, 14, 1, 1, 0, 1
+FROM traffic_service_categories WHERE category_code = 'PUBLIC_PERMITS'
+ON DUPLICATE KEY UPDATE service_name = VALUES(service_name);
+
+INSERT INTO traffic_service_definitions 
+  (service_code, category_id, service_name, description, fee_amount, processing_days, requires_documents, requires_payment, requires_appointment, requires_approval)
+SELECT 'DRIVING_SCHOOL_REGISTRATION', category_id, 'Driving School Registration', 'Register a driving school', 500.00, 30, 1, 1, 0, 1
+FROM traffic_service_categories WHERE category_code = 'DRIVING_SCHOOLS'
+ON DUPLICATE KEY UPDATE service_name = VALUES(service_name);
+
+INSERT INTO traffic_service_definitions 
+  (service_code, category_id, service_name, description, fee_amount, processing_days, requires_documents, requires_payment, requires_appointment, requires_approval)
+SELECT 'INSTRUCTOR_REGISTRATION', category_id, 'Instructor Registration', 'Register as a driving instructor', 200.00, 21, 1, 1, 0, 1
+FROM traffic_service_categories WHERE category_code = 'DRIVING_SCHOOLS'
+ON DUPLICATE KEY UPDATE service_name = VALUES(service_name);
+
+INSERT INTO traffic_service_definitions 
+  (service_code, category_id, service_name, description, fee_amount, processing_days, requires_documents, requires_payment, requires_appointment, requires_approval)
+SELECT 'RECORD_CORRECTION', category_id, 'Record Correction', 'Request correction of traffic records', 50.00, 14, 1, 0, 0, 1
+FROM traffic_service_categories WHERE category_code = 'FINES_CLEARANCE'
+ON DUPLICATE KEY UPDATE service_name = VALUES(service_name);
+
+-- 14.3 Traffic service fields (dynamic forms)
+CREATE TABLE traffic_service_fields (
+    field_id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    service_def_id INT UNSIGNED NOT NULL,
+    field_key VARCHAR(80) NOT NULL,
+    label VARCHAR(200) NOT NULL,
+    field_type ENUM('text','number','date','select','textarea','email','tel','file') NOT NULL,
+    options_json JSON,
+    required TINYINT(1) NOT NULL DEFAULT 0,
+    help_text VARCHAR(500),
+    placeholder VARCHAR(200),
+    sort_order INT NOT NULL DEFAULT 0,
+    FOREIGN KEY (service_def_id) REFERENCES traffic_service_definitions(service_def_id) ON DELETE CASCADE,
+    UNIQUE KEY uniq_traffic_service_field (service_def_id, field_key)
+);
+
+-- 14.4 Traffic applications
+CREATE TABLE traffic_applications (
+    application_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    reference_number VARCHAR(40) NOT NULL UNIQUE,
+    user_id BIGINT UNSIGNED NOT NULL,
+    category_id SMALLINT UNSIGNED NOT NULL,
+    service_def_id INT UNSIGNED,
+    application_type VARCHAR(60) NOT NULL,
+    title VARCHAR(200) NOT NULL,
+    description TEXT,
+    status ENUM(
+        'DRAFT','SUBMITTED','UNDER_REVIEW','DOCUMENTS_REQUIRED','APPOINTMENT_REQUIRED',
+        'PAYMENT_PENDING','APPROVED','REJECTED','PROCESSING','READY_FOR_COLLECTION',
+        'COMPLETED','CANCELLED'
+    ) NOT NULL DEFAULT 'DRAFT',
+    urgency ENUM('LOW','NORMAL','HIGH','URGENT') NOT NULL DEFAULT 'NORMAL',
+    submitted_at DATETIME,
+    assigned_admin_id BIGINT UNSIGNED,
+    admin_notes TEXT,
+    decision_notes TEXT,
+    rejection_reason TEXT,
+    decision_at DATETIME,
+    fee_amount DECIMAL(12,2),
+    payment_status ENUM('NOT_REQUIRED','PENDING','PAID','WAIVED','REFUNDED') DEFAULT 'NOT_REQUIRED',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (category_id) REFERENCES traffic_service_categories(category_id),
+    FOREIGN KEY (service_def_id) REFERENCES traffic_service_definitions(service_def_id),
+    FOREIGN KEY (assigned_admin_id) REFERENCES users(user_id) ON DELETE SET NULL,
+    INDEX idx_traffic_app_user (user_id, status),
+    INDEX idx_traffic_app_queue (status, application_type, submitted_at),
+    INDEX idx_traffic_app_ref (reference_number)
+);
+
+-- 14.5 Traffic application values
+CREATE TABLE traffic_application_values (
+    value_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    application_id BIGINT UNSIGNED NOT NULL,
+    field_key VARCHAR(100) NOT NULL,
+    field_value TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (application_id) REFERENCES traffic_applications(application_id) ON DELETE CASCADE,
+    INDEX idx_traffic_values_app (application_id, field_key)
+);
+
+-- 14.6 Traffic application documents
+CREATE TABLE traffic_application_documents (
+    document_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    application_id BIGINT UNSIGNED NOT NULL,
+    document_type VARCHAR(100) NOT NULL,
+    original_filename VARCHAR(255) NOT NULL,
+    storage_path VARCHAR(500) NOT NULL,
+    mime_type VARCHAR(120),
+    file_size_bytes BIGINT UNSIGNED,
+    verification_status ENUM('PENDING','VERIFIED','REJECTED','REPLACEMENT_REQUIRED') DEFAULT 'PENDING',
+    verified_by BIGINT UNSIGNED,
+    verified_at DATETIME,
+    rejection_reason VARCHAR(500),
+    uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (application_id) REFERENCES traffic_applications(application_id) ON DELETE CASCADE,
+    FOREIGN KEY (verified_by) REFERENCES users(user_id) ON DELETE SET NULL,
+    INDEX idx_traffic_docs_app (application_id, verification_status)
+);
+
+-- 14.7 Traffic status history
+CREATE TABLE traffic_status_history (
+    history_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    application_id BIGINT UNSIGNED NOT NULL,
+    old_status VARCHAR(50),
+    new_status VARCHAR(50) NOT NULL,
+    changed_by BIGINT UNSIGNED,
+    change_reason TEXT,
+    changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (application_id) REFERENCES traffic_applications(application_id) ON DELETE CASCADE,
+    FOREIGN KEY (changed_by) REFERENCES users(user_id) ON DELETE SET NULL,
+    INDEX idx_traffic_history_app (application_id, changed_at)
+);
+
+-- 14.8 Traffic notifications
+CREATE TABLE traffic_notifications (
+    notification_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT UNSIGNED NOT NULL,
+    application_id BIGINT UNSIGNED,
+    notification_type ENUM('APPLICATION_UPDATE','DOCUMENT_REQUEST','APPOINTMENT','PAYMENT','LICENCE_EXPIRY','INSPECTION_EXPIRY','COMPLAINT_UPDATE','GENERAL') NOT NULL,
+    title VARCHAR(200) NOT NULL,
+    message TEXT NOT NULL,
+    delivery_channel ENUM('IN_APP','EMAIL','SMS') DEFAULT 'IN_APP',
+    delivery_status ENUM('QUEUED','SENT','FAILED','READ') DEFAULT 'QUEUED',
+    sent_at DATETIME,
+    read_at DATETIME,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (application_id) REFERENCES traffic_applications(application_id) ON DELETE SET NULL,
+    INDEX idx_traffic_notif_user (user_id, delivery_status, created_at)
+);
+
+-- 14.9 Driver licences
+CREATE TABLE driver_licences (
+    licence_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT UNSIGNED NOT NULL,
+    application_id BIGINT UNSIGNED,
+    licence_number VARCHAR(60) NOT NULL UNIQUE,
+    licence_category VARCHAR(30) NOT NULL,
+    issue_date DATE,
+    expiry_date DATE,
+    licence_status ENUM('PENDING','VALID','EXPIRED','SUSPENDED','REVOKED','REPLACED') DEFAULT 'PENDING',
+    issuing_officer_id BIGINT UNSIGNED,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (application_id) REFERENCES traffic_applications(application_id) ON DELETE SET NULL,
+    FOREIGN KEY (issuing_officer_id) REFERENCES users(user_id) ON DELETE SET NULL,
+    INDEX idx_licence_user (user_id, licence_status),
+    INDEX idx_licence_expiry (expiry_date, licence_status)
+);
+
+-- 14.10 Traffic vehicles
+CREATE TABLE traffic_vehicles (
+    vehicle_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    owner_user_id BIGINT UNSIGNED NOT NULL,
+    vin_or_chassis_number VARCHAR(100) NOT NULL UNIQUE,
+    engine_number VARCHAR(100),
+    make VARCHAR(100) NOT NULL,
+    model VARCHAR(100),
+    manufacture_year YEAR,
+    vehicle_type VARCHAR(80) NOT NULL,
+    colour VARCHAR(50),
+    country_of_origin VARCHAR(100),
+    import_status ENUM('LOCAL','IMPORTED','UNKNOWN') DEFAULT 'UNKNOWN',
+    ownership_status ENUM('ACTIVE','TRANSFERRED','DISPUTED','DEREGISTERED') DEFAULT 'ACTIVE',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (owner_user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    INDEX idx_vehicle_owner (owner_user_id, ownership_status)
+);
+
+-- 14.11 Vehicle registrations
+CREATE TABLE vehicle_registrations (
+    registration_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    vehicle_id BIGINT UNSIGNED NOT NULL,
+    application_id BIGINT UNSIGNED,
+    registration_number VARCHAR(50) UNIQUE,
+    registration_type ENUM('NEW','IMPORTED','SECOND_HAND_LOCAL','SECOND_HAND_FOREIGN','TRANSFER') NOT NULL,
+    registration_status ENUM('PENDING','ACTIVE','SUSPENDED','CANCELLED','DEREGISTERED') DEFAULT 'PENDING',
+    registered_on DATE,
+    expiry_date DATE,
+    registration_certificate_key VARCHAR(500),
+    processed_by BIGINT UNSIGNED,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (vehicle_id) REFERENCES traffic_vehicles(vehicle_id) ON DELETE CASCADE,
+    FOREIGN KEY (application_id) REFERENCES traffic_applications(application_id) ON DELETE SET NULL,
+    FOREIGN KEY (processed_by) REFERENCES users(user_id) ON DELETE SET NULL,
+    INDEX idx_registration_vehicle (vehicle_id, registration_status),
+    INDEX idx_registration_expiry (expiry_date)
+);
+
+-- 14.12 Driving test bookings
+CREATE TABLE driving_test_bookings (
+    booking_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    application_id BIGINT UNSIGNED NOT NULL,
+    applicant_user_id BIGINT UNSIGNED NOT NULL,
+    test_type ENUM('THEORY','PRACTICAL','RETEST') NOT NULL,
+    office_name VARCHAR(150) NOT NULL,
+    scheduled_at DATETIME NOT NULL,
+    booking_status ENUM('REQUESTED','BOOKED','RESCHEDULED','CANCELLED','ATTENDED','NO_SHOW') DEFAULT 'REQUESTED',
+    booked_by BIGINT UNSIGNED,
+    notes VARCHAR(500),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (application_id) REFERENCES traffic_applications(application_id) ON DELETE CASCADE,
+    FOREIGN KEY (applicant_user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (booked_by) REFERENCES users(user_id) ON DELETE SET NULL,
+    INDEX idx_test_schedule (office_name, scheduled_at, booking_status)
+);
+
+-- 14.13 Driving test results
+CREATE TABLE driving_test_results (
+    result_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    booking_id BIGINT UNSIGNED NOT NULL UNIQUE,
+    examiner_user_id BIGINT UNSIGNED NOT NULL,
+    result ENUM('PASS','FAIL','ABSENT','PENDING') DEFAULT 'PENDING',
+    score DECIMAL(5,2),
+    result_notes TEXT,
+    recorded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (booking_id) REFERENCES driving_test_bookings(booking_id) ON DELETE CASCADE,
+    FOREIGN KEY (examiner_user_id) REFERENCES users(user_id) ON DELETE RESTRICT
+);
+
+-- 14.14 Vehicle inspections
+CREATE TABLE vehicle_inspections (
+    inspection_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    application_id BIGINT UNSIGNED,
+    vehicle_id BIGINT UNSIGNED,
+    inspection_type ENUM('ROADWORTHINESS','FITNESS','RE_INSPECTION','OTHER') NOT NULL,
+    inspection_location VARCHAR(150) NOT NULL,
+    scheduled_at DATETIME,
+    inspector_user_id BIGINT UNSIGNED,
+    inspection_status ENUM('REQUESTED','SCHEDULED','IN_PROGRESS','PASSED','FAILED','CANCELLED','NO_SHOW') DEFAULT 'REQUESTED',
+    certificate_number VARCHAR(60) UNIQUE,
+    certificate_issue_date DATE,
+    certificate_expiry_date DATE,
+    notes TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (application_id) REFERENCES traffic_applications(application_id) ON DELETE SET NULL,
+    FOREIGN KEY (vehicle_id) REFERENCES traffic_vehicles(vehicle_id) ON DELETE CASCADE,
+    FOREIGN KEY (inspector_user_id) REFERENCES users(user_id) ON DELETE SET NULL,
+    INDEX idx_inspection_schedule (inspection_location, scheduled_at, inspection_status),
+    INDEX idx_inspection_expiry (certificate_expiry_date)
+);
+
+-- 14.15 Inspection defects
+CREATE TABLE inspection_defects (
+    defect_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    inspection_id BIGINT UNSIGNED NOT NULL,
+    defect_code VARCHAR(50),
+    defect_description TEXT NOT NULL,
+    severity ENUM('MINOR','MAJOR','CRITICAL','INFO') DEFAULT 'MINOR',
+    rectified TINYINT(1) DEFAULT 0,
+    rectified_at DATETIME,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (inspection_id) REFERENCES vehicle_inspections(inspection_id) ON DELETE CASCADE,
+    INDEX idx_inspection_defects (inspection_id, severity, rectified)
+);
+
+-- 14.16 Public vehicle permits
+CREATE TABLE public_vehicle_permits (
+    permit_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    application_id BIGINT UNSIGNED NOT NULL,
+    vehicle_id BIGINT UNSIGNED,
+    permit_number VARCHAR(60) UNIQUE,
+    permit_type VARCHAR(100) NOT NULL,
+    permit_status ENUM('PENDING','ACTIVE','EXPIRED','SUSPENDED','REVOKED','REJECTED') DEFAULT 'PENDING',
+    conditions TEXT,
+    route_details TEXT,
+    issue_date DATE,
+    expiry_date DATE,
+    issued_by BIGINT UNSIGNED,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (application_id) REFERENCES traffic_applications(application_id) ON DELETE CASCADE,
+    FOREIGN KEY (vehicle_id) REFERENCES traffic_vehicles(vehicle_id) ON DELETE SET NULL,
+    FOREIGN KEY (issued_by) REFERENCES users(user_id) ON DELETE SET NULL,
+    INDEX idx_permit_vehicle (vehicle_id, permit_status),
+    INDEX idx_permit_expiry (expiry_date, permit_status)
+);
+
+-- 14.17 Driving schools
+CREATE TABLE driving_schools (
+    school_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    application_id BIGINT UNSIGNED,
+    user_id BIGINT UNSIGNED,
+    school_name VARCHAR(200) NOT NULL,
+    registration_number VARCHAR(60) UNIQUE,
+    address VARCHAR(500) NOT NULL,
+    district VARCHAR(100),
+    contact_phone VARCHAR(30),
+    contact_email VARCHAR(190),
+    school_status ENUM('PENDING','REGISTERED','SUSPENDED','CLOSED','REJECTED') DEFAULT 'PENDING',
+    num_instructors INT DEFAULT 0,
+    num_vehicles INT DEFAULT 0,
+    issue_date DATE,
+    expiry_date DATE,
+    reviewed_by BIGINT UNSIGNED,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (application_id) REFERENCES traffic_applications(application_id) ON DELETE SET NULL,
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE SET NULL,
+    FOREIGN KEY (reviewed_by) REFERENCES users(user_id) ON DELETE SET NULL,
+    INDEX idx_school_name_status (school_name, school_status)
+);
+
+-- 14.18 Driving instructors
+CREATE TABLE driving_instructors (
+    instructor_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT UNSIGNED,
+    school_id BIGINT UNSIGNED,
+    application_id BIGINT UNSIGNED,
+    instructor_number VARCHAR(60) UNIQUE,
+    full_name VARCHAR(200),
+    national_id VARCHAR(50),
+    qualification_details TEXT,
+    years_experience INT,
+    instructor_status ENUM('PENDING','AUTHORISED','SUSPENDED','EXPIRED','REJECTED') DEFAULT 'PENDING',
+    issue_date DATE,
+    expiry_date DATE,
+    reviewed_by BIGINT UNSIGNED,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE SET NULL,
+    FOREIGN KEY (school_id) REFERENCES driving_schools(school_id) ON DELETE SET NULL,
+    FOREIGN KEY (application_id) REFERENCES traffic_applications(application_id) ON DELETE SET NULL,
+    FOREIGN KEY (reviewed_by) REFERENCES users(user_id) ON DELETE SET NULL,
+    INDEX idx_instructor_school (school_id, instructor_status)
+);
+
+-- 14.19 Traffic fines
+CREATE TABLE traffic_fines (
+    fine_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    fine_reference VARCHAR(40) NOT NULL UNIQUE,
+    offender_user_id BIGINT UNSIGNED,
+    offender_name VARCHAR(200),
+    national_id VARCHAR(50),
+    vehicle_registration VARCHAR(50),
+    offence_description VARCHAR(500) NOT NULL,
+    offence_date DATE NOT NULL,
+    offence_location VARCHAR(200),
+    amount DECIMAL(12,2) NOT NULL,
+    currency CHAR(3) DEFAULT 'LSL',
+    fine_status ENUM('UNPAID','PAID','DISPUTED','CANCELLED','WRITTEN_OFF') DEFAULT 'UNPAID',
+    issued_by BIGINT UNSIGNED,
+    paid_at DATETIME,
+    payment_reference VARCHAR(100),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (offender_user_id) REFERENCES users(user_id) ON DELETE SET NULL,
+    FOREIGN KEY (issued_by) REFERENCES users(user_id) ON DELETE SET NULL,
+    INDEX idx_fine_offender (offender_user_id, fine_status),
+    INDEX idx_fine_vehicle (vehicle_registration, fine_status)
+);
+
+-- 14.20 Licence clearance requests
+CREATE TABLE licence_clearance_requests (
+    clearance_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    reference_number VARCHAR(40) NOT NULL UNIQUE,
+    applicant_user_id BIGINT UNSIGNED NOT NULL,
+    application_id BIGINT UNSIGNED,
+    licence_number VARCHAR(60),
+    vehicle_registration VARCHAR(50),
+    clearance_type ENUM('LICENCE_RENEWAL','VEHICLE_REGISTRATION','OWNERSHIP_TRANSFER','OTHER') NOT NULL,
+    clearance_status ENUM('PENDING','IN_PROGRESS','CLEARED','BLOCKED','EXPIRED') DEFAULT 'PENDING',
+    outstanding_amount DECIMAL(12,2) DEFAULT 0,
+    cleared_at DATETIME,
+    cleared_by BIGINT UNSIGNED,
+    notes TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (applicant_user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (application_id) REFERENCES traffic_applications(application_id) ON DELETE SET NULL,
+    FOREIGN KEY (cleared_by) REFERENCES users(user_id) ON DELETE SET NULL,
+    INDEX idx_clearance_user (applicant_user_id, clearance_status)
+);
+
+-- 14.21 Traffic payments
+CREATE TABLE traffic_payments (
+    payment_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    application_id BIGINT UNSIGNED,
+    fine_id BIGINT UNSIGNED,
+    payer_user_id BIGINT UNSIGNED NOT NULL,
+    payment_reference VARCHAR(100) NOT NULL UNIQUE,
+    provider_reference VARCHAR(150),
+    amount DECIMAL(12,2) NOT NULL,
+    currency CHAR(3) DEFAULT 'LSL',
+    payment_method ENUM('CARD','BANK_TRANSFER','MOBILE_MONEY','CASH_OFFICE','OTHER') NOT NULL,
+    payment_status ENUM('INITIATED','PENDING','SUCCESS','FAILED','REVERSED','REFUNDED') DEFAULT 'INITIATED',
+    payment_purpose VARCHAR(100),
+    paid_at DATETIME,
+    verified_by BIGINT UNSIGNED,
+    verified_at DATETIME,
+    receipt_key VARCHAR(500),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (application_id) REFERENCES traffic_applications(application_id) ON DELETE SET NULL,
+    FOREIGN KEY (fine_id) REFERENCES traffic_fines(fine_id) ON DELETE SET NULL,
+    FOREIGN KEY (payer_user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (verified_by) REFERENCES users(user_id) ON DELETE SET NULL,
+    INDEX idx_traffic_payment_user (payer_user_id, payment_status)
+);
+
+-- 14.22 Traffic complaints
+CREATE TABLE traffic_complaints (
+    complaint_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    reference_number VARCHAR(40) NOT NULL UNIQUE,
+    user_id BIGINT UNSIGNED NOT NULL,
+    application_id BIGINT UNSIGNED,
+    complaint_type ENUM('DELAY','PAYMENT','RECORD_ERROR','STAFF_SERVICE','LICENCE','REGISTRATION','INSPECTION','PERMIT','SCHOOL_INSTRUCTOR','OTHER') NOT NULL,
+    subject VARCHAR(200) NOT NULL,
+    description TEXT NOT NULL,
+    complaint_status ENUM('OPEN','ASSIGNED','IN_REVIEW','WAITING_FOR_USER','ESCALATED','RESOLVED','CLOSED') DEFAULT 'OPEN',
+    assigned_to BIGINT UNSIGNED,
+    admin_response TEXT,
+    resolved_at DATETIME,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (application_id) REFERENCES traffic_applications(application_id) ON DELETE SET NULL,
+    FOREIGN KEY (assigned_to) REFERENCES users(user_id) ON DELETE SET NULL,
+    INDEX idx_traffic_complaint_status (complaint_status, created_at)
+);
+
+-- ============================================================
+-- DONE — All tables created
+-- ============================================================
+
+SELECT 'Database lesotho_gov created successfully with all modules.' AS status;
+Step 3: Verify
+sql
 USE lesotho_gov;
 SHOW TABLES;
-```
-
-Expected tables:
-
-```
-application_field_values
-application_status_history
-applications
-audit_logs
-citizen_national_ids
-citizen_profiles
-civil_record_requests
-civil_records
-departments
-documents
-immigration_applications
-immigration_decisions
-livestock_animals
-livestock_marking_requests
-livestock_marks
-livestock_owners
-livestock_transfers
-login_history
-notifications
-officers
-otp_verifications
-payments
-service_catalog
-service_form_fields
-users
-```
-
-### Step 4: Add the `photo_path` column (if your DB predates the photo feature)
-
+Step 4: Add the photo_path column (if your DB predates the photo feature)
 If you have an older database, run:
 
-```sql
+sql
 USE lesotho_gov;
 
 ALTER TABLE users
   ADD COLUMN photo_path VARCHAR(500) DEFAULT NULL
   AFTER national_id;
-```
-
 If you get "Duplicate column name 'photo_path'", skip this step.
 
----
+Firebase Setup
+You do NOT need to create a Firebase project. We use one shared project. You only need to:
 
-## Firebase Setup
+Get the FirebaseAccountKey.json from the team lead
 
-**You do NOT need to create a Firebase project.** We use one shared project. You only need to:
+Place it in backend/
 
-1. Get the `FirebaseAccountKey.json` from the team lead
-2. Place it in `backend/`
-3. Make sure the `.env` file points to it correctly
+Make sure the .env file points to it correctly
 
-The `.env` file should look like:
+The .env file should look like:
 
-```env
+env
 PORT=3001
 BACKEND_URL=http://localhost:3001
 
@@ -1192,59 +2855,52 @@ DB_PASSWORD=your_mysql_password_here
 DB_NAME=lesotho_gov
 
 FIREBASE_SERVICE_ACCOUNT=./FirebaseAccountKey.json
-```
+Important: Change DB_PASSWORD to your own MySQL root password.
 
-⚠️ **Change `DB_PASSWORD`** to your own MySQL root password.
+Important: Leave FIREBASE_SERVICE_ACCOUNT=./FirebaseAccountKey.json as-is — the relative path works on any machine.
 
-⚠️ **Leave `FIREBASE_SERVICE_ACCOUNT=./FirebaseAccountKey.json` as-is** — the relative path works on any machine.
+Admin Account
+The only admin is:
 
----
-
-## Admin Account
-
-The **only admin** is:
-
-```
+text
 Email: kramohlabi7@gmail.com
-```
-
 When you log in with this email:
 
-- The backend **automatically** sets `role = 'admin'` and `account_type = 'admin'`
-- The frontend **automatically** redirects you to `/admin/home-affairs`
-- You see the **Administrator Dashboard** instead of the citizen dashboard
+The backend automatically sets role = 'admin' and account_type = 'admin'
 
-### How to Test Admin Access
+The frontend automatically redirects you to /admin/home-affairs
 
-1. Log in with `kramohlabi7@gmail.com`
-2. You should land on `/admin/home-affairs`
-3. You should see the review queue
+You see the Administrator Dashboard instead of the citizen dashboard
+
+How to Test Admin Access
+Log in with kramohlabi7@gmail.com
+
+You should land on /admin/home-affairs
+
+You should see the review queue
 
 If it doesn't work:
 
-```sql
+sql
 USE lesotho_gov;
 UPDATE users
 SET role = 'admin', account_type = 'admin'
 WHERE email = 'kramohlabi7@gmail.com';
-```
-
 Then log out and log back in.
 
-### How Citizens Are Handled
-
+How Citizens Are Handled
 Everyone else who registers:
 
-- Gets `role = 'client'` and `account_type = 'citizen'`
-- Gets an auto-assigned National ID (e.g., `LS000000001`)
-- Sees the **Home Affairs Citizen Dashboard**
-- Cannot access `/api/admin/*` (returns 403 Forbidden)
+Gets role = 'client' and account_type = 'citizen'
 
----
+Gets an auto-assigned National ID (e.g., LS000000001)
 
-## Project Structure
+Sees the Home Affairs Citizen Dashboard
 
-```
+Cannot access /api/admin/* (returns 403 Forbidden)
+
+Project Structure
+text
 home-affairs/
 ├── backend/
 │   ├── Server.js                    # Complete backend API
@@ -1255,7 +2911,14 @@ home-affairs/
 │   │   └── lesotho_gov_complete.sql # Full schema
 │   ├── uploads/
 │   │   ├── documents/               # Uploaded application documents
-│   │   └── photos/                  # User profile photos
+│   │   ├── photos/                  # User profile photos
+│   │   ├── passport_photos/         # Passport-specific photos
+│   │   ├── police_evidence/         # Police evidence uploads
+│   │   ├── police_certified/        # Police certified documents
+│   │   ├── police_letters/          # Police letters
+│   │   ├── traffic_documents/       # Traffic documents
+│   │   ├── finance_documents/       # Finance documents
+│   │   └── pension_documents/       # Pension documents
 │   └── node_modules/
 │
 ├── frontend/
@@ -1275,7 +2938,12 @@ home-affairs/
 │   │   │   ├── TrafficDashboard.js
 │   │   │   └── FinanceDashboard.js
 │   │   ├── admin/
-│   │   │   └── HomeAffairsDashboardAdmin.js
+│   │   │   ├── HomeAffairsDashboardAdmin.js
+│   │   │   ├── PassportOfficeDashboardAdmin.js
+│   │   │   ├── PoliceDashboardAdmin.js
+│   │   │   ├── FinanceDashboardAdmin.js
+│   │   │   ├── PensionsDashboardAdmin.js
+│   │   │   └── TrafficDashboardAdmin.js
 │   │   ├── components/
 │   │   │   ├── Navbar.js
 │   │   │   ├── Navbar.css
@@ -1287,424 +2955,731 @@ home-affairs/
 │   └── package.json
 │
 └── README.md
-```
+What's Built So Far
+Authentication
+Email + password registration
 
----
+Google sign-in
 
-## What's Built So Far
+Phone OTP (SMS)
 
-### Authentication
-- ✅ Email + password registration
-- ✅ Google sign-in
-- ✅ Phone OTP (SMS)
-- ✅ Auto-redirect to appropriate dashboard based on role
-- ✅ Session persistence via `sessionStorage`
+Auto-redirect to appropriate dashboard based on role
 
-### Citizen Features
-- ✅ **Public landing page** at `/` with ministry cards
-- ✅ **Home Affairs Citizen Dashboard** (`/home-affairs-dashboard`)
-  - Tabs: Apply, My Applications, Notifications, Profile
-  - Card grid of services grouped by module (NICR, Immigration, LRMIS)
-  - Dynamic form per service (fields loaded from database)
-  - File upload for documents
-  - Application tracking with status badges
-  - Real-time notifications
-  - **Profile photo upload** (displayed on ID card and certificates)
-- ✅ **Certificate viewer** with real-looking layouts
-  - National ID card
-  - Birth / Death / Marriage certificates
-  - Immigration permits
-  - Livestock certificates
-- ✅ **PDF export** — download any certificate as a PDF file
+Session persistence via sessionStorage
 
-### Admin Features
-- ✅ **Administrator Dashboard** (`/admin/home-affairs`)
-  - Stats cards (submitted, under review, approved, ready, completed)
-  - Total users and applications
-  - Application queue with filters (status + module)
-  - **Photo thumbnail** in queue
-  - **Applicant photo** in detail panel
-  - Review submitted information
-  - View uploaded documents
-  - View history of all actions
-  - Update status (approve, reject, request info, mark ready, complete)
-  - Add optional note for the citizen
-  - Auto-notification to citizen on status change
+Citizen Features
+Public landing page at / with ministry cards
 
-### Database
-- ✅ Single database: `lesotho_gov`
-- ✅ Full schema with 25+ tables
-- ✅ Service catalogue with 30+ services
-- ✅ Form field definitions per service
-- ✅ Auto-generated National IDs
-- ✅ Audit logging
-- ✅ Photo storage
+Home Affairs Citizen Dashboard (/home-affairs-dashboard)
 
----
+Tabs: Apply, My Applications, Notifications, Profile
 
-## Feature Guide
+Card grid of services grouped by module (NICR, Immigration, LRMIS)
 
-### For Citizens
+Dynamic form per service (fields loaded from database)
 
-#### 1. Register
-- Go to `http://localhost:3000/register`
-- Choose Email, Phone, or Google
-- Fill in your details
-- Get an auto-assigned National ID (e.g., `LS000000001`)
+File upload for documents
 
-#### 2. Apply for a Service
-- Log in → land on **Home Affairs Dashboard**
-- Click **Apply** tab
-- Choose module: Civil Registration / Immigration / Livestock
-- Click **Start application** on any service
-- Fill the form → upload any required documents
-- Click **Submit application**
-- Receive a reference number (e.g., `NICR-2026-000001`)
+Application tracking with status badges
 
-#### 3. Upload Your Photo
-- Go to **Profile** tab
-- In the **Identity photo** section, click **Upload photo**
-- Choose a JPG or PNG (max 5 MB)
-- Your photo appears on the ID card preview
-- It will appear on all future certificates
+Real-time notifications
 
-#### 4. Track Applications
-- Go to **My applications** tab
-- See every application with status badge
-- Click **View details** for full history
-- Click **Certificate** once approved
+Profile photo upload (displayed on ID card and certificates)
 
-#### 5. Download Certificate
-- Open any approved application
-- Click **Certificate**
-- Click **Download PDF**
-- The PDF contains your photo and all your information
+Certificate viewer with real-looking layouts
 
-#### 6. View Notifications
-- Go to **Notifications** tab
-- Every status change triggers a notification
-- Click **Mark as read** to clear
+National ID card
 
-### For Admins
+Birth / Death / Marriage certificates
 
-#### 1. Log In as Admin
-- Use `kramohlabi7@gmail.com`
-- You land on `/admin/home-affairs`
+Immigration permits
 
-#### 2. Review Applications
-- See the **queue** with all submitted applications
-- Filter by module or status
-- Each row shows the applicant's photo as a thumbnail
+Livestock certificates
 
-#### 3. Process an Application
-- Click **Open** on any row
-- See the applicant's photo, submitted information, documents, and history
-- Choose a status action:
-  - **Under review** — start processing
-  - **Request info** — ask for more details
-  - **Awaiting payment** — waiting for citizen to pay
-  - **Payment verified** — confirm payment
-  - **Approve** — accept the application
-  - **Ready** — mark ready for collection
-  - **Complete** — close the application
-  - **Reject** — reject with a note
-- Add an optional note for the citizen
-- The citizen gets an automatic notification
+PDF export — download any certificate as a PDF file
 
----
+Passport Office Module
+Tiered passport applications (Standard, Urgent, Express, Emergency, Official, Diplomatic)
 
-## API Reference
+Application tracking with status updates
 
+Biometrics capture and appointment scheduling
+
+Payment recording
+
+Complaint submission and response
+
+PDF passport download with profile photo
+
+Traffic Module
+Driver's licence applications (learner, full, renewal, replacement, correction)
+
+Vehicle registration (new, imported, second-hand local/foreign, transfer)
+
+Roadworthiness and fitness inspections
+
+Public motor vehicle permits
+
+Driving school and instructor registration
+
+Traffic fine management and online payment
+
+Licence clearance requests
+
+PDF driver's licence download with profile photo
+
+Police Services Module
+Non-emergency crime reporting (theft, lost items, fraud, cybercrime, missing persons)
+
+Police clearance applications
+
+Police report requests
+
+Witness information submission
+
+Complaint submission and response
+
+Document certification with automatic stamping
+
+Police letters (acknowledgement, affidavit, loss report, confirmation, witness statement)
+
+Feedback submission
+
+Finance Module
+Tax-related requests (clearance, declaration)
+
+Supplier/vendor registration
+
+Invoice and payment claims
+
+Tax refund requests
+
+Government payment processing
+
+Enquiry and complaint tickets
+
+Pensions Module
+Pension registration (PODCPF, Old Age Pension)
+
+Benefit applications (retirement, resignation, termination, retrenchment, disability, death, old age)
+
+Contribution tracking
+
+Payment recording and history
+
+Government debt deductions
+
+Enquiry and complaint management
+
+Admin Features
+Administrator Dashboard (/admin/home-affairs)
+
+Stats cards (submitted, under review, approved, ready, completed)
+
+Total users and applications
+
+Application queue with filters (status + module)
+
+Photo thumbnail in queue
+
+Applicant photo in detail panel
+
+Review submitted information
+
+View uploaded documents
+
+View history of all actions
+
+Update status (approve, reject, request info, mark ready, complete)
+
+Add optional note for the citizen
+
+Auto-notification to citizen on status change
+
+Module-specific Admin Dashboards
+
+Passport Admin
+
+Traffic Admin
+
+Police Admin
+
+Finance Admin
+
+Pensions Admin
+
+Database
+Single database: lesotho_gov
+
+Full schema with 60+ tables
+
+Service catalogue with 30+ services
+
+Form field definitions per service
+
+Auto-generated National IDs
+
+Audit logging
+
+Photo storage
+
+Feature Guide
+For Citizens
+1. Register
+Go to http://localhost:3000/register
+
+Choose Email, Phone, or Google
+
+Fill in your details
+
+Get an auto-assigned National ID (e.g., LS000000001)
+
+2. Apply for a Service
+Log in and land on the appropriate dashboard
+
+Click the Apply tab
+
+Choose a service category
+
+Click Start application on any service
+
+Fill the form and upload any required documents
+
+Click Submit application
+
+Receive a reference number
+
+3. Upload Your Photo
+Go to the Profile tab
+
+In the Identity photo section, click Upload photo
+
+Choose a JPG or PNG (max 5 MB)
+
+Your photo appears on the ID card preview
+
+It will appear on all future certificates and documents
+
+4. Track Applications
+Go to the My applications tab
+
+See every application with status badge
+
+Click View details for full history
+
+Click Certificate or document button once approved
+
+5. Download Documents
+Open any approved application
+
+Click the document button (Certificate, Licence, Passport, etc.)
+
+Click Download PDF
+
+The PDF contains your photo and all your information
+
+6. View Notifications
+Go to the Notifications tab
+
+Every status change triggers a notification
+
+Click Mark as read to clear
+
+For Admins
+1. Log In as Admin
+Use kramohlabi7@gmail.com
+
+You land on /admin/home-affairs
+
+2. Navigate Between Offices
+Use the Admin sub-navigation bar at the top:
+
+Home Affairs Admin
+
+Passport Admin
+
+Police Admin
+
+Finance Admin
+
+Pensions Admin
+
+Traffic Admin
+
+3. Review Applications
+See the queue with all submitted applications
+
+Filter by type or status
+
+Each row shows the applicant's photo as a thumbnail
+
+Click Open on any row to see full details
+
+4. Process an Application
+Click Open on any row
+
+See the applicant's photo, submitted information, documents, and history
+
+Choose a status action (Under review, Request info, Approve, Reject, etc.)
+
+Add an optional note for the citizen
+
+The citizen gets an automatic notification
+
+5. Module-Specific Actions
+Passport Admin:
+
+Record biometrics
+
+Schedule appointments
+
+Issue passports
+
+Record collections
+
+Process payments
+
+Respond to complaints
+
+Traffic Admin:
+
+Issue driver's licences
+
+Register vehicles
+
+Schedule driving tests
+
+Record test results
+
+Issue and manage fines
+
+Process clearances
+
+Manage driving schools
+
+Police Admin:
+
+Update case statuses
+
+Schedule appointments
+
+Verify evidence
+
+Certify documents with automatic stamping
+
+Respond to complaints
+
+View feedback
+
+Finance Admin:
+
+Process tax requests
+
+Review supplier registrations
+
+Process invoice claims
+
+Handle tax refunds
+
+Record payments
+
+Respond to tickets
+
+Pensions Admin:
+
+Verify members
+
+Process benefit applications
+
+Record assessments
+
+Manage contributions
+
+Process payments
+
+Handle government debts
+
+Respond to enquiries
+
+API Reference
 All authenticated endpoints require:
 
-```
+text
 Authorization: Bearer <firebase-id-token>
-```
-
-### Auth
-
-| Method | Path | Purpose |
-|---|---|---|
-| POST | `/api/register` | Create citizen account (auto-assigns National ID) |
-| POST | `/api/login` | Login (verifies token, returns user) |
-| GET | `/api/me` | Get current user |
-| POST | `/api/me/photo` | Upload profile photo |
-
-### Services
-
-| Method | Path | Purpose |
-|---|---|---|
-| GET | `/api/services` | List all services (optionally `?module=NICR`) |
-| GET | `/api/services/:id` | Get service + form fields |
-
-### Applications
-
-| Method | Path | Purpose |
-|---|---|---|
-| POST | `/api/applications` | Submit new application (multipart form) |
-| GET | `/api/applications/my` | List current user's applications |
-| GET | `/api/applications/:id` | Get full application detail |
-| GET | `/api/certificates/:id` | Get certificate data for PDF |
-
-### Notifications
-
-| Method | Path | Purpose |
-|---|---|---|
-| GET | `/api/notifications` | List user's notifications |
-| POST | `/api/notifications/:id/read` | Mark as read |
-
-### Admin (requires admin role)
-
-| Method | Path | Purpose |
-|---|---|---|
-| GET | `/api/admin/stats` | Dashboard metrics |
-| GET | `/api/admin/applications` | Queue with filters |
-| POST | `/api/admin/applications/:id/status` | Update application status |
-
----
-
-## Git Workflow
-
-### First time
-
-```bash
+Auth
+Method	Path	Purpose
+POST	/api/register	Create citizen account (auto-assigns National ID)
+POST	/api/login	Login (verifies token, returns user)
+GET	/api/me	Get current user
+POST	/api/me/photo	Upload profile photo
+Home Affairs
+Method	Path	Purpose
+GET	/api/services	List all services (optionally ?module=NICR)
+GET	/api/services/:id	Get service + form fields
+POST	/api/applications	Submit new application (multipart form)
+GET	/api/applications/my	List current user's applications
+GET	/api/applications/:id	Get full application detail
+GET	/api/certificates/:id	Get certificate data for PDF
+GET	/api/notifications	List user's notifications
+POST	/api/notifications/:id/read	Mark as read
+Passport
+Method	Path	Purpose
+GET	/api/passport/services	List passport services
+GET	/api/passport/services/:id	Get service + form fields
+POST	/api/passport/applications	Submit application
+GET	/api/passport/applications/my	List user's applications
+GET	/api/passport/applications/:id	Get full detail
+DELETE	/api/passport/applications/:id	Delete application
+GET	/api/passport/notifications	List notifications
+POST	/api/passport/complaints	Submit complaint
+GET	/api/passport/complaints/my	List user's complaints
+GET	/api/passport/certificates/:id	Get passport for PDF
+Traffic
+Method	Path	Purpose
+GET	/api/traffic/categories	List categories
+POST	/api/traffic/applications	Submit application
+GET	/api/traffic/applications/my	List user's applications
+GET	/api/traffic/applications/:id	Get full detail
+DELETE	/api/traffic/applications/:id	Delete application
+GET	/api/traffic/licences/my	List user's licences
+GET	/api/traffic/vehicles/my	List user's vehicles
+GET	/api/traffic/fines/my	List user's fines
+POST	/api/traffic/fines/:id/pay	Pay a fine
+GET	/api/traffic/clearances/my	List clearances
+GET	/api/traffic/notifications	List notifications
+POST	/api/traffic/complaints	Submit complaint
+GET	/api/traffic/complaints/my	List user's complaints
+GET	/api/traffic/payments/my	List payments
+GET	/api/traffic/driving-schools	List driving schools
+GET	/api/traffic/track/:reference	Track by reference
+Police
+Method	Path	Purpose
+GET	/api/police/categories	List categories
+POST	/api/police/applications	Submit application
+GET	/api/police/applications/my	List user's applications
+GET	/api/police/applications/:id	Get full detail
+DELETE	/api/police/applications/:id	Delete application
+GET	/api/police/notifications	List notifications
+POST	/api/police/feedback	Submit feedback
+GET	/api/police/feedback/my	List feedback
+GET	/api/police/letter-templates	List letter templates
+POST	/api/police/letters	Issue a letter
+GET	/api/police/letters/my	List user's letters
+POST	/api/police/certified-documents	Submit document for certification
+GET	/api/police/certified-documents/my	List certified documents
+Finance
+Method	Path	Purpose
+GET	/api/finance/services	List services
+POST	/api/finance/requests	Submit request
+GET	/api/finance/requests/my	List user's requests
+GET	/api/finance/requests/:id	Get full detail
+DELETE	/api/finance/requests/:id	Delete request
+GET	/api/finance/payments/my	List payments
+POST	/api/finance/tickets	Submit enquiry
+GET	/api/finance/tickets/my	List tickets
+GET	/api/finance/notifications	List notifications
+GET	/api/finance/suppliers/my	List suppliers
+Pensions
+Method	Path	Purpose
+GET	/api/pensions/programmes	List programmes
+GET	/api/pensions/me	Get member profile
+POST	/api/pensions/register	Register as member
+POST	/api/pensions/applications	Submit application
+GET	/api/pensions/applications/my	List applications
+GET	/api/pensions/applications/:id	Get full detail
+DELETE	/api/pensions/applications/:id	Delete application
+GET	/api/pensions/contributions/my	List contributions
+GET	/api/pensions/payments/my	List payments
+GET	/api/pensions/estimate/my	Get benefit estimate
+POST	/api/pensions/enquiries	Submit enquiry
+GET	/api/pensions/enquiries/my	List enquiries
+GET	/api/pensions/notifications	List notifications
+Admin (requires admin role)
+Method	Path	Purpose
+GET	/api/admin/stats	Home Affairs dashboard metrics
+GET	/api/admin/applications	Home Affairs queue with filters
+POST	/api/admin/applications/:id/status	Update application status
+GET	/api/passport/admin/stats	Passport dashboard metrics
+GET	/api/passport/admin/applications	Passport queue
+POST	/api/passport/admin/applications/:id/status	Update passport status
+POST	/api/passport/admin/applications/:id/issue	Issue passport
+POST	/api/passport/admin/applications/:id/biometrics	Record biometrics
+POST	/api/passport/admin/applications/:id/appointment	Schedule appointment
+POST	/api/passport/admin/applications/:id/payment	Record payment
+GET	/api/passport/admin/complaints	List complaints
+POST	/api/passport/admin/complaints/:id/respond	Respond to complaint
+GET	/api/traffic/admin/stats	Traffic dashboard metrics
+GET	/api/traffic/admin/applications	Traffic queue
+POST	/api/traffic/admin/applications/:id/status	Update traffic status
+POST	/api/traffic/admin/applications/:id/issue-licence	Issue licence
+POST	/api/traffic/admin/applications/:id/register-vehicle	Register vehicle
+POST	/api/traffic/admin/applications/:id/test-booking	Schedule test
+POST	/api/traffic/admin/applications/:id/payment	Record payment
+GET	/api/traffic/admin/fines	List fines
+POST	/api/traffic/admin/fines	Create fine
+POST	/api/traffic/admin/fines/:id/payment	Mark fine paid
+GET	/api/traffic/admin/clearances	List clearances
+POST	/api/traffic/admin/clearances/:id/update	Update clearance
+GET	/api/traffic/admin/complaints	List complaints
+POST	/api/traffic/admin/complaints/:id/respond	Respond to complaint
+GET	/api/traffic/admin/driving-schools	List schools
+POST	/api/traffic/admin/driving-schools/:id/status	Update school status
+GET	/api/traffic/admin/payments	List payments
+GET	/api/police/admin/stats	Police dashboard metrics
+GET	/api/police/admin/applications	Police queue
+POST	/api/police/admin/applications/:id/status	Update police status
+POST	/api/police/admin/applications/:id/payment	Record payment
+POST	/api/police/admin/applications/:id/appointment	Schedule appointment
+POST	/api/police/admin/evidence/:id/verify	Verify evidence
+GET	/api/police/admin/feedback	List feedback
+GET	/api/police/admin/certified-documents	List certified documents
+POST	/api/police/admin/certified-documents/:id/certify	Certify document
+POST	/api/police/admin/certified-documents/:id/status	Update status
+GET	/api/police/admin/letters	List letters
+GET	/api/finance/admin/stats	Finance dashboard metrics
+GET	/api/finance/admin/requests	Finance queue
+POST	/api/finance/admin/requests/:id/status	Update finance status
+GET	/api/finance/admin/suppliers	List suppliers
+POST	/api/finance/admin/suppliers/:id/status	Update supplier status
+GET	/api/finance/admin/invoices	List invoices
+POST	/api/finance/admin/invoices/:id/status	Update invoice status
+GET	/api/finance/admin/refunds	List refunds
+POST	/api/finance/admin/refunds/:id/status	Update refund status
+GET	/api/finance/admin/payments	List payments
+POST	/api/finance/admin/payments	Record payment
+GET	/api/finance/admin/tickets	List tickets
+POST	/api/finance/admin/tickets/:id/respond	Respond to ticket
+GET	/api/pensions/admin/stats	Pensions dashboard metrics
+GET	/api/pensions/admin/applications	Pensions queue
+POST	/api/pensions/admin/applications/:id/status	Update pension status
+POST	/api/pensions/admin/applications/:id/assessment	Record assessment
+GET	/api/pensions/admin/members	List members
+POST	/api/pensions/admin/members/:id/status	Update member status
+POST	/api/pensions/admin/contributions	Record contribution
+GET	/api/pensions/admin/payments	List payments
+POST	/api/pensions/admin/payments	Record payment
+GET	/api/pensions/admin/debts	List debts
+POST	/api/pensions/admin/debts/:id/status	Update debt status
+GET	/api/pensions/admin/enquiries	List enquiries
+POST	/api/pensions/admin/enquiries/:id/respond	Respond to enquiry
+Git Workflow
+First time
+bash
 git clone https://github.com/Boni-01/home-affairs.git
 cd home-affairs
-```
-
-### Every time you start working
-
-```bash
+Every time you start working
+bash
 git pull origin main
-```
-
-### Create your own branch
-
-```bash
+Create your own branch
+bash
 git checkout -b feature/your-name-task
-```
-
-### After making changes
-
-```bash
+After making changes
+bash
 git add .
 git commit -m "Clear description of what you changed"
 git push origin feature/your-name-task
-```
-
 Then open a Pull Request on GitHub.
 
-### IMPORTANT — Never Commit
+IMPORTANT — Never Commit
+The following are already in .gitignore and must never be committed:
 
-The following are already in `.gitignore` and **must never be committed**:
+backend/.env
 
-- `backend/.env`
-- `backend/FirebaseAccountKey.json`
-- `backend/uploads/`
-- `node_modules/`
+backend/FirebaseAccountKey.json
 
----
+backend/uploads/
 
-## Troubleshooting
+node_modules/
 
-### 🔴 `Cannot find module 'dotenv'`
-
+Troubleshooting
+Cannot find module 'dotenv'
 You forgot to install backend dependencies:
 
-```bash
+bash
 cd backend
-npm install express cors dotenv mysql2 firebase-admin multer
-```
+npm install express cors dotenv mysql2 firebase-admin multer pdf-lib
+Cannot read properties of undefined (reading 'cert')
+Your Server.js is using old Firebase Admin API. Pull the latest:
 
-### 🔴 `Cannot read properties of undefined (reading 'cert')`
-
-Your `Server.js` is using old Firebase Admin API. Pull the latest:
-
-```bash
+bash
 git pull origin main
-```
+ER_ACCESS_DENIED_ERROR / Access denied for user 'root'
+Your MySQL password in .env is wrong. Check by running:
 
-### 🔴 `ER_ACCESS_DENIED_ERROR` / `Access denied for user 'root'`
-
-Your MySQL password in `.env` is wrong. Check by running:
-
-```bash
+bash
 mysql -u root -p
-```
+Then update .env:
 
-Then update `.env`:
-
-```
+text
 DB_PASSWORD=your_actual_password
-```
-
-### 🔴 `ER_BAD_DB_ERROR: Unknown database 'lesotho_gov'`
-
+ER_BAD_DB_ERROR: Unknown database 'lesotho_gov'
 You haven't created the database:
 
-```bash
+bash
 mysql -u root -p < backend/database/lesotho_gov_complete.sql
-```
-
-### 🔴 `Table 'lesotho_gov.users' doesn't exist`
-
+Table 'lesotho_gov.users' doesn't exist
 The schema wasn't loaded. Run:
 
-```bash
+bash
 mysql -u root -p < backend/database/lesotho_gov_complete.sql
-```
-
-### 🔴 `Unknown column 'photo_path'`
-
+Unknown column 'photo_path'
 Run the migration:
 
-```sql
+sql
 USE lesotho_gov;
 ALTER TABLE users ADD COLUMN photo_path VARCHAR(500) DEFAULT NULL AFTER national_id;
-```
-
-### 🔴 `auth/network-request-failed`
-
+auth/network-request-failed
 Your network is blocking Firebase. Fix by:
 
-1. Change DNS to `1.1.1.1` and `8.8.8.8`
-2. Or install [Cloudflare WARP](https://1.1.1.1/)
-3. Or disable antivirus HTTPS scanning
+Change DNS to 1.1.1.1 and 8.8.8.8
 
-### 🔴 PDF doesn't include the photo
+Or install Cloudflare WARP
 
-The photo must be accessible via `http://localhost:3001/uploads/...`. Check:
+Or disable antivirus HTTPS scanning
 
-1. Backend is running
-2. `backend/uploads/photos/` contains the uploaded file
-3. The `photo_url` in the API response starts with `http://localhost:3001/`
+Important: If login and register refuse to work, download the Cloudflare WARP client, connect, then run the app again.
 
-If the URL is relative, update `.env`:
+Steps:
 
-```
+Download Cloudflare WARP for your operating system from https://1.1.1.1/
+
+Install it
+
+Open Cloudflare WARP and click Connect
+
+Wait for it to show "Connected"
+
+Run the backend and frontend again
+
+Try logging in or registering
+
+PDF doesn't include the photo
+The photo must be accessible via http://localhost:3001/uploads/.... Check:
+
+Backend is running
+
+backend/uploads/photos/ contains the uploaded file
+
+The photo_url in the API response starts with http://localhost:3001/
+
+If the URL is relative, update .env:
+
+text
 BACKEND_URL=http://localhost:3001
-```
-
-### 🔴 `localhost:3000 refused to connect`
-
+localhost:3000 refused to connect
 Frontend isn't running:
 
-```bash
+bash
 cd frontend
 npm start
-```
-
-### 🔴 `localhost:3001 refused to connect`
-
+localhost:3001 refused to connect
 Backend isn't running:
 
-```bash
+bash
 cd backend
 npm start
-```
+Port already in use
+Windows:
 
-### 🔴 Port already in use
-
-**Windows:**
-
-```bash
+bash
 netstat -ano | findstr :3000
 taskkill /PID <PID> /F
-```
+Mac/Linux:
 
-**Mac/Linux:**
-
-```bash
+bash
 lsof -i :3000
 kill -9 <PID>
-```
-
-### 🔴 Can't log in as admin
-
+Can't log in as admin
 Make sure:
 
-1. You're using exactly `kramohlabi7@gmail.com`
-2. Run this SQL:
-   ```sql
-   UPDATE users SET role = 'admin', account_type = 'admin'
-   WHERE email = 'kramohlabi7@gmail.com';
-   ```
-3. Log out and log back in
+You're using exactly kramohlabi7@gmail.com
 
----
+Run this SQL:
 
-## Security Notes
+sql
+UPDATE users SET role = 'admin', account_type = 'admin'
+WHERE email = 'kramohlabi7@gmail.com';
+Log out and log back in
 
-### Never Commit These Files
+PDF generation fails
+Make sure the frontend has jspdf and html2canvas installed:
 
-- `.env` (backend environment variables)
-- `FirebaseAccountKey.json` (Firebase Admin SDK key)
-- `uploads/` (user documents and photos)
+bash
+cd frontend
+npm install jspdf html2canvas
+Police document certification fails
+Make sure the backend has pdf-lib installed:
 
-### Never Share These Files
+bash
+cd backend
+npm install pdf-lib
+Also ensure police_stamp.png exists in the backend folder for the stamp image.
 
-- Firebase private key — share only via **private DM**, never in group chat
-- `.env` with real passwords — same
+Security Notes
+Never Commit These Files
+.env (backend environment variables)
 
-### If the Firebase Key Leaks
+FirebaseAccountKey.json (Firebase Admin SDK key)
 
-1. Go to [Google Cloud Console](https://console.cloud.google.com/) → IAM → Service Accounts
-2. Delete the exposed key
-3. Generate a new one
-4. Distribute privately
-5. Update `.gitignore` to be sure it's excluded
+uploads/ (user documents and photos)
 
-### What's Stored Where
+Never Share These Files
+Firebase private key — share only via private DM, never in group chat
 
-| Data | Stored In | Public? |
-|---|---|---|
-| Email, password | Firebase Auth | No |
-| Full name, phone, National ID | MySQL `users` table | No |
-| Profile photo | `backend/uploads/photos/` | Yes (URL is public on localhost) |
-| Application documents | `backend/uploads/documents/` | Yes (URL is public on localhost) |
-| Applications, statuses | MySQL | No |
-| Certificates | Generated on-the-fly (PDF) | No |
+.env with real passwords — same
 
-⚠️ **Note:** In development, `/uploads/*` is served publicly. In production, this would need authentication.
+If the Firebase Key Leaks
+Go to Google Cloud Console then IAM then Service Accounts
 
----
+Delete the exposed key
 
-## What's Coming Next
+Generate a new one
 
-- 🔜 **Passport module** (using same pattern: services, forms, admin queue, PDF passport booklet)
-- 🔜 **Traffic module** (driver's licences, vehicle registration)
-- 🔜 **Finance module** (payments, tax refunds)
-- 🔜 **Pensions module** (beneficiary verification)
-- 🔜 **Police module** (non-emergency reports, clearance certificates)
-- 🔜 **Cross-module integration** (single citizen profile reused everywhere)
-- 🔜 **Payment integration** (mock payment gateway)
-- 🔜 **Appointment booking system**
-- 🔜 **Digital wallet** for storing all issued documents
+Distribute privately
 
----
+Update .gitignore to be sure it's excluded
 
-## 👥 Team Responsibilities
+What's Stored Where
+Data	Stored In	Public?
+Email, password	Firebase Auth	No
+Full name, phone, National ID	MySQL users table	No
+Profile photo	backend/uploads/photos/	Yes (URL is public on localhost)
+Application documents	backend/uploads/documents/	Yes (URL is public on localhost)
+Applications, statuses	MySQL	No
+Certificates	Generated on-the-fly (PDF)	No
+Note: In development, /uploads/* is served publicly. In production, this would need authentication.
 
-| Member | Student Number | Primary Focus |
-|---|---|---|
-| Lehakoe Panyane | 901019088 | Backend, Firebase Auth |
-| Sehloho Tsiu | 901018558 | MySQL schema, data modelling |
-| Bonang Sakoane | 901019739 | Citizen frontend pages |
-| Katleho Ramohlabi | 901018965 | Officer dashboards, admin |
-| Malefu Mokitimi | 901018843 | Evaluation, documentation |
+What's Coming Next
+Cross-module integration (single citizen profile reused everywhere)
 
-**All members:** contribute to their own branch, submit PRs, and participate in the presentation.
+Payment integration (mock payment gateway)
 
----
+Appointment booking system
 
-## 📞 Need Help?
+Digital wallet for storing all issued documents
 
-1. **First:** check the [Troubleshooting](#troubleshooting) section
-2. **Then:** paste the full error in the group chat
-3. **Finally:** tag the team lead if stuck for more than 30 minutes
+SMS and email notifications
 
----
+Advanced reporting and analytics
 
-**Last Updated:** Week of 9 October 2026  
-**Version:** MVP 2.0 — Home Affairs module with photos + PDF certificates  
-**Next Milestone:** Passport Services module
+Mobile application
+
+Team Responsibilities
+Member	Student Number	Primary Focus
+Lehakoe Panyane	901019088	Backend, Firebase Auth
+Sehloho Tsiu	901018558	MySQL schema, data modelling
+Bonang Sakoane	901019739	Citizen frontend pages
+Katleho Ramohlabi	901018965	Officer dashboards, admin
+Malefu Mokitimi	901018843	Evaluation, documentation
+All members: contribute to their own branch, submit PRs, and participate in the presentation.
+
+Need Help?
+First: check the Troubleshooting section
+
+Then: paste the full error in the group chat
+
+Finally: tag the team lead if stuck for more than 30 minutes
+
+Last Updated: Week of 10 October 2026
+Version: MVP 3.0 — All modules with photos and PDF document downloads
+Next Milestone: Cross-module integration and payment gateway
