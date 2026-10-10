@@ -3,7 +3,7 @@
 **Project:** Integrated Government Services System for Lesotho  
 **Course:** BIHC3110 — Human Computer Interaction  
 **Institution:** Limkokwing University of Creative Technology — Lesotho  
-**Team:** 5 members
+**Team:** [@Zulu-012], [@lehakoe-droi], [@C0-der], [@Boni-01] 
 
 An integrated digital public-service platform concept for Lesotho, bringing multiple government services into one system.
 
