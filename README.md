@@ -295,13 +295,13 @@ cd ../backend
 npm install express cors dotenv mysql2 firebase-admin multer pdf-lib
 ```
 ### Step 4: Get the secret files from the team lead
-Two files are NOT in Git (security reasons). Ask the team lead to send them privately (WhatsApp DM, Discord DM, or Google Drive — never in the group chat):
+Two files are NOT in Git (security reasons). Ask the team lead to send them privately (WhatsApp DM or Google Mail):
 
 .env — Backend environment variables
 
 FirebaseAccountKey.json — Firebase Admin SDK key
 
-Place both files inside the backend/ folder:
+Create both files inside the backend/ folder:
 
 ```text
 backend/
