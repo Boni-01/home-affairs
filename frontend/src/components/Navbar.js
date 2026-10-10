@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
+import flagImage from "../Flag.png"; // Adjust path if Flag.png is in a subfolder (e.g., "./assets/Flag.png")
 import "./Navbar.css";
 
 function Navbar({ isAuthenticated, onLogout }) {
@@ -34,7 +35,11 @@ function Navbar({ isAuthenticated, onLogout }) {
       <div className="navbar-container">
         {/* Logo */}
         <Link to="/" className="navbar-logo" onClick={handleNavClick}>
-          <span className="logo-mark" aria-hidden="true">🇱🇸</span>
+          <img 
+            src={flagImage} 
+            alt="Kingdom of Lesotho Flag" 
+            className="logo-flag-img" 
+          />
           <span className="logo-text">
             <span className="logo-title">Home Affairs</span>
             <span className="logo-subtitle">Kingdom of Lesotho</span>

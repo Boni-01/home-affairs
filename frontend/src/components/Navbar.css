@@ -76,6 +76,12 @@
   color: inherit;
   flex-shrink: 0;
 }
+.logo-flag-img {
+  width: 36px;
+  height: auto;
+  object-fit: contain;
+  border-radius: 2px;
+}
 
 .logo-mark {
   font-size: 28px;
