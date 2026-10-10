@@ -17,17 +17,90 @@ async function api(path, opts = {}) {
   return data;
 }
 
+const APPLICATION_ICONS = {
+  REGISTRATION: () => (
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M4 20V4h11l5 5v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z" />
+      <path d="M15 4v5h5" />
+      <path d="M8 12h8M8 16h8" />
+    </svg>
+  ),
+  RETIREMENT_BENEFIT: () => (
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M4 10h16M6 10V7.5A1.5 1.5 0 0 1 7.5 6h9A1.5 1.5 0 0 1 18 7.5V10" />
+      <path d="M7 10v9h10v-9" />
+      <path d="M10 14h4" />
+    </svg>
+  ),
+  RESIGNATION_BENEFIT: () => (
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M8 7h8" />
+      <path d="M9 11h6" />
+      <path d="M8 4h8a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z" />
+      <path d="M12 15h.01" />
+    </svg>
+  ),
+  TERMINATION_BENEFIT: () => (
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M5 5h14v14H5z" />
+      <path d="M8 8h8v8H8z" />
+      <path d="M10 12h4" />
+    </svg>
+  ),
+  RETRENCHMENT_BENEFIT: () => (
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M4 16l6-8 4 6 6-8" />
+      <path d="M18 6h2v2" />
+      <path d="M4 20h16" />
+    </svg>
+  ),
+  DISABILITY_BENEFIT: () => (
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M12 21a7 7 0 1 1 0-14 7 7 0 0 1 0 14z" />
+      <path d="M9 10h6M12 7v6" />
+      <path d="M8 16c1-1 3-1.5 4-1.5s3 .5 4 1.5" />
+    </svg>
+  ),
+  DEATH_BENEFIT: () => (
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M12 20s-6-3.5-6-8.5A3.5 3.5 0 0 1 9.5 8c1.1 0 2.2.5 3 1.4A3.8 3.8 0 0 1 15.5 8 3.5 3.5 0 0 1 19 11.5C19 16.5 13 20 12 20z" />
+    </svg>
+  ),
+  OLD_AGE_PENSION: () => (
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="9" cy="8" r="3" />
+      <path d="M4 18a5 5 0 0 1 10 0" />
+      <path d="M16 8h4M18 6v4" />
+      <path d="M15 18h5" />
+    </svg>
+  ),
+  RECORD_CORRECTION: () => (
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M4 20V4h11l5 5v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z" />
+      <path d="M15 4v5h5" />
+      <path d="M8 12l2 2 5-5" />
+    </svg>
+  ),
+  OTHER: () => (
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M7 3h8l4 4v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z" />
+      <path d="M14 3v5h5" />
+      <path d="M8 13h8M8 17h8" />
+    </svg>
+  )
+};
+
 const APPLICATION_TYPES = [
-  { key: "REGISTRATION",         label: "Pension registration",        icon: "📝", needsDocs: true },
-  { key: "RETIREMENT_BENEFIT",   label: "Retirement benefit",          icon: "🏦", needsDocs: true },
-  { key: "RESIGNATION_BENEFIT",  label: "Resignation benefit",         icon: "📤", needsDocs: true },
-  { key: "TERMINATION_BENEFIT",  label: "Termination benefit",         icon: "📕", needsDocs: true },
-  { key: "RETRENCHMENT_BENEFIT", label: "Retrenchment benefit",        icon: "📉", needsDocs: true },
-  { key: "DISABILITY_BENEFIT",   label: "Disability benefit",          icon: "🩺", needsDocs: true },
-  { key: "DEATH_BENEFIT",        label: "Death / survivor benefit",    icon: "🕊️", needsDocs: true },
-  { key: "OLD_AGE_PENSION",      label: "Old Age Pension application", icon: "👴", needsDocs: true },
-  { key: "RECORD_CORRECTION",    label: "Record correction",           icon: "✏️", needsDocs: false },
-  { key: "OTHER",                label: "Other pension request",       icon: "📋", needsDocs: false }
+  { key: "REGISTRATION",         label: "Pension registration",        icon: APPLICATION_ICONS.REGISTRATION, needsDocs: true },
+  { key: "RETIREMENT_BENEFIT",   label: "Retirement benefit",          icon: APPLICATION_ICONS.RETIREMENT_BENEFIT, needsDocs: true },
+  { key: "RESIGNATION_BENEFIT",  label: "Resignation benefit",         icon: APPLICATION_ICONS.RESIGNATION_BENEFIT, needsDocs: true },
+  { key: "TERMINATION_BENEFIT",  label: "Termination benefit",         icon: APPLICATION_ICONS.TERMINATION_BENEFIT, needsDocs: true },
+  { key: "RETRENCHMENT_BENEFIT", label: "Retrenchment benefit",        icon: APPLICATION_ICONS.RETRENCHMENT_BENEFIT, needsDocs: true },
+  { key: "DISABILITY_BENEFIT",   label: "Disability benefit",          icon: APPLICATION_ICONS.DISABILITY_BENEFIT, needsDocs: true },
+  { key: "DEATH_BENEFIT",        label: "Death / survivor benefit",    icon: APPLICATION_ICONS.DEATH_BENEFIT, needsDocs: true },
+  { key: "OLD_AGE_PENSION",      label: "Old Age Pension application", icon: APPLICATION_ICONS.OLD_AGE_PENSION, needsDocs: true },
+  { key: "RECORD_CORRECTION",    label: "Record correction",           icon: APPLICATION_ICONS.RECORD_CORRECTION, needsDocs: false },
+  { key: "OTHER",                label: "Other pension request",       icon: APPLICATION_ICONS.OTHER, needsDocs: false }
 ];
 
 const ENQUIRY_TYPES = [
@@ -444,22 +517,31 @@ function PensionsDashboard() {
               gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
               gap: 16
             }}>
-              {APPLICATION_TYPES.map(t => (
-                <article key={t.key} style={{
-                  background: "#fff", border: `1px solid ${COLORS.border}`,
-                  borderRadius: 12, padding: 20,
-                  display: "flex", flexDirection: "column", gap: 8
-                }}>
-                  <span style={{ fontSize: 24 }}>{t.icon}</span>
-                  <h3 style={{ margin: 0, fontSize: 15, color: COLORS.blue }}>{t.label}</h3>
-                  <button onClick={() => openType(t)} style={{
-                    marginTop: 8, padding: "10px", border: 0,
-                    background: COLORS.blue, color: "#fff",
-                    borderRadius: 6, fontWeight: 700, fontSize: 13,
-                    cursor: "pointer", fontFamily: "inherit"
-                  }}>Start</button>
-                </article>
-              ))}
+              {APPLICATION_TYPES.map(t => {
+                const Icon = t.icon;
+                return (
+                  <article key={t.key} style={{
+                    background: "#fff", border: `1px solid ${COLORS.border}`,
+                    borderRadius: 12, padding: 20,
+                    display: "flex", flexDirection: "column", gap: 8
+                  }}>
+                    <div style={{
+                      width: 40, height: 40, display: "flex", alignItems: "center",
+                      justifyContent: "center", color: COLORS.blue, background: "#edf3ff",
+                      borderRadius: 10
+                    }}>
+                      <Icon />
+                    </div>
+                    <h3 style={{ margin: 0, fontSize: 15, color: COLORS.blue }}>{t.label}</h3>
+                    <button onClick={() => openType(t)} style={{
+                      marginTop: 8, padding: "10px", border: 0,
+                      background: COLORS.blue, color: "#fff",
+                      borderRadius: 6, fontWeight: 700, fontSize: 13,
+                      cursor: "pointer", fontFamily: "inherit"
+                    }}>Start</button>
+                  </article>
+                );
+              })}
             </div>
           </section>
         )}

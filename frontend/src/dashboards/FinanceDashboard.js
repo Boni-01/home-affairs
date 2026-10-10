@@ -17,14 +17,64 @@ async function api(path, opts = {}) {
   return data;
 }
 
+const REQUEST_ICONS = {
+  TAX_REQUEST: () => (
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M7 3h8l4 4v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z" />
+      <path d="M14 3v5h5" />
+      <path d="M8 13h8M8 17h6" />
+    </svg>
+  ),
+  TAX_CLEARANCE: () => (
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M5 12.5 9 16l10-10" />
+      <path d="M20 6.5V4h-2.5" />
+      <path d="M3 19.5h18" />
+    </svg>
+  ),
+  TAX_DECLARATION: () => (
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M7 3h8l4 4v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z" />
+      <path d="M14 3v5h5" />
+      <path d="M8 12h8M8 16h8" />
+    </svg>
+  ),
+  SUPPLIER_REGISTRATION: () => (
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M3 21V7l9-4 9 4v14" />
+      <path d="M8 10h8M8 14h8M8 18h8" />
+    </svg>
+  ),
+  INVOICE_CLAIM: () => (
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M7 3h8l4 4v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z" />
+      <path d="M14 3v5h5" />
+      <path d="M8 12h8M8 16h6" />
+      <path d="M8 8h3" />
+    </svg>
+  ),
+  TAX_REFUND: () => (
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M12 3v18" />
+      <path d="M17 7.5A3.5 3.5 0 0 0 12 5h-1a3.5 3.5 0 0 0 0 7h2a3.5 3.5 0 0 1 0 7h-1a3.5 3.5 0 0 1-5-2.5" />
+    </svg>
+  ),
+  GENERAL_ENQUIRY: () => (
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M5 6.5A2.5 2.5 0 0 1 7.5 4h9A2.5 2.5 0 0 1 19 6.5v7A2.5 2.5 0 0 1 16.5 16H10l-5 4v-4.5A2.5 2.5 0 0 1 5 13.5v-7z" />
+      <path d="M8 9h8M8 12h6" />
+    </svg>
+  )
+};
+
 const REQUEST_TYPES = [
-  { key: "TAX_REQUEST",           label: "Tax-related request",       icon: "🧾", serviceCode: "TAX-REQUEST" },
-  { key: "TAX_CLEARANCE",         label: "Tax clearance request",     icon: "✅", serviceCode: "TAX-CLEARANCE" },
-  { key: "TAX_DECLARATION",       label: "Tax declaration",           icon: "📄", serviceCode: "TAX-DECLARATION" },
-  { key: "SUPPLIER_REGISTRATION", label: "Supplier registration",     icon: "🏢", serviceCode: "SUPPLIER-REG" },
-  { key: "INVOICE_CLAIM",         label: "Invoice / payment claim",   icon: "📑", serviceCode: "INVOICE-CLAIM" },
-  { key: "TAX_REFUND",            label: "Tax refund request",        icon: "💰", serviceCode: "TAX-REFUND" },
-  { key: "GENERAL_ENQUIRY",       label: "Finance enquiry",           icon: "💬", serviceCode: "FINANCE-ENQUIRY" }
+  { key: "TAX_REQUEST",           label: "Tax-related request",       icon: REQUEST_ICONS.TAX_REQUEST, serviceCode: "TAX-REQUEST" },
+  { key: "TAX_CLEARANCE",         label: "Tax clearance request",     icon: REQUEST_ICONS.TAX_CLEARANCE, serviceCode: "TAX-CLEARANCE" },
+  { key: "TAX_DECLARATION",       label: "Tax declaration",           icon: REQUEST_ICONS.TAX_DECLARATION, serviceCode: "TAX-DECLARATION" },
+  { key: "SUPPLIER_REGISTRATION", label: "Supplier registration",     icon: REQUEST_ICONS.SUPPLIER_REGISTRATION, serviceCode: "SUPPLIER-REG" },
+  { key: "INVOICE_CLAIM",         label: "Invoice / payment claim",   icon: REQUEST_ICONS.INVOICE_CLAIM, serviceCode: "INVOICE-CLAIM" },
+  { key: "TAX_REFUND",            label: "Tax refund request",        icon: REQUEST_ICONS.TAX_REFUND, serviceCode: "TAX-REFUND" },
+  { key: "GENERAL_ENQUIRY",       label: "Finance enquiry",           icon: REQUEST_ICONS.GENERAL_ENQUIRY, serviceCode: "FINANCE-ENQUIRY" }
 ];
 
 const FIELD_GROUPS = {
@@ -339,22 +389,31 @@ function FinanceDashboard() {
               gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
               gap: 16
             }}>
-              {REQUEST_TYPES.map(t => (
-                <article key={t.key} style={{
-                  background: "#fff", border: `1px solid ${COLORS.border}`,
-                  borderRadius: 12, padding: 20,
-                  display: "flex", flexDirection: "column", gap: 8
-                }}>
-                  <span style={{ fontSize: 24 }}>{t.icon}</span>
-                  <h3 style={{ margin: 0, fontSize: 15, color: COLORS.blue }}>{t.label}</h3>
-                  <button onClick={() => { setTab("new"); openType(t); }} style={{
-                    marginTop: 8, padding: "10px", border: 0,
-                    background: COLORS.blue, color: "#fff",
-                    borderRadius: 6, fontWeight: 700, fontSize: 13,
-                    cursor: "pointer", fontFamily: "inherit"
-                  }}>Start</button>
-                </article>
-              ))}
+              {REQUEST_TYPES.map(t => {
+                const Icon = t.icon;
+                return (
+                  <article key={t.key} style={{
+                    background: "#fff", border: `1px solid ${COLORS.border}`,
+                    borderRadius: 12, padding: 20,
+                    display: "flex", flexDirection: "column", gap: 8
+                  }}>
+                    <div style={{
+                      width: 40, height: 40, display: "flex", alignItems: "center",
+                      justifyContent: "center", color: COLORS.blue, background: "#edf3ff",
+                      borderRadius: 10
+                    }}>
+                      <Icon />
+                    </div>
+                    <h3 style={{ margin: 0, fontSize: 15, color: COLORS.blue }}>{t.label}</h3>
+                    <button onClick={() => { setTab("new"); openType(t); }} style={{
+                      marginTop: 8, padding: "10px", border: 0,
+                      background: COLORS.blue, color: "#fff",
+                      borderRadius: 6, fontWeight: 700, fontSize: 13,
+                      cursor: "pointer", fontFamily: "inherit"
+                    }}>Start</button>
+                  </article>
+                );
+              })}
             </div>
           </section>
         )}

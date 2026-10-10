@@ -21,18 +21,96 @@ async function api(path, opts = {}) {
 // ============================================================
 // Application types (categories the citizen can start)
 // ============================================================
+const APPLICATION_ICONS = {
+  crime_report: () => (
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M12 2 4 5v7c0 4.5 3.1 8.7 8 10 4.9-1.3 8-5.5 8-10V5l-8-3z" />
+      <path d="M12 8v5M12 16h.01" />
+    </svg>
+  ),
+  theft_report: () => (
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="11" cy="12" r="6" />
+      <path d="M11 8v4l3 2" />
+      <path d="M17 4h3v3" />
+      <path d="M20 4l-6 6" />
+    </svg>
+  ),
+  lost_item_report: () => (
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="11" cy="11" r="6" />
+      <path d="m16 16 5 5" />
+      <path d="M8 11h6M11 8v6" />
+    </svg>
+  ),
+  missing_person_report: () => (
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="12" cy="8" r="4" />
+      <path d="M4 20c1.7-3.3 5-5 8-5s6.3 1.7 8 5" />
+      <path d="M18 4l3 3M21 4l-3 3" />
+    </svg>
+  ),
+  fraud_report: () => (
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="4" y="5" width="16" height="12" rx="2" />
+      <path d="M8 9h8M8 13h5" />
+      <path d="M4 17l4 4M20 17l-4 4" />
+    </svg>
+  ),
+  traffic_incident: () => (
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M3 12h18" />
+      <path d="m7 8 5-5 5 5" />
+      <path d="m7 16 5 5 5-5" />
+      <path d="M12 3v18" />
+    </svg>
+  ),
+  police_clearance: () => (
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M12 2 4 5v7c0 4.5 3.1 8.7 8 10 4.9-1.3 8-5.5 8-10V5l-8-3z" />
+      <path d="M9 12l2 2 4-4" />
+    </svg>
+  ),
+  police_report_request: () => (
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M7 3h8l4 4v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z" />
+      <path d="M14 3v5h5" />
+      <path d="M8 12h8M8 16h6" />
+    </svg>
+  ),
+  police_conduct_complaint: () => (
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M12 3 3 7v6c0 4.5 3.1 8.7 9 10 5.9-1.3 9-5.5 9-10V7l-9-4z" />
+      <path d="M12 8v5M12 16h.01" />
+    </svg>
+  ),
+  witness_information: () => (
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="9" cy="8" r="3" />
+      <path d="M4 18a5 5 0 0 1 10 0" />
+      <path d="M18 8h2M18 12h2M19 6v4" />
+    </svg>
+  ),
+  additional_evidence: () => (
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M8 7V4h8l4 4v12a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2z" />
+      <path d="M16 4v4h4M9 13h6M9 17h6" />
+    </svg>
+  )
+};
+
 const APPLICATION_TYPES = [
-  { key: "crime_report",            label: "Report a crime",                       description: "Report theft, assault, burglary, fraud, or any other criminal incident.", categoryCode: "CRIME",           icon: "🚨" },
-  { key: "theft_report",            label: "Report theft",                         description: "Report stolen property, livestock, or other possessions.",                categoryCode: "THEFT",           icon: "🕵️" },
-  { key: "lost_item_report",        label: "Report a lost item",                   description: "Report lost identity documents, phones, or other property.",              categoryCode: "LOST_ITEM",       icon: "🔎" },
-  { key: "missing_person_report",   label: "Report a missing person",              description: "Submit information about a missing person.",                              categoryCode: "MISSING_PERSON",  icon: "🧭" },
-  { key: "fraud_report",            label: "Report fraud or cybercrime",           description: "Report suspected fraud, scams, or online crime.",                         categoryCode: "FRAUD_CYBER",     icon: "💻" },
-  { key: "traffic_incident",        label: "Report a road traffic incident",       description: "Submit information about a traffic accident or road incident.",           categoryCode: "TRAFFIC",         icon: "🚗" },
-  { key: "police_clearance",        label: "Request a police clearance certificate", description: "Apply for a clearance certificate, subject to eligibility checks.",       categoryCode: "CLEARANCE",       icon: "🪪" },
-  { key: "police_report_request",   label: "Request a police report",              description: "Request an eligible copy or confirmation of a police report.",            categoryCode: "POLICE_REPORT",   icon: "📄" },
-  { key: "police_conduct_complaint",label: "Complaint against police conduct",     description: "Report alleged misconduct or dissatisfaction with police service.",       categoryCode: "COMPLAINT",       icon: "⚖️" },
-  { key: "witness_information",     label: "Submit witness information",           description: "Provide details of an incident or potential witnesses.",                  categoryCode: "WITNESS",         icon: "🙋" },
-  { key: "additional_evidence",     label: "Provide additional evidence",          description: "Upload documents, photographs, or other relevant information.",           categoryCode: "EVIDENCE",        icon: "📎" }
+  { key: "crime_report",            label: "Report a crime",                       description: "Report theft, assault, burglary, fraud, or any other criminal incident.", categoryCode: "CRIME",           icon: APPLICATION_ICONS.crime_report },
+  { key: "theft_report",            label: "Report theft",                         description: "Report stolen property, livestock, or other possessions.",                categoryCode: "THEFT",           icon: APPLICATION_ICONS.theft_report },
+  { key: "lost_item_report",        label: "Report a lost item",                   description: "Report lost identity documents, phones, or other property.",              categoryCode: "LOST_ITEM",       icon: APPLICATION_ICONS.lost_item_report },
+  { key: "missing_person_report",   label: "Report a missing person",              description: "Submit information about a missing person.",                              categoryCode: "MISSING_PERSON",  icon: APPLICATION_ICONS.missing_person_report },
+  { key: "fraud_report",            label: "Report fraud or cybercrime",           description: "Report suspected fraud, scams, or online crime.",                         categoryCode: "FRAUD_CYBER",     icon: APPLICATION_ICONS.fraud_report },
+  { key: "traffic_incident",        label: "Report a road traffic incident",       description: "Submit information about a traffic accident or road incident.",           categoryCode: "TRAFFIC",         icon: APPLICATION_ICONS.traffic_incident },
+  { key: "police_clearance",        label: "Request a police clearance certificate", description: "Apply for a clearance certificate, subject to eligibility checks.",       categoryCode: "CLEARANCE",       icon: APPLICATION_ICONS.police_clearance },
+  { key: "police_report_request",   label: "Request a police report",              description: "Request an eligible copy or confirmation of a police report.",            categoryCode: "POLICE_REPORT",   icon: APPLICATION_ICONS.police_report_request },
+  { key: "police_conduct_complaint",label: "Complaint against police conduct",     description: "Report alleged misconduct or dissatisfaction with police service.",       categoryCode: "COMPLAINT",       icon: APPLICATION_ICONS.police_conduct_complaint },
+  { key: "witness_information",     label: "Submit witness information",           description: "Provide details of an incident or potential witnesses.",                  categoryCode: "WITNESS",         icon: APPLICATION_ICONS.witness_information },
+  { key: "additional_evidence",     label: "Provide additional evidence",          description: "Upload documents, photographs, or other relevant information.",           categoryCode: "EVIDENCE",        icon: APPLICATION_ICONS.additional_evidence }
 ];
 
 const FIELDS_BY_TYPE = {
@@ -496,26 +574,35 @@ function PoliceDashboard() {
               gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
               gap: 16
             }}>
-              {APPLICATION_TYPES.map(t => (
-                <article key={t.key} style={{
-                  background: "#fff", border: `1px solid ${COLORS.border}`,
-                  borderRadius: 12, padding: 20,
-                  boxShadow: "0 2px 8px rgba(0,32,159,0.05)",
-                  display: "flex", flexDirection: "column", gap: 8
-                }}>
-                  <span style={{ fontSize: 24 }}>{t.icon}</span>
-                  <h3 style={{ margin: 0, fontSize: 15, color: COLORS.blue }}>{t.label}</h3>
-                  <p style={{ margin: 0, fontSize: 13, color: COLORS.textMuted, lineHeight: 1.5, flexGrow: 1 }}>
-                    {t.description}
-                  </p>
-                  <button onClick={() => openType(t)} style={{
-                    width: "100%", padding: "10px", border: 0,
-                    background: COLORS.blue, color: "#fff",
-                    borderRadius: 6, fontWeight: 700, fontSize: 13,
-                    cursor: "pointer", fontFamily: "inherit"
-                  }}>Start</button>
-                </article>
-              ))}
+              {APPLICATION_TYPES.map(t => {
+                const Icon = t.icon;
+                return (
+                  <article key={t.key} style={{
+                    background: "#fff", border: `1px solid ${COLORS.border}`,
+                    borderRadius: 12, padding: 20,
+                    boxShadow: "0 2px 8px rgba(0,32,159,0.05)",
+                    display: "flex", flexDirection: "column", gap: 8
+                  }}>
+                    <div style={{
+                      width: 40, height: 40, display: "flex", alignItems: "center",
+                      justifyContent: "center", color: COLORS.blue, background: "#edf3ff",
+                      borderRadius: 10
+                    }}>
+                      <Icon />
+                    </div>
+                    <h3 style={{ margin: 0, fontSize: 15, color: COLORS.blue }}>{t.label}</h3>
+                    <p style={{ margin: 0, fontSize: 13, color: COLORS.textMuted, lineHeight: 1.5, flexGrow: 1 }}>
+                      {t.description}
+                    </p>
+                    <button onClick={() => openType(t)} style={{
+                      width: "100%", padding: "10px", border: 0,
+                      background: COLORS.blue, color: "#fff",
+                      borderRadius: 6, fontWeight: 700, fontSize: 13,
+                      cursor: "pointer", fontFamily: "inherit"
+                    }}>Start</button>
+                  </article>
+                );
+              })}
             </div>
           </section>
         )}
