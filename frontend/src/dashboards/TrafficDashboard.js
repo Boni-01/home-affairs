@@ -5,6 +5,129 @@ import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 
 // ============================================================
+// SVG ICONS
+// ============================================================
+const TrafficIcons = {
+  Document: ({ size = 24, ...props }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M14 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7z" />
+      <path d="M14 2v6h6" />
+      <path d="M9 11h6M9 15h6" />
+    </svg>
+  ),
+  Car: ({ size = 24, ...props }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M5 16l1.5-5.5A2 2 0 0 1 8.4 9h7.2a2 2 0 0 1 1.9 1.5L19 16" />
+      <path d="M3 16h18v2.5A1.5 1.5 0 0 1 19.5 20h-15A1.5 1.5 0 0 1 3 18.5V16z" />
+      <circle cx="7.5" cy="16.5" r="1.5" />
+      <circle cx="16.5" cy="16.5" r="1.5" />
+    </svg>
+  ),
+  Refresh: ({ size = 24, ...props }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M3 12a9 9 0 0 1 15.3-6.3L21 7" />
+      <path d="M21 12a9 9 0 0 1-15.3 6.3L3 17" />
+      <path d="M21 7v5h-5" />
+      <path d="M3 17v-5h5" />
+    </svg>
+  ),
+  Clipboard: ({ size = 24, ...props }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M9 3h6" />
+      <path d="M8 4h8a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z" />
+      <path d="M9 9h6M9 13h6" />
+    </svg>
+  ),
+  Pencil: ({ size = 24, ...props }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M12 20h9" />
+      <path d="M16.5 3.5a2.1 2.1 0 1 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
+    </svg>
+  ),
+  Vehicle: ({ size = 24, ...props }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M3 14l2.2-6a2 2 0 0 1 1.9-1.4h9.8a2 2 0 0 1 1.9 1.4L20 14" />
+      <path d="M5 14h14v4H5zm2 0V9h10v5" />
+      <circle cx="7.5" cy="18.5" r="1.5" />
+      <circle cx="16.5" cy="18.5" r="1.5" />
+    </svg>
+  ),
+  Box: ({ size = 24, ...props }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M3 7.5 12 3l9 4.5-9 4.5L3 7.5z" />
+      <path d="M3 7.5V16l9 5 9-5V7.5" />
+      <path d="M12 12v9" />
+    </svg>
+  ),
+  Globe: ({ size = 24, ...props }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18" />
+    </svg>
+  ),
+  Number: ({ size = 24, ...props }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M8 3v18M16 3v18M3 8h18M3 16h18" />
+    </svg>
+  ),
+  File: ({ size = 24, ...props }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M14 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7z" />
+      <path d="M14 2v6h6" />
+      <path d="M8 13h8M8 17h8" />
+    </svg>
+  ),
+  Wrench: ({ size = 24, ...props }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M14.7 6.3a6 6 0 0 0-8.4 8.4L10 20l4-4-4-4 4.7-4.7a6 6 0 0 0 8.4 8.4" />
+      <path d="M14 14l-4 4" />
+    </svg>
+  ),
+  Check: ({ size = 24, ...props }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M20 6L9 17l-5-5" />
+    </svg>
+  ),
+  Repeat: ({ size = 24, ...props }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M17 1l4 4-4 4" />
+      <path d="M3 11V9a4 4 0 0 1 4-4h14" />
+      <path d="M7 23l-4-4 4-4" />
+      <path d="M21 13v2a4 4 0 0 1-4 4H3" />
+    </svg>
+  ),
+  Bus: ({ size = 24, ...props }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M4 14V7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v7" />
+      <path d="M4 14h16v4H4z" />
+      <path d="M7 18v2M17 18v2" />
+      <circle cx="7.5" cy="10.5" r="1.5" />
+      <circle cx="16.5" cy="10.5" r="1.5" />
+    </svg>
+  ),
+  Graduation: ({ size = 24, ...props }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M2 9l10-5 10 5-10 5-10-5z" />
+      <path d="M6 10.5V16c0 1.7 3.6 3 6 3s6-1.3 6-3v-5.5" />
+      <path d="M12 14v7" />
+    </svg>
+  ),
+  Teacher: ({ size = 24, ...props }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M16 19v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+      <circle cx="10" cy="7" r="4" />
+      <path d="M22 19v-2a4 4 0 0 0-3-3.87" />
+      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+    </svg>
+  ),
+  Chat: ({ size = 24, ...props }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+    </svg>
+  )
+};
+
+// ============================================================
 // API helper
 // ============================================================
 async function api(path, opts = {}) {
@@ -29,7 +152,7 @@ const SERVICE_CONFIG = {
   LEARNER_LICENCE: {
     label: "Learner's Licence Application",
     fee: 50,
-    icon: "📝",
+    icon: TrafficIcons.Document,
     fields: [
       { key: "id_number", label: "National ID Number", type: "text", required: true },
       { key: "date_of_birth", label: "Date of Birth", type: "date", required: true },
@@ -41,7 +164,7 @@ const SERVICE_CONFIG = {
   DRIVER_LICENCE: {
     label: "Driver's Licence Application",
     fee: 100,
-    icon: "🚗",
+    icon: TrafficIcons.Car,
     fields: [
       { key: "id_number", label: "National ID Number", type: "text", required: true },
       { key: "date_of_birth", label: "Date of Birth", type: "date", required: true },
@@ -54,7 +177,7 @@ const SERVICE_CONFIG = {
   LICENCE_RENEWAL: {
     label: "Driver's Licence Renewal",
     fee: 80,
-    icon: "🔄",
+    icon: TrafficIcons.Refresh,
     fields: [
       { key: "licence_number", label: "Current Licence Number", type: "text", required: true },
       { key: "licence_category", label: "Licence Category", type: "text", required: true },
@@ -65,7 +188,7 @@ const SERVICE_CONFIG = {
   LICENCE_REPLACEMENT: {
     label: "Licence Replacement (Lost / Damaged)",
     fee: 100,
-    icon: "📋",
+    icon: TrafficIcons.Clipboard,
     fields: [
       { key: "licence_number", label: "Licence Number (if known)", type: "text" },
       { key: "reason", label: "Reason", type: "select", options: ["Lost", "Damaged", "Stolen"], required: true },
@@ -76,7 +199,7 @@ const SERVICE_CONFIG = {
   LICENCE_CORRECTION: {
     label: "Licence Correction",
     fee: 50,
-    icon: "✏️",
+    icon: TrafficIcons.Pencil,
     fields: [
       { key: "licence_number", label: "Licence Number", type: "text", required: true },
       { key: "field_to_correct", label: "Field to Correct", type: "select", options: ["Name spelling", "Date of birth", "National ID", "Address", "Category", "Other"], required: true },
@@ -88,7 +211,7 @@ const SERVICE_CONFIG = {
   VEHICLE_REGISTRATION: {
     label: "Register a Motor Vehicle",
     fee: 150,
-    icon: "🚙",
+    icon: TrafficIcons.Vehicle,
     fields: [
       { key: "vin", label: "VIN / Chassis Number", type: "text", required: true },
       { key: "engine_number", label: "Engine Number", type: "text" },
@@ -103,7 +226,7 @@ const SERVICE_CONFIG = {
   IMPORTED_VEHICLE_REGISTRATION: {
     label: "Register an Imported Vehicle",
     fee: 250,
-    icon: "📦",
+    icon: TrafficIcons.Box,
     fields: [
       { key: "vin", label: "VIN / Chassis Number", type: "text", required: true },
       { key: "make", label: "Make", type: "text", required: true },
@@ -119,7 +242,7 @@ const SERVICE_CONFIG = {
   SECOND_HAND_LOCAL: {
     label: "Second-Hand Vehicle (Purchased Locally)",
     fee: 150,
-    icon: "🚗",
+    icon: TrafficIcons.Car,
     fields: [
       { key: "vin", label: "VIN / Chassis Number", type: "text", required: true },
       { key: "make", label: "Make", type: "text", required: true },
@@ -134,7 +257,7 @@ const SERVICE_CONFIG = {
   SECOND_HAND_FOREIGN: {
     label: "Second-Hand Vehicle (Purchased Abroad)",
     fee: 250,
-    icon: "🌍",
+    icon: TrafficIcons.Globe,
     fields: [
       { key: "vin", label: "VIN / Chassis Number", type: "text", required: true },
       { key: "make", label: "Make", type: "text", required: true },
@@ -148,7 +271,7 @@ const SERVICE_CONFIG = {
   OWNERSHIP_TRANSFER: {
     label: "Vehicle Ownership Transfer",
     fee: 100,
-    icon: "📝",
+    icon: TrafficIcons.Document,
     fields: [
       { key: "registration_number", label: "Current Registration Number", type: "text", required: true },
       { key: "new_owner_name", label: "New Owner's Full Name", type: "text", required: true },
@@ -160,7 +283,7 @@ const SERVICE_CONFIG = {
   NUMBER_PLATE: {
     label: "Apply for Number Plates",
     fee: 100,
-    icon: "🔢",
+    icon: TrafficIcons.Number,
     fields: [
       { key: "vin", label: "VIN / Chassis Number", type: "text", required: true },
       { key: "registration_number", label: "Registration Number (if assigned)", type: "text" },
@@ -172,7 +295,7 @@ const SERVICE_CONFIG = {
   NUMBER_PLATE_REPLACEMENT: {
     label: "Replace Number Plates",
     fee: 150,
-    icon: "🔢",
+    icon: TrafficIcons.Number,
     fields: [
       { key: "registration_number", label: "Current Registration Number", type: "text", required: true },
       { key: "reason", label: "Reason", type: "select", options: ["Lost", "Damaged", "Stolen", "Worn out"], required: true },
@@ -183,7 +306,7 @@ const SERVICE_CONFIG = {
   SPECIAL_VEHICLE_PERMIT: {
     label: "Special Permit (New Vehicle Awaiting Registration)",
     fee: 100,
-    icon: "📄",
+    icon: TrafficIcons.File,
     fields: [
       { key: "vin", label: "VIN / Chassis Number", type: "text", required: true },
       { key: "make", label: "Make", type: "text", required: true },
@@ -197,7 +320,7 @@ const SERVICE_CONFIG = {
   ROADWORTHINESS_INSPECTION: {
     label: "Roadworthiness Inspection",
     fee: 80,
-    icon: "🔧",
+    icon: TrafficIcons.Wrench,
     fields: [
       { key: "vin", label: "VIN / Chassis Number", type: "text", required: true },
       { key: "registration_number", label: "Registration Number", type: "text" },
@@ -210,7 +333,7 @@ const SERVICE_CONFIG = {
   FITNESS_INSPECTION: {
     label: "Fitness Inspection",
     fee: 80,
-    icon: "✅",
+    icon: TrafficIcons.Check,
     fields: [
       { key: "vin", label: "VIN / Chassis Number", type: "text", required: true },
       { key: "registration_number", label: "Registration Number", type: "text" },
@@ -223,7 +346,7 @@ const SERVICE_CONFIG = {
   RE_INSPECTION: {
     label: "Re-inspection",
     fee: 40,
-    icon: "🔁",
+    icon: TrafficIcons.Repeat,
     fields: [
       { key: "vin", label: "VIN / Chassis Number", type: "text", required: true },
       { key: "previous_inspection_reference", label: "Previous Inspection Reference", type: "text", required: true },
@@ -235,7 +358,7 @@ const SERVICE_CONFIG = {
   PUBLIC_MOTOR_VEHICLE_PERMIT: {
     label: "Public Motor Vehicle Permit",
     fee: 300,
-    icon: "🚌",
+    icon: TrafficIcons.Bus,
     fields: [
       { key: "vin", label: "VIN / Chassis Number", type: "text", required: true },
       { key: "registration_number", label: "Registration Number", type: "text", required: true },
@@ -249,7 +372,7 @@ const SERVICE_CONFIG = {
   PERMIT_RENEWAL: {
     label: "Permit Renewal",
     fee: 250,
-    icon: "🔄",
+    icon: TrafficIcons.Refresh,
     fields: [
       { key: "permit_number", label: "Existing Permit Number", type: "text", required: true },
       { key: "registration_number", label: "Vehicle Registration Number", type: "text", required: true },
@@ -260,7 +383,7 @@ const SERVICE_CONFIG = {
   DRIVING_SCHOOL_REGISTRATION: {
     label: "Driving School Registration",
     fee: 500,
-    icon: "🎓",
+    icon: TrafficIcons.Graduation,
     fields: [
       { key: "school_name", label: "School Name", type: "text", required: true },
       { key: "owner_name", label: "Owner / Director Name", type: "text", required: true },
@@ -276,7 +399,7 @@ const SERVICE_CONFIG = {
   INSTRUCTOR_REGISTRATION: {
     label: "Driving Instructor Registration",
     fee: 200,
-    icon: "👨‍🏫",
+    icon: TrafficIcons.Teacher,
     fields: [
       { key: "full_name", label: "Instructor Full Name", type: "text", required: true },
       { key: "national_id", label: "National ID", type: "text", required: true },
@@ -291,7 +414,7 @@ const SERVICE_CONFIG = {
   RECORD_CORRECTION: {
     label: "Record Correction",
     fee: 50,
-    icon: "✏️",
+    icon: TrafficIcons.Pencil,
     fields: [
       { key: "record_type", label: "Type of Record", type: "select", options: ["Driver licence", "Vehicle registration", "Fine", "Permit", "Other"], required: true },
       { key: "record_reference", label: "Record Reference", type: "text", required: true },
@@ -695,14 +818,14 @@ function TrafficDashboard() {
                 gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
                 gap: 12
               }}>
-                <ShortcutButton icon="📝" label="Apply for Learner's Licence" onClick={() => openServiceModal("LEARNER_LICENCE")} />
-                <ShortcutButton icon="🚗" label="Apply for Driver's Licence" onClick={() => openServiceModal("DRIVER_LICENCE")} />
-                <ShortcutButton icon="🔄" label="Renew Licence" onClick={() => openServiceModal("LICENCE_RENEWAL")} />
-                <ShortcutButton icon="📋" label="Replace Lost Licence" onClick={() => openServiceModal("LICENCE_REPLACEMENT")} />
-                <ShortcutButton icon="🚙" label="Register a Vehicle" onClick={() => openServiceModal("VEHICLE_REGISTRATION")} />
-                <ShortcutButton icon="🔧" label="Book Roadworthiness" onClick={() => openServiceModal("ROADWORTHINESS_INSPECTION")} />
-                <ShortcutButton icon="🚌" label="Public Transport Permit" onClick={() => openServiceModal("PUBLIC_MOTOR_VEHICLE_PERMIT")} />
-                <ShortcutButton icon="💬" label="Submit a Complaint" onClick={() => setShowComplaintModal(true)} />
+                <ShortcutButton icon={TrafficIcons.Document} label="Apply for Learner's Licence" onClick={() => openServiceModal("LEARNER_LICENCE")} />
+                <ShortcutButton icon={TrafficIcons.Car} label="Apply for Driver's Licence" onClick={() => openServiceModal("DRIVER_LICENCE")} />
+                <ShortcutButton icon={TrafficIcons.Refresh} label="Renew Licence" onClick={() => openServiceModal("LICENCE_RENEWAL")} />
+                <ShortcutButton icon={TrafficIcons.Clipboard} label="Replace Lost Licence" onClick={() => openServiceModal("LICENCE_REPLACEMENT")} />
+                <ShortcutButton icon={TrafficIcons.Vehicle} label="Register a Vehicle" onClick={() => openServiceModal("VEHICLE_REGISTRATION")} />
+                <ShortcutButton icon={TrafficIcons.Wrench} label="Book Roadworthiness" onClick={() => openServiceModal("ROADWORTHINESS_INSPECTION")} />
+                <ShortcutButton icon={TrafficIcons.Bus} label="Public Transport Permit" onClick={() => openServiceModal("PUBLIC_MOTOR_VEHICLE_PERMIT")} />
+                <ShortcutButton icon={TrafficIcons.Chat} label="Submit a Complaint" onClick={() => setShowComplaintModal(true)} />
               </div>
             </section>
 
@@ -801,7 +924,9 @@ function TrafficDashboard() {
                   }}
                 >
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
-                    <span style={{ fontSize: 28 }}>{cfg.icon}</span>
+                    <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", color: COLORS.blue }}>
+                      {React.createElement(cfg.icon, { size: 28 })}
+                    </span>
                     <span style={{
                       fontSize: 12, fontWeight: 700,
                       padding: "4px 10px", borderRadius: 6,
@@ -1833,6 +1958,7 @@ function StatCard({ label, value, accent }) {
 }
 
 function ShortcutButton({ icon, label, onClick }) {
+  const Icon = icon;
   return (
     <button onClick={onClick} style={{
       display: "flex", alignItems: "center", gap: 12,
@@ -1842,7 +1968,9 @@ function ShortcutButton({ icon, label, onClick }) {
       cursor: "pointer", textAlign: "left", fontFamily: "inherit",
       transition: "all 0.15s"
     }}>
-      <span style={{ fontSize: 24 }}>{icon}</span>
+      <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 24, height: 24 }}>
+        <Icon size={22} />
+      </span>
       <span>{label}</span>
     </button>
   );
