@@ -39,6 +39,25 @@ const TYPE_FILTERS = [
   { key: "replacement", label: "Replacement" }
 ];
 
+const TIER_FILTERS = [
+  { key: "", label: "All tiers" },
+  { key: "standard", label: "Standard" },
+  { key: "urgent", label: "Urgent" },
+  { key: "express", label: "Express" },
+  { key: "emergency", label: "Emergency" },
+  { key: "official", label: "Official" },
+  { key: "diplomatic", label: "Diplomatic" }
+];
+
+const TIER_COLORS = {
+  standard:   "#175cd3",
+  urgent:     "#b45309",
+  express:    "#b3261e",
+  emergency:  "#7a1fa2",
+  official:   "#0f766e",
+  diplomatic: "#334155"
+};
+
 function PassportOfficeDashboardAdmin() {
   const [tab, setTab] = useState("queue");
 
@@ -49,6 +68,7 @@ function PassportOfficeDashboardAdmin() {
 
   const [statusFilter, setStatusFilter] = useState("");
   const [typeFilter, setTypeFilter] = useState("");
+  const [tierFilter, setTierFilter] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -57,27 +77,23 @@ function PassportOfficeDashboardAdmin() {
   const [note, setNote] = useState("");
   const [updating, setUpdating] = useState(false);
 
-  // Issue passport form
   const [issueForm, setIssueForm] = useState({
     passport_number: "", issue_date: "", expiry_date: ""
   });
   const [issueMsg, setIssueMsg] = useState("");
 
-  // Biometrics form
   const [bioForm, setBioForm] = useState({
     fingerprints_captured: false, photograph_captured: false,
     signature_captured: false, enrolment_reference: "", notes: ""
   });
   const [bioMsg, setBioMsg] = useState("");
 
-  // Appointment form
   const [apptForm, setApptForm] = useState({
     appointment_date: "", appointment_type: "biometrics",
     office_location: "Maseru Passport Office"
   });
   const [apptMsg, setApptMsg] = useState("");
 
-  // Payment form
   const [payForm, setPayForm] = useState({
     fee_type: "Passport fee", amount: "200",
     payment_method: "cash", payment_status: "paid",
@@ -85,7 +101,6 @@ function PassportOfficeDashboardAdmin() {
   });
   const [payMsg, setPayMsg] = useState("");
 
-  // Complaint response
   const [complaintResponse, setComplaintResponse] = useState({});
   const [complaintMsg, setComplaintMsg] = useState({});
 
@@ -103,11 +118,12 @@ function PassportOfficeDashboardAdmin() {
       const qs = new URLSearchParams();
       if (statusFilter) qs.set("status", statusFilter);
       if (typeFilter) qs.set("application_type", typeFilter);
+      if (tierFilter) qs.set("processing_tier", tierFilter);
       const data = await api(`/passport/admin/applications?${qs}`);
       setQueue(data.applications || []);
     } catch (err) { setError(err.message); }
     finally { setLoading(false); }
-  }, [statusFilter, typeFilter]);
+  }, [statusFilter, typeFilter, tierFilter]);
 
   const loadComplaints = useCallback(async () => {
     try {
@@ -133,6 +149,13 @@ function PassportOfficeDashboardAdmin() {
   async function openApplication(id) {
     try {
       const data = await api(`/passport/applications/${id}`);
+
+      // Guard: only passport apps should be opened from this dashboard
+      if (data.application?.module && data.application.module !== "PASSPORT") {
+        alert("This application belongs to a different office.");
+        return;
+      }
+
       setSelected(data.application);
       setDetail(data);
       setNote("");
@@ -152,6 +175,12 @@ function PassportOfficeDashboardAdmin() {
         });
       } else {
         setIssueForm({ passport_number: "", issue_date: "", expiry_date: "" });
+      }
+      if (data.application?.fee_amount != null) {
+        setPayForm(p => ({
+          ...p,
+          amount: String(Number(data.application.fee_amount).toFixed(2))
+        }));
       }
     } catch (err) { alert(err.message); }
   }
@@ -244,6 +273,10 @@ function PassportOfficeDashboardAdmin() {
   const countFor = (key) =>
     stats.byStatus?.find(s => s.status === key)?.count || 0;
 
+  const passportPhoto =
+    selected?.passport_photo_url || detail?.application?.passport_photo_url || null;
+  const profilePhoto = selected?.photo_url || null;
+
   return (
     <main style={layout.page}>
       <div style={layout.container}>
@@ -257,7 +290,7 @@ function PassportOfficeDashboardAdmin() {
               <p style={header.eyebrow}>Home Affairs · Passport Administrator</p>
               <h1 style={header.title}>Passport Admin Dashboard</h1>
               <p style={header.subtitle}>
-                Review and process passport applications
+                Review, approve, and issue passports
               </p>
             </div>
             <span style={header.liveBadge}>
@@ -302,10 +335,18 @@ function PassportOfficeDashboardAdmin() {
         {tab === "queue" && (
           <section style={grids.twoCol}>
             <article style={cards.cardPadded}>
-              <h2 style={section.title}>Queue</h2>
+              <h2 style={section.title}>Passport queue</h2>
+              <p style={section.subtitle}>
+                Only passport applications appear here.
+              </p>
               <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap" }}>
                 <select value={typeFilter} onChange={e => setTypeFilter(e.target.value)} style={selectStyle}>
                   {TYPE_FILTERS.map(t => (
+                    <option key={t.key} value={t.key}>{t.label}</option>
+                  ))}
+                </select>
+                <select value={tierFilter} onChange={e => setTierFilter(e.target.value)} style={selectStyle}>
+                  {TIER_FILTERS.map(t => (
                     <option key={t.key} value={t.key}>{t.label}</option>
                   ))}
                 </select>
@@ -324,27 +365,30 @@ function PassportOfficeDashboardAdmin() {
                   <thead>
                     <tr>
                       <th style={{ ...thStyle, width: 44 }}></th>
-                      {["Ref", "Applicant", "Type", "Status", ""].map(h =>
+                      {["Ref", "Applicant", "Type", "Tier", "Status", ""].map(h =>
                         <th key={h} style={thStyle}>{h}</th>
                       )}
                     </tr>
                   </thead>
                   <tbody>
                     {queue.length === 0 && !loading && (
-                      <tr><td colSpan={5} style={{
+                      <tr><td colSpan={6} style={{
                         padding: 16, color: COLORS.textMuted, fontSize: 13
-                      }}>No applications.</td></tr>
+                      }}>No passport applications.</td></tr>
                     )}
                     {queue.map(a => (
                       <tr key={a.application_id}>
                         <td style={{ ...tdStyle, width: 44 }}>
-                          {a.photo_url ? (
-                            <img src={a.photo_url} alt={a.full_name}
+                          {a.passport_photo_url || a.photo_url ? (
+                            <img
+                              src={a.passport_photo_url || a.photo_url}
+                              alt={a.full_name}
                               style={{
                                 width: 34, height: 42, borderRadius: 4,
                                 objectFit: "cover", display: "block",
                                 border: `1px solid ${COLORS.borderLight}`
-                              }} />
+                              }}
+                            />
                           ) : (
                             <div style={{
                               width: 34, height: 42, borderRadius: 4,
@@ -360,6 +404,9 @@ function PassportOfficeDashboardAdmin() {
                         </td>
                         <td style={tdStyle}>{a.full_name || "—"}</td>
                         <td style={tdStyle}>{a.application_type.replace(/_/g, " ")}</td>
+                        <td style={tdStyle}>
+                          <TierBadge tier={a.processing_tier} />
+                        </td>
                         <td style={tdStyle}><StatusBadge status={a.status} /></td>
                         <td style={tdStyle}>
                           <button style={linkBtn}
@@ -378,7 +425,7 @@ function PassportOfficeDashboardAdmin() {
               {!selected && (
                 <>
                   <h2 style={section.title}>Application detail</h2>
-                  <p style={section.subtitle}>Select an application to review.</p>
+                  <p style={section.subtitle}>Select a passport application to review.</p>
                 </>
               )}
 
@@ -394,6 +441,7 @@ function PassportOfficeDashboardAdmin() {
                       </h2>
                       <p style={{ margin: "4px 0 0", fontSize: 12, color: COLORS.textMuted }}>
                         {selected.application_type.replace(/_/g, " ")}
+                        {selected.service_name ? ` · ${selected.service_name}` : ""}
                       </p>
                     </div>
                     <StatusBadge status={selected.status} />
@@ -402,23 +450,46 @@ function PassportOfficeDashboardAdmin() {
                   <div style={{
                     display: "flex", gap: 16, padding: 14, marginBottom: 14,
                     background: COLORS.lightBg, borderRadius: 10,
-                    border: `1px solid ${COLORS.borderLight}`
+                    border: `1px solid ${COLORS.borderLight}`, flexWrap: "wrap"
                   }}>
-                    <div style={{
-                      width: 90, height: 116, borderRadius: 6, overflow: "hidden",
-                      border: `1px solid ${COLORS.border}`, background: "#fff",
-                      flexShrink: 0, display: "grid", placeItems: "center"
-                    }}>
-                      {selected.photo_url ? (
-                        <img src={selected.photo_url} alt={selected.full_name}
-                          style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                      ) : (
-                        <span style={{ fontSize: 10, color: COLORS.textMuted, padding: 6 }}>
-                          No photo
-                        </span>
-                      )}
+                    <div style={{ flexShrink: 0 }}>
+                      <p style={miniLabel}>Passport photo</p>
+                      <div style={{
+                        width: 90, height: 116, borderRadius: 6, overflow: "hidden",
+                        border: `1px solid ${COLORS.border}`, background: "#fff",
+                        display: "grid", placeItems: "center"
+                      }}>
+                        {passportPhoto ? (
+                          <img src={passportPhoto} alt="Passport"
+                            crossOrigin="anonymous"
+                            style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                        ) : (
+                          <span style={{ fontSize: 10, color: COLORS.textMuted, padding: 6 }}>
+                            Not uploaded
+                          </span>
+                        )}
+                      </div>
                     </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
+
+                    <div style={{ flexShrink: 0 }}>
+                      <p style={miniLabel}>Profile photo</p>
+                      <div style={{
+                        width: 90, height: 116, borderRadius: 6, overflow: "hidden",
+                        border: `1px solid ${COLORS.border}`, background: "#fff",
+                        display: "grid", placeItems: "center"
+                      }}>
+                        {profilePhoto ? (
+                          <img src={profilePhoto} alt="Profile"
+                            style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                        ) : (
+                          <span style={{ fontSize: 10, color: COLORS.textMuted, padding: 6 }}>
+                            No photo
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div style={{ flex: 1, minWidth: 200 }}>
                       <p style={{
                         margin: "0 0 6px", fontSize: 14,
                         fontWeight: 700, color: COLORS.textDark
@@ -426,6 +497,10 @@ function PassportOfficeDashboardAdmin() {
                       <Row label="National ID" value={selected.national_id || "—"} />
                       <Row label="Email" value={selected.email || "—"} />
                       <Row label="Phone" value={selected.phone || "—"} />
+                      <Row label="Tier" value={<TierBadge tier={selected.processing_tier} />} />
+                      {selected.fee_amount != null && (
+                        <Row label="Fee" value={`M ${Number(selected.fee_amount).toFixed(2)}`} />
+                      )}
                     </div>
                   </div>
 
@@ -467,6 +542,29 @@ function PassportOfficeDashboardAdmin() {
                     </>
                   )}
 
+                  <div style={{
+                    padding: 12, marginTop: 16, marginBottom: 4,
+                    background: "#ecfdf3", border: "1px solid #06764755",
+                    borderRadius: 8
+                  }}>
+                    <p style={{
+                      margin: "0 0 8px", fontSize: 12,
+                      color: "#067647", fontWeight: 700
+                    }}>Quick action</p>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                      <button disabled={updating}
+                        onClick={() => setStatus("approved")}
+                        style={quickApprove}>
+                        {updating ? "Working…" : "Approve application"}
+                      </button>
+                      <button disabled={updating}
+                        onClick={() => setStatus("in_production")}
+                        style={quickProduction}>
+                        Mark in production
+                      </button>
+                    </div>
+                  </div>
+
                   <h3 style={subHeading}>Update status</h3>
                   <textarea
                     placeholder="Optional note for the applicant"
@@ -499,7 +597,6 @@ function PassportOfficeDashboardAdmin() {
                     ))}
                   </div>
 
-                  {/* RECORD PAYMENT */}
                   <h3 style={subHeading}>Record payment</h3>
                   <form onSubmit={submitPayment} style={{
                     display: "grid", gridTemplateColumns: "1fr 1fr",
@@ -508,7 +605,8 @@ function PassportOfficeDashboardAdmin() {
                     <input placeholder="Fee type" value={payForm.fee_type}
                       onChange={e => setPayForm(p => ({ ...p, fee_type: e.target.value }))}
                       style={inputStyle} />
-                    <input placeholder="Amount" type="number" value={payForm.amount}
+                    <input placeholder="Amount" type="number" step="0.01"
+                      value={payForm.amount}
                       onChange={e => setPayForm(p => ({ ...p, amount: e.target.value }))}
                       style={inputStyle} />
                     <select value={payForm.payment_method}
@@ -541,7 +639,6 @@ function PassportOfficeDashboardAdmin() {
                     )}
                   </form>
 
-                  {/* BIOMETRICS */}
                   <h3 style={subHeading}>Biometrics</h3>
                   <form onSubmit={submitBiometrics} style={{ marginBottom: 6 }}>
                     <label style={checkboxLabel}>
@@ -576,7 +673,6 @@ function PassportOfficeDashboardAdmin() {
                     )}
                   </form>
 
-                  {/* APPOINTMENT */}
                   <h3 style={subHeading}>Schedule appointment</h3>
                   <form onSubmit={submitAppointment}>
                     <input type="datetime-local" value={apptForm.appointment_date}
@@ -604,7 +700,6 @@ function PassportOfficeDashboardAdmin() {
                     )}
                   </form>
 
-                  {/* ISSUE PASSPORT */}
                   <h3 style={subHeading}>Issue passport</h3>
                   <form onSubmit={submitIssue}>
                     <input placeholder="Passport number" value={issueForm.passport_number}
@@ -619,7 +714,7 @@ function PassportOfficeDashboardAdmin() {
                       onChange={e => setIssueForm(p => ({ ...p, expiry_date: e.target.value }))}
                       required style={inputStyle} />
                     <button type="submit" style={{ ...btnSmall, marginTop: 8 }}>
-                      Issue & mark ready
+                      Issue &amp; mark ready
                     </button>
                     {issueMsg && (
                       <p style={{
@@ -640,9 +735,7 @@ function PassportOfficeDashboardAdmin() {
             <p style={section.subtitle}>Citizen complaints and enquiries.</p>
 
             {complaints.length === 0 && (
-              <p style={{ color: COLORS.textMuted, fontSize: 13 }}>
-                No complaints.
-              </p>
+              <p style={{ color: COLORS.textMuted, fontSize: 13 }}>No complaints.</p>
             )}
 
             {complaints.map(c => (
@@ -768,6 +861,20 @@ function Row({ label, value }) {
   );
 }
 
+function TierBadge({ tier }) {
+  if (!tier) return <span style={{ color: COLORS.textMuted, fontSize: 11 }}>—</span>;
+  const color = TIER_COLORS[tier] || COLORS.blue;
+  return (
+    <span style={{
+      display: "inline-block", padding: "3px 10px",
+      background: `${color}15`, color: color,
+      borderRadius: 20, fontSize: 11, fontWeight: 700,
+      textTransform: "uppercase", letterSpacing: 0.4,
+      border: `1px solid ${color}44`, whiteSpace: "nowrap"
+    }}>{tier}</span>
+  );
+}
+
 function StatusBadge({ status }) {
   const map = {
     submitted: { bg: "#eff8ff", fg: "#175cd3" },
@@ -801,6 +908,11 @@ const subHeading = {
   fontSize: 12, color: COLORS.textMuted,
   textTransform: "uppercase", marginTop: 18,
   marginBottom: 6, letterSpacing: 0.6, fontWeight: 700
+};
+
+const miniLabel = {
+  margin: "0 0 4px", fontSize: 10, color: COLORS.textMuted,
+  textTransform: "uppercase", letterSpacing: 0.6, fontWeight: 700
 };
 
 const thStyle = {
@@ -837,6 +949,18 @@ const inputStyle = {
 
 const btnSmall = {
   padding: "8px 14px", border: 0, background: COLORS.blue,
+  color: "#fff", borderRadius: 6, cursor: "pointer",
+  fontWeight: 700, fontSize: 12, fontFamily: "inherit"
+};
+
+const quickApprove = {
+  padding: "10px 16px", border: 0, background: COLORS.green,
+  color: "#fff", borderRadius: 6, cursor: "pointer",
+  fontWeight: 700, fontSize: 12, fontFamily: "inherit"
+};
+
+const quickProduction = {
+  padding: "10px 16px", border: 0, background: COLORS.blue,
   color: "#fff", borderRadius: 6, cursor: "pointer",
   fontWeight: 700, fontSize: 12, fontFamily: "inherit"
 };

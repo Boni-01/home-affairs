@@ -4,6 +4,9 @@ import { auth, API_BASE } from "../Database/firebase";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 
+// ============================================================
+// API helper
+// ============================================================
 async function api(path, opts = {}) {
   const user = auth.currentUser;
   const token = user ? await user.getIdToken() : null;
@@ -45,7 +48,6 @@ function HomeAffairsDashboard() {
 
   const [certificate, setCertificate] = useState(null);
 
-  // Photo upload state
   const [photoUploading, setPhotoUploading] = useState(false);
   const [photoError, setPhotoError] = useState("");
   const photoInputRef = useRef(null);
@@ -126,15 +128,11 @@ function HomeAffairsDashboard() {
     } catch (err) { console.error(err); }
   }
 
-  // ------------------------------------------------------------
-  // Photo upload
-  // ------------------------------------------------------------
   async function handlePhotoUpload(e) {
     const file = e.target.files?.[0];
     if (!file) return;
     setPhotoError("");
 
-    // Client-side validation
     const okTypes = ["image/jpeg", "image/jpg", "image/png"];
     if (!okTypes.includes(file.type)) {
       setPhotoError("Only JPG, JPEG, or PNG photos are allowed.");
@@ -441,7 +439,7 @@ function HomeAffairsDashboard() {
               gridTemplateColumns: "minmax(0, 1fr) minmax(0, 2fr)",
               gap: 20
             }}>
-              {/* ID CARD WITH PHOTO */}
+              {/* ID CARD WITH PHOTO (this stays) */}
               <div style={{
                 background: `linear-gradient(135deg, ${COLORS.blue} 0%, #001a80 100%)`,
                 color: "#fff", borderRadius: 12, padding: 22,
@@ -461,7 +459,6 @@ function HomeAffairsDashboard() {
                     </p>
                   </div>
 
-                  {/* PHOTO on ID */}
                   <div style={{
                     width: 72, height: 92, borderRadius: 4,
                     background: "rgba(255,255,255,0.12)",
@@ -538,7 +535,6 @@ function HomeAffairsDashboard() {
                   <ProfileRow label="Member since" value={new Date(me.created_at).toLocaleDateString()} />
                 </div>
 
-                {/* PHOTO UPLOAD CARD */}
                 <div style={{
                   background: "#fff", border: `1px solid ${COLORS.border}`,
                   borderRadius: 12, padding: 24
@@ -552,7 +548,7 @@ function HomeAffairsDashboard() {
                     color: COLORS.textMuted, lineHeight: 1.5
                   }}>
                     Upload a clear, front-facing photo of yourself. This photo will
-                    appear on your National ID and any printed certificates.
+                    appear on your National ID card in your profile.
                   </p>
 
                   <div style={{ display: "flex", gap: 20, alignItems: "center", flexWrap: "wrap" }}>
@@ -829,7 +825,9 @@ function StatusBadge({ status }) {
 }
 
 // ============================================================
-// CERTIFICATES WITH PHOTO + PDF
+// CERTIFICATES
+// - NationalIDCard → keeps photo (it's an ID)
+// - All other certificates → NO photo (text only)
 // ============================================================
 function CertificateView({ data, onClose }) {
   const { application, data: fields } = data;
@@ -883,6 +881,9 @@ function usePdfDownload() {
   return { ref, download, downloading };
 }
 
+// ============================================================
+// NATIONAL ID CARD — KEEPS PHOTO
+// ============================================================
 function NationalIDCard({ application, fields, onClose }) {
   const { ref, download, downloading } = usePdfDownload();
 
@@ -961,6 +962,9 @@ function NationalIDCard({ application, fields, onClose }) {
   );
 }
 
+// ============================================================
+// CIVIL CERTIFICATE — NO PHOTO
+// ============================================================
 function CivilCertificate({ application, fields, onClose }) {
   const { ref, download, downloading } = usePdfDownload();
   const t = (application.service_type || "").toLowerCase();
@@ -999,36 +1003,20 @@ function CivilCertificate({ application, fields, onClose }) {
           </p>
         </div>
 
-        <div style={{ display: "flex", gap: 24, marginBottom: 20 }}>
-          {/* PHOTO on certificate */}
-          {application.photo_url && (
-            <div style={{
-              width: 100, height: 128, borderRadius: 4,
-              border: `1px solid ${COLORS.border}`,
-              overflow: "hidden", flexShrink: 0
-            }}>
-              <img src={application.photo_url} alt="Holder"
-                crossOrigin="anonymous"
-                style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-            </div>
-          )}
-          <div style={{ flex: 1 }}>
-            <p style={{ margin: "0 0 8px", fontSize: 12, color: COLORS.textMuted }}>
-              <strong>Certificate No:</strong> {application.reference_number}
-            </p>
-            <p style={{ margin: "0 0 20px", fontSize: 12, color: COLORS.textMuted }}>
-              <strong>Issued on:</strong> {new Date().toLocaleDateString()}
-            </p>
-            <p style={{ fontSize: 14, lineHeight: 1.7, margin: "0 0 16px" }}>
-              This is to certify that the record of
-            </p>
-            <p style={{
-              fontSize: 18, fontWeight: 700, color: COLORS.blue,
-              margin: "0 0 16px"
-            }}>{subjectName}</p>
-          </div>
-        </div>
+        <p style={{ margin: "0 0 8px", fontSize: 12, color: COLORS.textMuted }}>
+          <strong>Certificate No:</strong> {application.reference_number}
+        </p>
+        <p style={{ margin: "0 0 20px", fontSize: 12, color: COLORS.textMuted }}>
+          <strong>Issued on:</strong> {new Date().toLocaleDateString()}
+        </p>
 
+        <p style={{ fontSize: 14, lineHeight: 1.7, margin: "0 0 16px" }}>
+          This is to certify that the record of
+        </p>
+        <p style={{
+          fontSize: 18, fontWeight: 700, color: COLORS.blue,
+          margin: "0 0 16px", textAlign: "center"
+        }}>{subjectName}</p>
         <p style={{ fontSize: 14, lineHeight: 1.7, margin: "0 0 20px" }}>
           is duly registered in the records of the Ministry of Home Affairs,
           Kingdom of Lesotho, in accordance with the laws of the Kingdom.
@@ -1079,6 +1067,9 @@ function CivilCertificate({ application, fields, onClose }) {
   );
 }
 
+// ============================================================
+// IMMIGRATION PERMIT — NO PHOTO
+// ============================================================
 function ImmigrationPermit({ application, fields, onClose }) {
   const { ref, download, downloading } = usePdfDownload();
   return (
@@ -1103,27 +1094,12 @@ function ImmigrationPermit({ application, fields, onClose }) {
           </p>
         </div>
 
-        <div style={{ display: "flex", gap: 24, marginBottom: 20 }}>
-          {application.photo_url && (
-            <div style={{
-              width: 100, height: 128, borderRadius: 4,
-              border: `1px solid ${COLORS.border}`,
-              overflow: "hidden", flexShrink: 0
-            }}>
-              <img src={application.photo_url} alt="Holder"
-                crossOrigin="anonymous"
-                style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-            </div>
-          )}
-          <div style={{ flex: 1 }}>
-            <p style={{ fontSize: 12, color: COLORS.textMuted }}>
-              <strong>Permit No:</strong> {application.reference_number}
-            </p>
-            <p style={{ fontSize: 12, color: COLORS.textMuted }}>
-              <strong>Holder:</strong> {application.full_name}
-            </p>
-          </div>
-        </div>
+        <p style={{ fontSize: 12, color: COLORS.textMuted }}>
+          <strong>Permit No:</strong> {application.reference_number}
+        </p>
+        <p style={{ fontSize: 12, color: COLORS.textMuted }}>
+          <strong>Holder:</strong> {application.full_name}
+        </p>
 
         <div style={{ marginTop: 16 }}>
           {Object.entries(fields)
@@ -1155,6 +1131,9 @@ function ImmigrationPermit({ application, fields, onClose }) {
   );
 }
 
+// ============================================================
+// LIVESTOCK CERTIFICATE — NO PHOTO
+// ============================================================
 function LivestockCertificate({ application, fields, onClose }) {
   const { ref, download, downloading } = usePdfDownload();
   return (
@@ -1170,27 +1149,12 @@ function LivestockCertificate({ application, fields, onClose }) {
           Ministry of Home Affairs · LRMIS
         </p>
 
-        <div style={{ display: "flex", gap: 24, marginTop: 20 }}>
-          {application.photo_url && (
-            <div style={{
-              width: 90, height: 116, borderRadius: 4,
-              border: `1px solid ${COLORS.border}`,
-              overflow: "hidden", flexShrink: 0
-            }}>
-              <img src={application.photo_url} alt="Owner"
-                crossOrigin="anonymous"
-                style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-            </div>
-          )}
-          <div style={{ flex: 1 }}>
-            <p style={{ fontSize: 13 }}>
-              <strong>Reference:</strong> {application.reference_number}
-            </p>
-            <p style={{ fontSize: 13 }}>
-              <strong>Owner:</strong> {application.full_name}
-            </p>
-          </div>
-        </div>
+        <p style={{ marginTop: 20, fontSize: 13 }}>
+          <strong>Reference:</strong> {application.reference_number}
+        </p>
+        <p style={{ fontSize: 13 }}>
+          <strong>Owner:</strong> {application.full_name}
+        </p>
 
         {Object.entries(fields)
           .filter(([k, v]) => v && !k.startsWith("_"))
@@ -1220,6 +1184,9 @@ function LivestockCertificate({ application, fields, onClose }) {
   );
 }
 
+// ============================================================
+// GENERIC CERTIFICATE — NO PHOTO
+// ============================================================
 function GenericCertificate({ application, fields, onClose }) {
   const { ref, download, downloading } = usePdfDownload();
   return (
@@ -1229,24 +1196,9 @@ function GenericCertificate({ application, fields, onClose }) {
         <p style={{ margin: "4px 0 20px", fontSize: 13, color: COLORS.textMuted }}>
           Reference: {application.reference_number}
         </p>
-        <div style={{ display: "flex", gap: 20 }}>
-          {application.photo_url && (
-            <div style={{
-              width: 90, height: 116, borderRadius: 4,
-              border: `1px solid ${COLORS.border}`,
-              overflow: "hidden", flexShrink: 0
-            }}>
-              <img src={application.photo_url} alt="Holder"
-                crossOrigin="anonymous"
-                style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-            </div>
-          )}
-          <div>
-            <p style={{ fontSize: 13, margin: 0 }}>
-              <strong>Issued to:</strong> {application.full_name}
-            </p>
-          </div>
-        </div>
+        <p style={{ fontSize: 13, margin: 0 }}>
+          <strong>Issued to:</strong> {application.full_name}
+        </p>
         {Object.entries(fields)
           .filter(([k, v]) => v && !k.startsWith("_"))
           .map(([k, v]) => (
