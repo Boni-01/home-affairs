@@ -1,4 +1,4 @@
-Lesotho Integrated Government Services System
+#Lesotho Integrated Government Services System
 Project: Integrated Government Services System for Lesotho
 Course: BIHC3110 — Human Computer Interaction
 Institution: Limkokwing University of Creative Technology — Lesotho
