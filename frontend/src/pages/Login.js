@@ -27,11 +27,11 @@ const COLORS = {
 const fieldStyle = {
   width: "100%",
   boxSizing: "border-box",
-  marginTop: "8px",
+  marginTop: "6px",
   padding: "12px 14px",
   border: `1px solid ${COLORS.border}`,
   borderRadius: "6px",
-  fontSize: "16px",
+  fontSize: "15px",
   outline: "none"
 };
 
@@ -42,7 +42,7 @@ const buttonStyle = (bg) => ({
   borderRadius: "6px",
   background: bg,
   color: "#fff",
-  fontSize: "16px",
+  fontSize: "15px",
   fontWeight: 700,
   cursor: "pointer",
   marginTop: "8px"
@@ -215,201 +215,275 @@ function Login({ onSuccess, getPostAuthRoute }) {
       display: "grid",
       placeItems: "center",
       padding: "24px",
+      boxSizing: "border-box",
       background: COLORS.lightBg,
       fontFamily: "Arial, sans-serif"
     }}>
       <div id={RECAPTCHA_CONTAINER_ID}></div>
 
+      {/* Split Screen Container */}
       <section
         aria-labelledby="login-title"
         style={{
           width: "100%",
-          maxWidth: "440px",
-          boxSizing: "border-box",
-          padding: "36px",
-          borderRadius: "12px",
+          maxWidth: "1000px",
+          display: "grid",
+          gridTemplateColumns: "1fr 1.1fr",
           background: COLORS.white,
-          boxShadow: "0 8px 28px rgba(0, 32, 159, 0.12)",
+          borderRadius: 16,
+          boxShadow: "0 16px 40px rgba(0, 32, 159, .12)",
+          overflow: "hidden",
           borderTop: `5px solid ${COLORS.blue}`
         }}
       >
-        <header style={{ marginBottom: "24px", textAlign: "center" }}>
-          <div style={{
-            display: "flex", height: "6px", borderRadius: "3px",
-            overflow: "hidden", marginBottom: "18px"
-          }}>
-            <div style={{ flex: 1, background: COLORS.blue }} />
+        {/* Left Side: Informational & Portal Highlights */}
+        <div style={{
+          background: "linear-gradient(135deg, #00209F 0%, #001257 100%)",
+          color: COLORS.white,
+          padding: "48px 40px",
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "space-between"
+        }}>
+          <div>
             <div style={{
-              flex: 1, background: COLORS.white,
-              borderTop: `1px solid ${COLORS.border}`,
-              borderBottom: `1px solid ${COLORS.border}`
-            }} />
-            <div style={{ flex: 1, background: COLORS.green }} />
+              display: "flex", height: "6px", borderRadius: "3px",
+              overflow: "hidden", marginBottom: 24, width: 120
+            }}>
+              <div style={{ flex: 1, background: COLORS.blue }} />
+              <div style={{ flex: 1, background: COLORS.white }} />
+              <div style={{ flex: 1, background: COLORS.green }} />
+            </div>
+
+            <p style={{
+              margin: "0 0 8px", color: "#4ade80", fontSize: 12,
+              fontWeight: 700, letterSpacing: 1.3, textTransform: "uppercase"
+            }}>
+              Secure National Gateway
+            </p>
+            <h2 style={{ margin: "0 0 16px", fontSize: 28, lineHeight: 1.2 }}>
+              Welcome back to Lesotho Services
+            </h2>
+            <p style={{ margin: "0 0 32px", color: "#d1d5db", fontSize: 15, lineHeight: 1.6 }}>
+              Log in to access your active applications, tax portals, verification history, and official documents.
+            </p>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              {[
+                { title: "Active Applications", desc: "Check live status on passports, IDs, and licenses." },
+                { title: "Fast-Track Services", desc: "Skip queues with verified digital submissions." },
+                { title: "Secure & Encrypted", desc: "Protected by government-grade authentication protocols." }
+              ].map((item, idx) => (
+                <div key={idx} style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+                  <div style={{
+                    width: 24, height: 24, borderRadius: "50%", background: "rgba(255,255,255,0.15)",
+                    display: "grid", placeItems: "center", fontSize: 12, fontWeight: 700, color: "#4ade80", flexShrink: 0
+                  }}>✓</div>
+                  <div>
+                    <h4 style={{ margin: "0 0 2px", fontSize: 15, color: "#fff" }}>{item.title}</h4>
+                    <p style={{ margin: 0, fontSize: 13, color: "#9ca3af" }}>{item.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
 
-          <h1 id="login-title" style={{ margin: "0 0 6px", color: COLORS.blue, fontSize: "26px" }}>
-            Welcome back
-          </h1>
-          <p style={{ margin: 0, color: COLORS.textMuted, fontSize: "14px" }}>
-            Sign in to Lesotho Government Services
-          </p>
-        </header>
-
-        <div style={{
-          display: "flex", gap: "8px", marginBottom: "24px",
-          background: COLORS.lightBg, padding: "4px", borderRadius: "8px"
-        }}>
-          <button
-            type="button"
-            onClick={() => { setMode("email"); setError(""); setInfo(""); }}
-            style={{
-              flex: 1, padding: "10px", border: 0, borderRadius: "6px",
-              background: mode === "email" ? COLORS.blue : "transparent",
-              color: mode === "email" ? "#fff" : COLORS.textMuted,
-              fontWeight: 700, cursor: "pointer"
-            }}
-          >Email</button>
-          <button
-            type="button"
-            onClick={() => { setMode("phone"); setError(""); setInfo(""); }}
-            style={{
-              flex: 1, padding: "10px", border: 0, borderRadius: "6px",
-              background: mode === "phone" ? COLORS.green : "transparent",
-              color: mode === "phone" ? "#fff" : COLORS.textMuted,
-              fontWeight: 700, cursor: "pointer"
-            }}
-          >Phone OTP</button>
+          {/* Bottom Container with Centered Back Button */}
+          <div style={{ marginTop: 40, borderTop: "1px solid rgba(255,255,255,0.15)", paddingTop: 20, display: "flex", flexDirection: "column", alignItems: "center", gap: 14 }}>
+            <Link
+              to="/home-dashboard"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 8,
+                background: "transparent",
+                color: "#FFFFFF",
+                border: "1px solid #FFFFFF",
+                borderRadius: 8,
+                padding: "10px 24px",
+                textDecoration: "none",
+                fontSize: 14,
+                fontWeight: 600,
+                width: "fit-content",
+                transition: "background 0.2s"
+              }}
+            >
+              ← Back to Home
+            </Link>
+            <p style={{ margin: 0, fontSize: 12, color: "#9ca3af", textAlign: "center" }}>
+              Need help recovering access? Contact helpdesk@gov.ls or call local support lines.
+            </p>
+          </div>
         </div>
 
-        {mode === "email" && (
-          <form onSubmit={handleEmailLogin}>
-            <div style={{ marginBottom: "18px" }}>
-              <label htmlFor="email" style={{ display: "block", fontWeight: 600, color: "#263648" }}>
-                Email address
-              </label>
-              <input
-                id="email" type="email" autoComplete="email"
-                placeholder="you@example.com" required
-                value={email} onChange={(e) => setEmail(e.target.value)}
-                style={fieldStyle}
-              />
-            </div>
-            <div style={{ marginBottom: "16px" }}>
-              <label htmlFor="password" style={{ display: "block", fontWeight: 600, color: "#263648" }}>
-                Password
-              </label>
-              <input
-                id="password" type="password" autoComplete="current-password"
-                placeholder="Enter your password" required
-                value={password} onChange={(e) => setPassword(e.target.value)}
-                style={fieldStyle}
-              />
-            </div>
-            <div style={{
-              display: "flex", justifyContent: "space-between",
-              alignItems: "center", gap: "12px",
-              marginBottom: "20px", fontSize: "14px"
-            }}>
-              <label style={{ display: "inline-flex", alignItems: "center", gap: "8px", color: "#475569" }}>
-                <input type="checkbox" name="rememberMe" /> Remember me
-              </label>
-              <a href="/forgot-password" style={{ color: COLORS.blue, textDecoration: "none", fontWeight: 600 }}>
-                Forgot password?
-              </a>
-            </div>
-            <button type="submit" disabled={loading} style={buttonStyle(COLORS.blue)}>
-              {loading ? "Signing in..." : "Sign in"}
-            </button>
-          </form>
-        )}
+        {/* Right Side: Login Form */}
+        <div style={{ padding: "40px 44px", overflowY: "auto", maxHeight: "90vh" }}>
+          <header style={{ marginBottom: 22 }}>
+            <h1 id="login-title" style={{ margin: "0 0 6px", color: COLORS.blue, fontSize: "26px" }}>
+              Sign in to your account
+            </h1>
+            <p style={{ margin: 0, color: COLORS.textMuted, fontSize: "14px" }}>
+              Choose your preferred sign-in method
+            </p>
+          </header>
 
-        {mode === "phone" && (
-          <form onSubmit={otpSent ? handleVerifyOtp : handleSendOtp}>
-            <div style={{ marginBottom: "16px" }}>
-              <label htmlFor="phone" style={{ display: "block", fontWeight: 600, color: "#263648" }}>
-                Phone number
-              </label>
-              <input
-                id="phone" type="tel" autoComplete="tel"
-                placeholder="+26658000001" required disabled={otpSent}
-                value={phone} onChange={(e) => setPhone(e.target.value)}
-                style={fieldStyle}
-              />
-            </div>
-            {otpSent && (
-              <div style={{ marginBottom: "16px" }}>
-                <label htmlFor="otp" style={{ display: "block", fontWeight: 600, color: "#263648" }}>
-                  Enter OTP
+          <div style={{
+            display: "flex", gap: "8px", marginBottom: "20px",
+            background: COLORS.lightBg, padding: "4px", borderRadius: "8px"
+          }}>
+            <button
+              type="button"
+              onClick={() => { setMode("email"); setError(""); setInfo(""); }}
+              style={{
+                flex: 1, padding: "10px", border: 0, borderRadius: "6px",
+                background: mode === "email" ? COLORS.blue : "transparent",
+                color: mode === "email" ? "#fff" : COLORS.textMuted,
+                fontWeight: 700, cursor: "pointer", fontSize: 14
+              }}
+            >Email</button>
+            <button
+              type="button"
+              onClick={() => { setMode("phone"); setError(""); setInfo(""); }}
+              style={{
+                flex: 1, padding: "10px", border: 0, borderRadius: "6px",
+                background: mode === "phone" ? COLORS.green : "transparent",
+                color: mode === "phone" ? "#fff" : COLORS.textMuted,
+                fontWeight: 700, cursor: "pointer", fontSize: 14
+              }}
+            >Phone OTP</button>
+          </div>
+
+          {mode === "email" && (
+            <form onSubmit={handleEmailLogin}>
+              <div style={{ marginBottom: "14px" }}>
+                <label htmlFor="email" style={{ display: "block", fontWeight: 600, color: "#263648", fontSize: 13 }}>
+                  Email address
                 </label>
                 <input
-                  id="otp" type="text" inputMode="numeric"
-                  autoComplete="one-time-code" placeholder="123456"
-                  required value={otp} onChange={(e) => setOtp(e.target.value)}
+                  id="email" type="email" autoComplete="email"
+                  placeholder="you@example.com" required
+                  value={email} onChange={(e) => setEmail(e.target.value)}
                   style={fieldStyle}
                 />
               </div>
-            )}
-            <button type="submit" disabled={loading} style={buttonStyle(COLORS.green)}>
-              {loading ? "Please wait..." : otpSent ? "Verify OTP & Sign in" : "Send OTP"}
-            </button>
-            {otpSent && (
-              <button
-                type="button"
-                onClick={() => { setOtpSent(false); setOtp(""); setInfo(""); }}
-                style={{
-                  ...buttonStyle("transparent"),
-                  color: COLORS.blue, border: `1px solid ${COLORS.blue}`
-                }}
-              >Use different number</button>
-            )}
-          </form>
-        )}
+              <div style={{ marginBottom: "14px" }}>
+                <label htmlFor="password" style={{ display: "block", fontWeight: 600, color: "#263648", fontSize: 13 }}>
+                  Password
+                </label>
+                <input
+                  id="password" type="password" autoComplete="current-password"
+                  placeholder="Enter your password" required
+                  value={password} onChange={(e) => setPassword(e.target.value)}
+                  style={fieldStyle}
+                />
+              </div>
+              <div style={{
+                display: "flex", justifyContent: "space-between",
+                alignItems: "center", gap: "12px",
+                marginBottom: "18px", fontSize: "13px"
+              }}>
+                <label style={{ display: "inline-flex", alignItems: "center", gap: "8px", color: "#475569" }}>
+                  <input type="checkbox" name="rememberMe" /> Remember me
+                </label>
+                <a href="/forgot-password" style={{ color: COLORS.blue, textDecoration: "none", fontWeight: 600 }}>
+                  Forgot password?
+                </a>
+              </div>
+              <button type="submit" disabled={loading} style={buttonStyle(COLORS.blue)}>
+                {loading ? "Signing in..." : "Sign in"}
+              </button>
+            </form>
+          )}
 
-        <div style={{
-          display: "flex", alignItems: "center", gap: "12px",
-          margin: "22px 0", color: COLORS.textMuted, fontSize: "13px"
-        }}>
-          <div style={{ flex: 1, height: "1px", background: COLORS.border }} />
-          <span>OR</span>
-          <div style={{ flex: 1, height: "1px", background: COLORS.border }} />
+          {mode === "phone" && (
+            <form onSubmit={otpSent ? handleVerifyOtp : handleSendOtp}>
+              <div style={{ marginBottom: "14px" }}>
+                <label htmlFor="phone" style={{ display: "block", fontWeight: 600, color: "#263648", fontSize: 13 }}>
+                  Phone number
+                </label>
+                <input
+                  id="phone" type="tel" autoComplete="tel"
+                  placeholder="+26658000001" required disabled={otpSent}
+                  value={phone} onChange={(e) => setPhone(e.target.value)}
+                  style={fieldStyle}
+                />
+              </div>
+              {otpSent && (
+                <div style={{ marginBottom: "14px" }}>
+                  <label htmlFor="otp" style={{ display: "block", fontWeight: 600, color: "#263648", fontSize: 13 }}>
+                    Enter OTP
+                  </label>
+                  <input
+                    id="otp" type="text" inputMode="numeric"
+                    autoComplete="one-time-code" placeholder="123456"
+                    required value={otp} onChange={(e) => setOtp(e.target.value)}
+                    style={fieldStyle}
+                  />
+                </div>
+              )}
+              <button type="submit" disabled={loading} style={buttonStyle(COLORS.green)}>
+                {loading ? "Please wait..." : otpSent ? "Verify OTP & Sign in" : "Send OTP"}
+              </button>
+              {otpSent && (
+                <button
+                  type="button"
+                  onClick={() => { setOtpSent(false); setOtp(""); setInfo(""); }}
+                  style={{
+                    ...buttonStyle("transparent"),
+                    color: COLORS.blue, border: `1px solid ${COLORS.blue}`
+                  }}
+                >Use different number</button>
+              )}
+            </form>
+          )}
+
+          <div style={{
+            display: "flex", alignItems: "center", gap: "12px",
+            margin: "18px 0", color: COLORS.textMuted, fontSize: "12px"
+          }}>
+            <div style={{ flex: 1, height: "1px", background: COLORS.border }} />
+            <span>OR</span>
+            <div style={{ flex: 1, height: "1px", background: COLORS.border }} />
+          </div>
+
+          <button
+            type="button" onClick={handleGoogleLogin} disabled={loading}
+            style={{
+              width: "100%", padding: "12px",
+              border: `1px solid ${COLORS.border}`, borderRadius: "6px",
+              background: "#fff", color: "#333", fontSize: "14px",
+              fontWeight: 600, cursor: "pointer",
+              display: "flex", alignItems: "center", justifyContent: "center", gap: "10px"
+            }}
+          >
+            <svg width="18" height="18" viewBox="0 0 48 48">
+              <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.9 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.5 6.1 29.5 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.5-.4-3.5z"/>
+              <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.5 6.1 29.5 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/>
+              <path fill="#4CAF50" d="M24 44c5.3 0 10.2-2 13.8-5.3l-6.4-5.4C29.3 34.9 26.8 36 24 36c-5.3 0-9.7-3.1-11.3-7.6l-6.5 5C9.5 39.6 16.2 44 24 44z"/>
+              <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.3 4.3-4.3 5.7l6.4 5.4C36.9 39.1 44 34 44 24c0-1.3-.1-2.5-.4-3.5z"/>
+            </svg>
+            Continue with Google
+          </button>
+
+          {error && (
+            <p role="alert" style={{ margin: "14px 0 0", color: COLORS.error, fontSize: "13px", textAlign: "center" }}>
+              {error}
+            </p>
+          )}
+          {info && !error && (
+            <p style={{ margin: "14px 0 0", color: COLORS.green, fontSize: "13px", textAlign: "center" }}>
+              {info}
+            </p>
+          )}
+
+          <p style={{ margin: "20px 0 0", color: COLORS.textMuted, textAlign: "center", fontSize: "13px" }}>
+            Don&apos;t have an account?{" "}
+            <Link to="/register" state={location.state} style={{ color: COLORS.blue, fontWeight: 700, textDecoration: "none" }}>
+              Create an account
+            </Link>
+          </p>
         </div>
-
-        <button
-          type="button" onClick={handleGoogleLogin} disabled={loading}
-          style={{
-            width: "100%", padding: "12px",
-            border: `1px solid ${COLORS.border}`, borderRadius: "6px",
-            background: "#fff", color: "#333", fontSize: "15px",
-            fontWeight: 600, cursor: "pointer",
-            display: "flex", alignItems: "center", justifyContent: "center", gap: "10px"
-          }}
-        >
-          <svg width="18" height="18" viewBox="0 0 48 48">
-            <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.9 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.5 6.1 29.5 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.5-.4-3.5z"/>
-            <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.5 6.1 29.5 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/>
-            <path fill="#4CAF50" d="M24 44c5.3 0 10.2-2 13.8-5.3l-6.4-5.4C29.3 34.9 26.8 36 24 36c-5.3 0-9.7-3.1-11.3-7.6l-6.5 5C9.5 39.6 16.2 44 24 44z"/>
-            <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.3 4.3-4.3 5.7l6.4 5.4C36.9 39.1 44 34 44 24c0-1.3-.1-2.5-.4-3.5z"/>
-          </svg>
-          Continue with Google
-        </button>
-
-        {error && (
-          <p role="alert" style={{ margin: "16px 0 0", color: COLORS.error, fontSize: "14px", textAlign: "center" }}>
-            {error}
-          </p>
-        )}
-        {info && !error && (
-          <p style={{ margin: "16px 0 0", color: COLORS.green, fontSize: "14px", textAlign: "center" }}>
-            {info}
-          </p>
-        )}
-
-        <p style={{ margin: "24px 0 0", color: COLORS.textMuted, textAlign: "center", fontSize: "14px" }}>
-          Don&apos;t have an account?{" "}
-          <Link to="/register" state={location.state} style={{ color: COLORS.blue, fontWeight: 700, textDecoration: "none" }}>
-            Create an account
-          </Link>
-        </p>
       </section>
     </main>
   );

@@ -284,250 +284,320 @@ function Register({ onSuccess, getPostAuthRoute }) {
     }}>
       <div id={RECAPTCHA_CONTAINER_ID}></div>
 
+      {/* Split Screen Container */}
       <section style={{
         width: "100%",
-        maxWidth: 660,
-        boxSizing: "border-box",
-        padding: "36px 40px",
+        maxWidth: 1060,
+        display: "grid",
+        gridTemplateColumns: "1fr 1.1fr",
         background: COLORS.white,
-        borderRadius: 14,
-        boxShadow: "0 12px 36px rgba(0, 32, 159, .15)",
+        borderRadius: 16,
+        boxShadow: "0 16px 40px rgba(0, 32, 159, .12)",
+        overflow: "hidden",
         borderTop: `5px solid ${COLORS.green}`
       }}>
-        <header style={{ marginBottom: 26 }}>
-          <div style={{
-            display: "flex", height: "6px", borderRadius: "3px",
-            overflow: "hidden", marginBottom: 18
-          }}>
-            <div style={{ flex: 1, background: COLORS.blue }} />
-            <div style={{
-              flex: 1, background: COLORS.white,
-              borderTop: `1px solid ${COLORS.border}`,
-              borderBottom: `1px solid ${COLORS.border}`
-            }} />
-            <div style={{ flex: 1, background: COLORS.green }} />
-          </div>
-
-          <p style={{
-            margin: "0 0 8px", color: COLORS.blue, fontSize: 12,
-            fontWeight: 700, letterSpacing: 1.3, textTransform: "uppercase"
-          }}>
-            Lesotho Government Services
-          </p>
-          <h1 style={{ margin: "0 0 8px", color: COLORS.blue, fontSize: 30 }}>
-            Create an account
-          </h1>
-          <p style={{ margin: 0, color: COLORS.textMuted, lineHeight: 1.5 }}>
-            One account for Home Affairs, Passport, Traffic, Pensions, Police and Finance.
-          </p>
-        </header>
-
+        
+        {/* Left Side: Informational & Branding Panel */}
         <div style={{
-          display: "flex", gap: 8, marginBottom: 22,
-          background: COLORS.lightBg, padding: 4, borderRadius: 8
+          background: "linear-gradient(135deg, #00209F 0%, #001257 100% )",
+          color: COLORS.white,
+          padding: "48px 40px",
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "space-between"
         }}>
-          <button
-            type="button"
-            onClick={() => { setMethod("email"); setError(""); setInfo(""); setOtpSent(false); }}
-            style={{
-              flex: 1, padding: 10, border: 0, borderRadius: 6,
-              background: method === "email" ? COLORS.blue : "transparent",
-              color: method === "email" ? "#fff" : COLORS.textMuted,
-              fontWeight: 700, cursor: "pointer"
-            }}
-          >Email</button>
-          <button
-            type="button"
-            onClick={() => { setMethod("phone"); setError(""); setInfo(""); }}
-            style={{
-              flex: 1, padding: 10, border: 0, borderRadius: 6,
-              background: method === "phone" ? COLORS.green : "transparent",
-              color: method === "phone" ? "#fff" : COLORS.textMuted,
-              fontWeight: 700, cursor: "pointer"
-            }}
-          >Phone OTP</button>
-        </div>
-
-        {method === "email" && (
-          <form onSubmit={handleEmailRegister}>
+          <div>
             <div style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))",
-              gap: 18
+              display: "flex", height: "6px", borderRadius: "3px",
+              overflow: "hidden", marginBottom: 24, width: 120
             }}>
-              <label style={{ color: "#263b35", fontSize: 14, fontWeight: 600 }}>
-                First name
-                <input type="text" autoComplete="given-name" required
-                  value={firstName} onChange={(e) => setFirstName(e.target.value)}
-                  style={{ ...fieldStyle, display: "block", marginTop: 7 }} />
-              </label>
-              <label style={{ color: "#263b35", fontSize: 14, fontWeight: 600 }}>
-                Last name
-                <input type="text" autoComplete="family-name" required
-                  value={lastName} onChange={(e) => setLastName(e.target.value)}
-                  style={{ ...fieldStyle, display: "block", marginTop: 7 }} />
-              </label>
-              <label style={{ color: "#263b35", fontSize: 14, fontWeight: 600 }}>
-                Email address
-                <input type="email" autoComplete="email" required
-                  value={email} onChange={(e) => setEmail(e.target.value)}
-                  style={{ ...fieldStyle, display: "block", marginTop: 7 }} />
-              </label>
-              <label style={{ color: "#263b35", fontSize: 14, fontWeight: 600 }}>
-                Phone number
-                <input type="tel" autoComplete="tel" required
-                  value={phone} onChange={(e) => setPhone(e.target.value)}
-                  style={{ ...fieldStyle, display: "block", marginTop: 7 }} />
-              </label>
-              <label style={{
-                gridColumn: "1 / -1", color: "#263b35",
-                fontSize: 14, fontWeight: 600
-              }}>
-                ID or passport number
-                <input type="text" autoComplete="off" required
-                  value={identityNumber} onChange={(e) => setIdentityNumber(e.target.value)}
-                  style={{ ...fieldStyle, display: "block", marginTop: 7 }} />
-              </label>
-              <label style={{ color: "#263b35", fontSize: 14, fontWeight: 600 }}>
-                Password
-                <input type="password" autoComplete="new-password" minLength={8} required
-                  value={password} onChange={(e) => setPassword(e.target.value)}
-                  style={{ ...fieldStyle, display: "block", marginTop: 7 }} />
-              </label>
-              <label style={{ color: "#263b35", fontSize: 14, fontWeight: 600 }}>
-                Confirm password
-                <input type="password" autoComplete="new-password" minLength={8} required
-                  value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)}
-                  style={{ ...fieldStyle, display: "block", marginTop: 7 }} />
-              </label>
+              <div style={{ flex: 1, background: COLORS.blue }} />
+              <div style={{ flex: 1, background: COLORS.white }} />
+              <div style={{ flex: 1, background: COLORS.green }} />
             </div>
 
-            <p style={{ margin: "12px 0 8px", color: COLORS.textMuted, fontSize: 13 }}>
-              Password must be at least 8 characters.
+            <p style={{
+              margin: "0 0 8px", color: "#4ade80", fontSize: 12,
+              fontWeight: 700, letterSpacing: 1.3, textTransform: "uppercase"
+            }}>
+              Official Digital Portal
+            </p>
+            <h2 style={{ margin: "0 0 16px", fontSize: 28, lineHeight: 1.2 }}>
+              The Kingdom of Lesotho Single Identity
+            </h2>
+            <p style={{ margin: "0 0 32px", color: "#d1d5db", fontSize: 15, lineHeight: 1.6 }}>
+              Access streamlined public services securely through a unified national profile.
             </p>
 
-            {error && <p role="alert" style={{ color: COLORS.error, fontSize: 14 }}>{error}</p>}
-
-            <button type="submit" disabled={loading} style={buttonStyle(COLORS.blue)}>
-              {loading ? "Creating account..." : "Create account"}
-            </button>
-          </form>
-        )}
-
-        {method === "phone" && (
-          <form onSubmit={otpSent ? handleVerifyOtp : handleSendOtp}>
-            <div style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))",
-              gap: 18
-            }}>
-              <label style={{ color: "#263b35", fontSize: 14, fontWeight: 600 }}>
-                First name
-                <input type="text" required disabled={otpSent}
-                  value={firstName} onChange={(e) => setFirstName(e.target.value)}
-                  style={{ ...fieldStyle, display: "block", marginTop: 7 }} />
-              </label>
-              <label style={{ color: "#263b35", fontSize: 14, fontWeight: 600 }}>
-                Last name
-                <input type="text" required disabled={otpSent}
-                  value={lastName} onChange={(e) => setLastName(e.target.value)}
-                  style={{ ...fieldStyle, display: "block", marginTop: 7 }} />
-              </label>
-              <label style={{
-                gridColumn: "1 / -1", color: "#263b35",
-                fontSize: 14, fontWeight: 600
-              }}>
-                ID or passport number
-                <input type="text" required disabled={otpSent}
-                  value={identityNumber} onChange={(e) => setIdentityNumber(e.target.value)}
-                  style={{ ...fieldStyle, display: "block", marginTop: 7 }} />
-              </label>
-              <label style={{
-                gridColumn: "1 / -1", color: "#263b35",
-                fontSize: 14, fontWeight: 600
-              }}>
-                Phone number
-                <input type="tel" required disabled={otpSent}
-                  placeholder="+26658000001"
-                  value={phone} onChange={(e) => setPhone(e.target.value)}
-                  style={{ ...fieldStyle, display: "block", marginTop: 7 }} />
-              </label>
-              {otpSent && (
-                <label style={{
-                  gridColumn: "1 / -1", color: "#263b35",
-                  fontSize: 14, fontWeight: 600
-                }}>
-                  Enter OTP
-                  <input type="text" inputMode="numeric" autoComplete="one-time-code"
-                    required placeholder="123456"
-                    value={otp} onChange={(e) => setOtp(e.target.value)}
-                    style={{ ...fieldStyle, display: "block", marginTop: 7 }} />
-                </label>
-              )}
+            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              {[
+                { title: "Home Affairs & Passports", desc: "Track applications and renewals seamlessly." },
+                { title: "Traffic & Transport", desc: "Manage driver licenses and vehicle registrations." },
+                { title: "Pensions & Social Grants", desc: "Secure tracking for disbursements and support." },
+                { title: "Police & Public Safety", desc: "Quick access to clearances and public services." }
+              ].map((item, idx) => (
+                <div key={idx} style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+                  <div style={{
+                    width: 24, height: 24, borderRadius: "50%", background: "rgba(255,255,255,0.15)",
+                    display: "grid", placeItems: "center", fontSize: 12, fontWeight: 700, color: "#4ade80", flexShrink: 0
+                  }}>✓</div>
+                  <div>
+                    <h4 style={{ margin: "0 0 2px", fontSize: 15, color: "#fff" }}>{item.title}</h4>
+                    <p style={{ margin: 0, fontSize: 13, color: "#9ca3af" }}>{item.desc}</p>
+                  </div>
+                </div>
+              ))}
             </div>
+          </div>
 
-            {error && (
-              <p role="alert" style={{ color: COLORS.error, fontSize: 14, marginTop: 12 }}>{error}</p>
-            )}
-            {info && !error && (
-              <p style={{ color: COLORS.green, fontSize: 14, marginTop: 12 }}>{info}</p>
-            )}
-
-            <button type="submit" disabled={loading} style={buttonStyle(COLORS.green)}>
-              {loading ? "Please wait..." : otpSent ? "Verify OTP & Create account" : "Send OTP"}
-            </button>
-
-            {otpSent && (
-              <button
-                type="button"
-                onClick={() => { setOtpSent(false); setOtp(""); setInfo(""); }}
-                style={{
-                  ...buttonStyle("transparent"),
-                  color: COLORS.blue, border: `1px solid ${COLORS.blue}`
-                }}
-              >Use different number</button>
-            )}
-          </form>
-        )}
-
-        <div style={{
-          display: "flex", alignItems: "center", gap: 12,
-          margin: "22px 0", color: COLORS.textMuted, fontSize: 13
-        }}>
-          <div style={{ flex: 1, height: 1, background: COLORS.border }} />
-          <span>OR</span>
-          <div style={{ flex: 1, height: 1, background: COLORS.border }} />
+          {/* Bottom Container with Centered Back Button */}
+          <div style={{ marginTop: 40, borderTop: "1px solid rgba(255,255,255,0.15)", paddingTop: 20, display: "flex", flexDirection: "column", alignItems: "center", gap: 14 }}>
+            <Link
+              to="/home-dashboard"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 8,
+                background: "transparent",
+                color: "#FFFFFF",
+                border: "1px solid #FFFFFF",
+                borderRadius: 8,
+                padding: "10px 24px",
+                textDecoration: "none",
+                fontSize: 14,
+                fontWeight: 600,
+                width: "fit-content",
+                transition: "background 0.2s"
+              }}
+            >
+              ← Back to Home
+            </Link>
+            <p style={{ margin: 0, fontSize: 12, color: "#9ca3af", textAlign: "center" }}>
+              Need assistance? Contact the Government Service Desk or call support numbers locally.
+            </p>
+          </div>
         </div>
 
-        <button
-          type="button" onClick={handleGoogleRegister} disabled={loading}
-          style={{
-            width: "100%", padding: 12,
-            border: `1px solid ${COLORS.border}`, borderRadius: 7,
-            background: "#fff", color: "#333", fontSize: 15,
-            fontWeight: 600, cursor: "pointer",
-            display: "flex", alignItems: "center", justifyContent: "center", gap: 10
-          }}
-        >
-          <svg width="18" height="18" viewBox="0 0 48 48">
-            <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.9 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.5 6.1 29.5 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.5-.4-3.5z"/>
-            <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.5 6.1 29.5 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/>
-            <path fill="#4CAF50" d="M24 44c5.3 0 10.2-2 13.8-5.3l-6.4-5.4C29.3 34.9 26.8 36 24 36c-5.3 0-9.7-3.1-11.3-7.6l-6.5 5C9.5 39.6 16.2 44 24 44z"/>
-            <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.3 4.3-4.3 5.7l6.4 5.4C36.9 39.1 44 34 44 24c0-1.3-.1-2.5-.4-3.5z"/>
-          </svg>
-          Sign up with Google
-        </button>
+        {/* Right Side: Registration Form */}
+        <div style={{ padding: "40px 44px", overflowY: "auto", maxHeight: "90vh" }}>
+          <header style={{ marginBottom: 24 }}>
+            <h1 style={{ margin: "0 0 8px", color: COLORS.blue, fontSize: 26 }}>
+              Create an account
+            </h1>
+            <p style={{ margin: 0, color: COLORS.textMuted, fontSize: 14, lineHeight: 1.5 }}>
+              Enter your credential details to get started.
+            </p>
+          </header>
 
-        <p style={{
-          margin: "22px 0 0", textAlign: "center",
-          color: COLORS.textMuted, fontSize: 14
-        }}>
-          Already have an account?{" "}
-          <Link to="/login" state={location.state}
-            style={{ color: COLORS.blue, fontWeight: 700, textDecoration: "none" }}>
-            Sign in
-          </Link>
-        </p>
+          <div style={{
+            display: "flex", gap: 8, marginBottom: 20,
+            background: COLORS.lightBg, padding: 4, borderRadius: 8
+          }}>
+            <button
+              type="button"
+              onClick={() => { setMethod("email"); setError(""); setInfo(""); setOtpSent(false); }}
+              style={{
+                flex: 1, padding: 10, border: 0, borderRadius: 6,
+                background: method === "email" ? COLORS.blue : "transparent",
+                color: method === "email" ? "#fff" : COLORS.textMuted,
+                fontWeight: 700, cursor: "pointer", fontSize: 14
+              }}
+            >Email</button>
+            <button
+              type="button"
+              onClick={() => { setMethod("phone"); setError(""); setInfo(""); }}
+              style={{
+                flex: 1, padding: 10, border: 0, borderRadius: 6,
+                background: method === "phone" ? COLORS.green : "transparent",
+                color: method === "phone" ? "#fff" : COLORS.textMuted,
+                fontWeight: 700, cursor: "pointer", fontSize: 14
+              }}
+            >Phone OTP</button>
+          </div>
+
+          {method === "email" && (
+            <form onSubmit={handleEmailRegister}>
+              <div style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr",
+                gap: 14
+              }}>
+                <label style={{ color: "#263b35", fontSize: 13, fontWeight: 600 }}>
+                  First name
+                  <input type="text" autoComplete="given-name" required
+                    value={firstName} onChange={(e) => setFirstName(e.target.value)}
+                    style={{ ...fieldStyle, display: "block", marginTop: 6 }} />
+                </label>
+                <label style={{ color: "#263b35", fontSize: 13, fontWeight: 600 }}>
+                  Last name
+                  <input type="text" autoComplete="family-name" required
+                    value={lastName} onChange={(e) => setLastName(e.target.value)}
+                    style={{ ...fieldStyle, display: "block", marginTop: 6 }} />
+                </label>
+                <label style={{ gridColumn: "1 / -1", color: "#263b35", fontSize: 13, fontWeight: 600 }}>
+                  Email address
+                  <input type="email" autoComplete="email" required
+                    value={email} onChange={(e) => setEmail(e.target.value)}
+                    style={{ ...fieldStyle, display: "block", marginTop: 6 }} />
+                </label>
+                <label style={{ gridColumn: "1 / -1", color: "#263b35", fontSize: 13, fontWeight: 600 }}>
+                  Phone number
+                  <input type="tel" autoComplete="tel" required
+                    value={phone} onChange={(e) => setPhone(e.target.value)}
+                    style={{ ...fieldStyle, display: "block", marginTop: 6 }} />
+                </label>
+                <label style={{
+                  gridColumn: "1 / -1", color: "#263b35",
+                  fontSize: 13, fontWeight: 600
+                }}>
+                  ID or passport number
+                  <input type="text" autoComplete="off" required
+                    value={identityNumber} onChange={(e) => setIdentityNumber(e.target.value)}
+                    style={{ ...fieldStyle, display: "block", marginTop: 6 }} />
+                </label>
+                <label style={{ color: "#263b35", fontSize: 13, fontWeight: 600 }}>
+                  Password
+                  <input type="password" autoComplete="new-password" minLength={8} required
+                    value={password} onChange={(e) => setPassword(e.target.value)}
+                    style={{ ...fieldStyle, display: "block", marginTop: 6 }} />
+                </label>
+                <label style={{ color: "#263b35", fontSize: 13, fontWeight: 600 }}>
+                  Confirm password
+                  <input type="password" autoComplete="new-password" minLength={8} required
+                    value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)}
+                    style={{ ...fieldStyle, display: "block", marginTop: 6 }} />
+                </label>
+              </div>
+
+              <p style={{ margin: "10px 0 6px", color: COLORS.textMuted, fontSize: 12 }}>
+                Password must be at least 8 characters.
+              </p>
+
+              {error && <p role="alert" style={{ color: COLORS.error, fontSize: 13, margin: "6px 0" }}>{error}</p>}
+
+              <button type="submit" disabled={loading} style={buttonStyle(COLORS.blue)}>
+                {loading ? "Creating account..." : "Create account"}
+              </button>
+            </form>
+          )}
+
+          {method === "phone" && (
+            <form onSubmit={otpSent ? handleVerifyOtp : handleSendOtp}>
+              <div style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr",
+                gap: 14
+              }}>
+                <label style={{ color: "#263b35", fontSize: 13, fontWeight: 600 }}>
+                  First name
+                  <input type="text" required disabled={otpSent}
+                    value={firstName} onChange={(e) => setFirstName(e.target.value)}
+                    style={{ ...fieldStyle, display: "block", marginTop: 6 }} />
+                </label>
+                <label style={{ color: "#263b35", fontSize: 13, fontWeight: 600 }}>
+                  Last name
+                  <input type="text" required disabled={otpSent}
+                    value={lastName} onChange={(e) => setLastName(e.target.value)}
+                    style={{ ...fieldStyle, display: "block", marginTop: 6 }} />
+                </label>
+                <label style={{
+                  gridColumn: "1 / -1", color: "#263b35",
+                  fontSize: 13, fontWeight: 600
+                }}>
+                  ID or passport number
+                  <input type="text" required disabled={otpSent}
+                    value={identityNumber} onChange={(e) => setIdentityNumber(e.target.value)}
+                    style={{ ...fieldStyle, display: "block", marginTop: 6 }} />
+                </label>
+                <label style={{
+                  gridColumn: "1 / -1", color: "#263b35",
+                  fontSize: 13, fontWeight: 600
+                }}>
+                  Phone number
+                  <input type="tel" required disabled={otpSent}
+                    placeholder="+26658000001"
+                    value={phone} onChange={(e) => setPhone(e.target.value)}
+                    style={{ ...fieldStyle, display: "block", marginTop: 6 }} />
+                </label>
+                {otpSent && (
+                  <label style={{
+                    gridColumn: "1 / -1", color: "#263b35",
+                    fontSize: 13, fontWeight: 600
+                  }}>
+                    Enter OTP
+                    <input type="text" inputMode="numeric" autoComplete="one-time-code"
+                      required placeholder="123456"
+                      value={otp} onChange={(e) => setOtp(e.target.value)}
+                      style={{ ...fieldStyle, display: "block", marginTop: 6 }} />
+                  </label>
+                )}
+              </div>
+
+              {error && (
+                <p role="alert" style={{ color: COLORS.error, fontSize: 13, marginTop: 10 }}>{error}</p>
+              )}
+              {info && !error && (
+                <p style={{ color: COLORS.green, fontSize: 13, marginTop: 10 }}>{info}</p>
+              )}
+
+              <button type="submit" disabled={loading} style={buttonStyle(COLORS.green)}>
+                {loading ? "Please wait..." : otpSent ? "Verify OTP & Create account" : "Send OTP"}
+              </button>
+
+              {otpSent && (
+                <button
+                  type="button"
+                  onClick={() => { setOtpSent(false); setOtp(""); setInfo(""); }}
+                  style={{
+                    ...buttonStyle("transparent"),
+                    color: COLORS.blue, border: `1px solid ${COLORS.blue}`
+                  }}
+                >Use different number</button>
+              )}
+            </form>
+          )}
+
+          <div style={{
+            display: "flex", alignItems: "center", gap: 12,
+            margin: "18px 0", color: COLORS.textMuted, fontSize: 12
+          }}>
+            <div style={{ flex: 1, height: 1, background: COLORS.border }} />
+            <span>OR</span>
+            <div style={{ flex: 1, height: 1, background: COLORS.border }} />
+          </div>
+
+          <button
+            type="button" onClick={handleGoogleRegister} disabled={loading}
+            style={{
+              width: "100%", padding: 12,
+              border: `1px solid ${COLORS.border}`, borderRadius: 7,
+              background: "#fff", color: "#333", fontSize: 14,
+              fontWeight: 600, cursor: "pointer",
+              display: "flex", alignItems: "center", justifyContent: "center", gap: 10
+            }}
+          >
+            <svg width="18" height="18" viewBox="0 0 48 48">
+              <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.9 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.5 6.1 29.5 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.5-.4-3.5z"/>
+              <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.5 6.1 29.5 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/>
+              <path fill="#4CAF50" d="M24 44c5.3 0 10.2-2 13.8-5.3l-6.4-5.4C29.3 34.9 26.8 36 24 36c-5.3 0-9.7-3.1-11.3-7.6l-6.5 5C9.5 39.6 16.2 44 24 44z"/>
+              <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.3 4.3-4.3 5.7l6.4 5.4C36.9 39.1 44 34 44 24c0-1.3-.1-2.5-.4-3.5z"/>
+            </svg>
+            Sign up with Google
+          </button>
+
+          <p style={{
+            margin: "18px 0 0", textAlign: "center",
+            color: COLORS.textMuted, fontSize: 13
+          }}>
+            Already have an account?{" "}
+            <Link to="/login" state={location.state}
+              style={{ color: COLORS.blue, fontWeight: 700, textDecoration: "none" }}>
+              Sign in
+            </Link>
+          </p>
+        </div>
+
       </section>
     </main>
   );

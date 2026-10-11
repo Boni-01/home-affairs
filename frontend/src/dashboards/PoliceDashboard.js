@@ -78,6 +78,13 @@ const APPLICATION_ICONS = {
       <path d="M8 12h8M8 16h6" />
     </svg>
   ),
+  affidavit: () => (
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M7 3h8l4 4v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z" />
+      <path d="M14 3v5h5" />
+      <path d="M8 8h5M8 12h8M8 16h8" />
+    </svg>
+  ),
   police_conduct_complaint: () => (
     <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <path d="M12 3 3 7v6c0 4.5 3.1 8.7 9 10 5.9-1.3 9-5.5 9-10V7l-9-4z" />
@@ -108,6 +115,7 @@ const APPLICATION_TYPES = [
   { key: "traffic_incident",        label: "Report a road traffic incident",       description: "Submit information about a traffic accident or road incident.",           categoryCode: "TRAFFIC",         icon: APPLICATION_ICONS.traffic_incident },
   { key: "police_clearance",        label: "Request a police clearance certificate", description: "Apply for a clearance certificate, subject to eligibility checks.",       categoryCode: "CLEARANCE",       icon: APPLICATION_ICONS.police_clearance },
   { key: "police_report_request",   label: "Request a police report",              description: "Request an eligible copy or confirmation of a police report.",            categoryCode: "POLICE_REPORT",   icon: APPLICATION_ICONS.police_report_request },
+  { key: "affidavit",               label: "Request an affidavit",                 description: "Submit a statement of facts or affidavit for police records.",            categoryCode: "AFFIDAVIT",      icon: APPLICATION_ICONS.affidavit },
   { key: "police_conduct_complaint",label: "Complaint against police conduct",     description: "Report alleged misconduct or dissatisfaction with police service.",       categoryCode: "COMPLAINT",       icon: APPLICATION_ICONS.police_conduct_complaint },
   { key: "witness_information",     label: "Submit witness information",           description: "Provide details of an incident or potential witnesses.",                  categoryCode: "WITNESS",         icon: APPLICATION_ICONS.witness_information },
   { key: "additional_evidence",     label: "Provide additional evidence",          description: "Upload documents, photographs, or other relevant information.",           categoryCode: "EVIDENCE",        icon: APPLICATION_ICONS.additional_evidence }
@@ -159,6 +167,13 @@ const FIELDS_BY_TYPE = {
   police_report_request: [
     { key: "related_reference", label: "Related report reference number",   type: "text" },
     { key: "purpose",           label: "Purpose of request",                type: "textarea" }
+  ],
+  affidavit: [
+    { key: "full_name",        label: "Your full name",                    type: "text" },
+    { key: "national_id",      label: "National ID number",               type: "text" },
+    { key: "related_reference", label: "Related report / case reference", type: "text" },
+    { key: "district",         label: "District",                         type: "text" },
+    { key: "declaration",      label: "Statement of facts / affidavit details", type: "textarea" }
   ],
   police_conduct_complaint: [
     { key: "officer_details",   label: "Officer name / badge (if known)",   type: "text" },
