@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import { COLORS, layout, header, section } from "../styles/dashboardStyles";
+import DashboardSidebar from "../components/DashboardSidebar";
 import { auth, API_BASE } from "../Database/firebase";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
@@ -39,7 +40,7 @@ const APP_TYPE_LABEL = {
 // Statuses in which the citizen is still allowed to delete their own application
 const DELETABLE_STATUSES = ["submitted", "more_information_required"];
 
-function PassportOfficeDashboard() {
+function PassportOfficeDashboard({ onLogout }) {
   const [tab, setTab] = useState("apply");
   const [me, setMe] = useState(null);
   const [services, setServices] = useState([]);
@@ -262,7 +263,7 @@ function PassportOfficeDashboard() {
   const readyApps = applications.filter(a => a.status === "ready_for_collection").length;
 
   return (
-    <main style={layout.page}>
+    <main className="dashboard-page" style={layout.page}>
       <div style={layout.container}>
         <header style={header.wrapper}>
           <div style={header.content}>
@@ -292,26 +293,18 @@ function PassportOfficeDashboard() {
           <StatCard label="Notifications" value={unread} accent={COLORS.blue} />
         </section>
 
-        <nav style={{
-          display: "flex", gap: 4, marginBottom: 24,
-          borderBottom: `1px solid ${COLORS.border}`, flexWrap: "wrap"
-        }}>
-          {[
+        <DashboardSidebar
+          items={[
             ["apply", "Apply"],
             ["mine", `My applications (${applications.length})`],
             ["notifications", `Notifications${unread ? ` (${unread})` : ""}`],
             ["complaints", `Complaints${complaints.length ? ` (${complaints.length})` : ""}`],
             ["profile", "Profile"]
-          ].map(([key, label]) => (
-            <button key={key} onClick={() => setTab(key)} style={{
-              padding: "12px 18px", border: 0, background: "transparent",
-              borderBottom: tab === key ? `3px solid ${COLORS.blue}` : "3px solid transparent",
-              color: tab === key ? COLORS.blue : COLORS.textMid,
-              fontWeight: 700, fontSize: 13, cursor: "pointer",
-              fontFamily: "inherit"
-            }}>{label}</button>
-          ))}
-        </nav>
+          ]}
+          activeTab={tab}
+          onTabChange={setTab}
+          onLogout={onLogout}
+        />
 
         {tab === "apply" && (
           <section style={section.wrapper}>

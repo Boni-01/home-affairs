@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { COLORS, layout, header, cards, grids, section } from "../styles/dashboardStyles";
+import DashboardSidebar from "../components/DashboardSidebar";
 import { auth, API_BASE } from "../Database/firebase";
 
 async function api(path, opts = {}) {
@@ -40,7 +41,7 @@ const REQUEST_TYPE_FILTERS = [
   { key: "GENERAL_ENQUIRY", label: "Finance enquiry" }
 ];
 
-export default function FinanceDashboardAdmin() {
+export default function FinanceDashboardAdmin({ onLogout }) {
   const [tab, setTab] = useState("requests");
 
   const [stats, setStats] = useState({});
@@ -220,7 +221,7 @@ export default function FinanceDashboardAdmin() {
   }
 
   return (
-    <main style={layout.page}>
+    <main className="dashboard-page" style={layout.page}>
       <div style={layout.container}>
         <header style={header.wrapper}>
           <div style={{
@@ -256,11 +257,8 @@ export default function FinanceDashboardAdmin() {
           <Metric label="Open enquiries" value={stats.openTickets || 0} />
         </section>
 
-        <nav style={{
-          display: "flex", gap: 4, marginBottom: 24,
-          borderBottom: `1px solid ${COLORS.border}`, flexWrap: "wrap"
-        }}>
-          {[
+        <DashboardSidebar
+          items={[
             ["requests", "Requests"],
             ["suppliers", `Suppliers (${suppliers.length})`],
             ["invoices", `Invoices (${invoices.length})`],
@@ -268,16 +266,11 @@ export default function FinanceDashboardAdmin() {
             ["payments", `Payments (${payments.length})`],
             ["tickets", `Enquiries (${tickets.length})`],
             ["audit", "Audit log"]
-          ].map(([key, label]) => (
-            <button key={key} onClick={() => setTab(key)} style={{
-              padding: "12px 18px", border: 0, background: "transparent",
-              borderBottom: tab === key ? `3px solid ${COLORS.blue}` : "3px solid transparent",
-              color: tab === key ? COLORS.blue : COLORS.textMid,
-              fontWeight: 700, fontSize: 13, cursor: "pointer",
-              fontFamily: "inherit"
-            }}>{label}</button>
-          ))}
-        </nav>
+          ]}
+          activeTab={tab}
+          onTabChange={setTab}
+          onLogout={onLogout}
+        />
 
         {/* ---------------- Requests tab ---------------- */}
         {tab === "requests" && (

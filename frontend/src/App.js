@@ -23,8 +23,7 @@ import {
   Navigate,
   Route,
   Routes,
-  useLocation,
-  Link
+  useLocation
 } from "react-router-dom";
 
 // ============================================================
@@ -50,59 +49,6 @@ function AdminRoute({ isAuthenticated, children }) {
     return <Navigate to="/home-affairs-dashboard" replace />;
   }
   return children;
-}
-
-// ============================================================
-// Admin sub-navigation
-// ============================================================
-function AdminSubNav() {
-  const location = useLocation();
-  const isHomeAffairs = location.pathname.startsWith("/admin/home-affairs");
-  const isPassport = location.pathname.startsWith("/admin/passport");
-  const isPolice = location.pathname.startsWith("/admin/police");
-  const isFinance = location.pathname.startsWith("/admin/finance");
-  const isPensions = location.pathname.startsWith("/admin/pensions");
-  const isTraffic = location.pathname.startsWith("/admin/traffic");
-
-  const linkStyle = (active) => ({
-    padding: "10px 18px",
-    fontSize: 13,
-    fontWeight: 700,
-    textDecoration: "none",
-    color: active ? "#175cd3" : "#475569",
-    borderBottom: active ? "3px solid #175cd3" : "3px solid transparent",
-    fontFamily: "inherit"
-  });
-
-  return (
-    <div style={{
-      background: "#fff",
-      borderBottom: "1px solid #e2e8f0",
-      padding: "0 24px",
-      display: "flex",
-      gap: 8,
-      flexWrap: "wrap"
-    }}>
-      <Link to="/admin/home-affairs" style={linkStyle(isHomeAffairs)}>
-        Home Affairs Admin
-      </Link>
-      <Link to="/admin/passport" style={linkStyle(isPassport)}>
-        Passport Admin
-      </Link>
-      <Link to="/admin/police" style={linkStyle(isPolice)}>
-        Police Admin
-      </Link>
-      <Link to="/admin/finance" style={linkStyle(isFinance)}>
-        Finance Admin
-      </Link>
-      <Link to="/admin/pensions" style={linkStyle(isPensions)}>
-        Pensions Admin
-      </Link>
-      <Link to="/admin/traffic" style={linkStyle(isTraffic)}>
-        Traffic Admin
-      </Link>
-    </div>
-  );
 }
 
 // ============================================================
@@ -132,8 +78,6 @@ function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(
     () => sessionStorage.getItem("home-affairs-authenticated") === "true"
   );
-  const isAdmin = sessionStorage.getItem("is-admin") === "true";
-
   const handleAuthenticationSuccess = () => {
     sessionStorage.setItem("home-affairs-authenticated", "true");
     setIsAuthenticated(true);
@@ -160,9 +104,6 @@ function App() {
           isAuthenticated={isAuthenticated}
           onLogout={handleLogout}
         />
-
-        {/* Admin-only sub-nav so the single admin can move between offices */}
-        {isAuthenticated && isAdmin && <AdminSubNav />}
 
         <div style={{ flexGrow: 1 }}>
           <Routes>
@@ -197,7 +138,7 @@ function App() {
               path="/home-affairs-dashboard"
               element={
                 <RequireAccess isAuthenticated={isAuthenticated}>
-                  <HomeAffairsDashboard />
+                  <HomeAffairsDashboard onLogout={handleLogout} />
                 </RequireAccess>
               }
             />
@@ -205,7 +146,7 @@ function App() {
               path="/passport-office-dashboard"
               element={
                 <RequireAccess isAuthenticated={isAuthenticated}>
-                  <PassportOfficeDashboard />
+                  <PassportOfficeDashboard onLogout={handleLogout} />
                 </RequireAccess>
               }
             />
@@ -213,7 +154,7 @@ function App() {
               path="/pensions-dashboard"
               element={
                 <RequireAccess isAuthenticated={isAuthenticated}>
-                  <PensionsDashboard />
+                  <PensionsDashboard onLogout={handleLogout} />
                 </RequireAccess>
               }
             />
@@ -221,7 +162,7 @@ function App() {
               path="/police-dashboard"
               element={
                 <RequireAccess isAuthenticated={isAuthenticated}>
-                  <PoliceDashboard />
+                  <PoliceDashboard onLogout={handleLogout} />
                 </RequireAccess>
               }
             />
@@ -229,7 +170,7 @@ function App() {
               path="/traffic-dashboard"
               element={
                 <RequireAccess isAuthenticated={isAuthenticated}>
-                  <TrafficDashboard />
+                  <TrafficDashboard onLogout={handleLogout} />
                 </RequireAccess>
               }
             />
@@ -237,7 +178,7 @@ function App() {
               path="/finance-dashboard"
               element={
                 <RequireAccess isAuthenticated={isAuthenticated}>
-                  <FinanceDashboard />
+                  <FinanceDashboard onLogout={handleLogout} />
                 </RequireAccess>
               }
             />
@@ -247,7 +188,7 @@ function App() {
               path="/admin/home-affairs"
               element={
                 <AdminRoute isAuthenticated={isAuthenticated}>
-                  <HomeAffairsDashboardAdmin />
+                  <HomeAffairsDashboardAdmin onLogout={handleLogout} />
                 </AdminRoute>
               }
             />
@@ -255,7 +196,7 @@ function App() {
               path="/admin/passport"
               element={
                 <AdminRoute isAuthenticated={isAuthenticated}>
-                  <PassportOfficeDashboardAdmin />
+                  <PassportOfficeDashboardAdmin onLogout={handleLogout} />
                 </AdminRoute>
               }
             />
@@ -263,7 +204,7 @@ function App() {
               path="/admin/police"
               element={
                 <AdminRoute isAuthenticated={isAuthenticated}>
-                  <PoliceDashboardAdmin />
+                  <PoliceDashboardAdmin onLogout={handleLogout} />
                 </AdminRoute>
               }
             />
@@ -271,7 +212,7 @@ function App() {
               path="/admin/finance"
               element={
                 <AdminRoute isAuthenticated={isAuthenticated}>
-                  <FinanceDashboardAdmin />
+                  <FinanceDashboardAdmin onLogout={handleLogout} />
                 </AdminRoute>
               }
             />
@@ -279,7 +220,7 @@ function App() {
               path="/admin/pensions"
               element={
                 <AdminRoute isAuthenticated={isAuthenticated}>
-                  <PensionsDashboardAdmin />
+                  <PensionsDashboardAdmin onLogout={handleLogout} />
                 </AdminRoute>
               }
             />
@@ -287,7 +228,7 @@ function App() {
               path="/admin/traffic"
               element={
                 <AdminRoute isAuthenticated={isAuthenticated}>
-                  <TrafficDashboardAdmin />
+                  <TrafficDashboardAdmin onLogout={handleLogout} />
                 </AdminRoute>
               }
             />

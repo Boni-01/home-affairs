@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback, useRef } from "react";
 import { COLORS, layout, header, section } from "../styles/dashboardStyles";
+import DashboardSidebar from "../components/DashboardSidebar";
 import { auth, API_BASE } from "../Database/firebase";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
@@ -428,7 +429,7 @@ const SERVICE_CONFIG = {
 // ============================================================
 // COMPONENT
 // ============================================================
-function TrafficDashboard() {
+function TrafficDashboard({ onLogout }) {
   const [tab, setTab] = useState("overview");
   const [me, setMe] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -719,7 +720,8 @@ function TrafficDashboard() {
 
   if (loading && !me) {
     return (
-      <main style={layout.page}>
+      <main className="dashboard-page" style={layout.page}>
+        <DashboardSidebar items={[]} activeTab="" onLogout={onLogout} />
         <div style={layout.container}>
           <div style={{ textAlign: "center", padding: 60, color: COLORS.textMuted }}>
             Loading traffic services…
@@ -730,7 +732,7 @@ function TrafficDashboard() {
   }
 
   return (
-    <main style={layout.page}>
+    <main className="dashboard-page" style={layout.page}>
       <div style={layout.container}>
         {/* HEADER */}
         <header style={header.wrapper}>
@@ -781,11 +783,8 @@ function TrafficDashboard() {
         </section>
 
         {/* TABS */}
-        <nav style={{
-          display: "flex", gap: 4, marginBottom: 24,
-          borderBottom: `1px solid ${COLORS.border}`, flexWrap: "wrap"
-        }}>
-          {[
+        <DashboardSidebar
+          items={[
             ["overview", "Overview"],
             ["apply", "Apply"],
             ["applications", `Applications (${applications.length})`],
@@ -796,16 +795,11 @@ function TrafficDashboard() {
             ["complaints", `Complaints (${complaints.length})`],
             ["notifications", `Notifications${unread ? ` (${unread})` : ""}`],
             ["profile", "Profile"]
-          ].map(([key, label]) => (
-            <button key={key} onClick={() => setTab(key)} style={{
-              padding: "12px 18px", border: 0, background: "transparent",
-              borderBottom: tab === key ? `3px solid ${COLORS.blue}` : "3px solid transparent",
-              color: tab === key ? COLORS.blue : COLORS.textMid,
-              fontWeight: 700, fontSize: 13, cursor: "pointer",
-              fontFamily: "inherit"
-            }}>{label}</button>
-          ))}
-        </nav>
+          ]}
+          activeTab={tab}
+          onTabChange={setTab}
+          onLogout={onLogout}
+        />
 
         {/* OVERVIEW TAB */}
         {tab === "overview" && (

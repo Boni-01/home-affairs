@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { COLORS, layout, header, cards, grids, section } from "../styles/dashboardStyles";
+import DashboardSidebar from "../components/DashboardSidebar";
 import { auth, API_BASE } from "../Database/firebase";
 
 async function api(path, opts = {}) {
@@ -63,7 +64,7 @@ const URGENCY_COLORS = {
   low: "#475569"
 };
 
-export default function PoliceDashboardAdmin() {
+export default function PoliceDashboardAdmin({ onLogout }) {
   const [tab, setTab] = useState("queue");
 
   const [stats, setStats] = useState({});
@@ -307,7 +308,7 @@ export default function PoliceDashboardAdmin() {
     stats.byStatus?.find(s => s.status === key)?.count || 0;
 
   return (
-    <main style={layout.page}>
+    <main className="dashboard-page" style={layout.page}>
       <div style={layout.container}>
         <header style={header.wrapper}>
           <div style={{
@@ -342,26 +343,18 @@ export default function PoliceDashboardAdmin() {
           <Metric label="Feedback" value={stats.totalFeedback || 0} />
         </section>
 
-        <nav style={{
-          display: "flex", gap: 4, marginBottom: 24,
-          borderBottom: `1px solid ${COLORS.border}`, flexWrap: "wrap"
-        }}>
-          {[
+        <DashboardSidebar
+          items={[
             ["queue", "Application queue"],
             ["letters", `Letters (${letters.length})`],
             ["certify", `Certified docs (${certDocs.length})`],
             ["feedback", "Feedback"],
             ["audit", "Audit log"]
-          ].map(([key, label]) => (
-            <button key={key} onClick={() => setTab(key)} style={{
-              padding: "12px 18px", border: 0, background: "transparent",
-              borderBottom: tab === key ? `3px solid ${COLORS.blue}` : "3px solid transparent",
-              color: tab === key ? COLORS.blue : COLORS.textMid,
-              fontWeight: 700, fontSize: 13, cursor: "pointer",
-              fontFamily: "inherit"
-            }}>{label}</button>
-          ))}
-        </nav>
+          ]}
+          activeTab={tab}
+          onTabChange={setTab}
+          onLogout={onLogout}
+        />
 
         {/* ================= QUEUE TAB ================= */}
         {tab === "queue" && (

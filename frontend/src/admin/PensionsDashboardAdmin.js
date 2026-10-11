@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { COLORS, layout, header, cards, grids, section } from "../styles/dashboardStyles";
+import DashboardSidebar from "../components/DashboardSidebar";
 import { auth, API_BASE } from "../Database/firebase";
 
 async function api(path, opts = {}) {
@@ -55,7 +56,7 @@ const MEMBER_STATUS_FILTERS = [
   { key: "SUSPENDED", label: "Suspended" }
 ];
 
-export default function PensionsDashboardAdmin() {
+export default function PensionsDashboardAdmin({ onLogout }) {
   const [tab, setTab] = useState("applications");
 
   const [stats, setStats] = useState({});
@@ -325,7 +326,7 @@ export default function PensionsDashboardAdmin() {
   }
 
   return (
-    <main style={layout.page}>
+    <main className="dashboard-page" style={layout.page}>
       <div style={layout.container}>
         <header style={header.wrapper}>
           <div style={{
@@ -361,11 +362,8 @@ export default function PensionsDashboardAdmin() {
           <Metric label="Open enquiries" value={stats.openEnquiries || 0} />
         </section>
 
-        <nav style={{
-          display: "flex", gap: 4, marginBottom: 24,
-          borderBottom: `1px solid ${COLORS.border}`, flexWrap: "wrap"
-        }}>
-          {[
+        <DashboardSidebar
+          items={[
             ["applications", `Applications (${applications.length})`],
             ["members", `Members (${members.length})`],
             ["contributions", "Contributions"],
@@ -373,16 +371,11 @@ export default function PensionsDashboardAdmin() {
             ["debts", `Debts (${debts.length})`],
             ["enquiries", `Enquiries (${enquiries.length})`],
             ["audit", "Audit log"]
-          ].map(([key, label]) => (
-            <button key={key} onClick={() => setTab(key)} style={{
-              padding: "12px 18px", border: 0, background: "transparent",
-              borderBottom: tab === key ? `3px solid ${COLORS.blue}` : "3px solid transparent",
-              color: tab === key ? COLORS.blue : COLORS.textMid,
-              fontWeight: 700, fontSize: 13, cursor: "pointer",
-              fontFamily: "inherit"
-            }}>{label}</button>
-          ))}
-        </nav>
+          ]}
+          activeTab={tab}
+          onTabChange={setTab}
+          onLogout={onLogout}
+        />
 
         {/* APPLICATIONS TAB */}
         {tab === "applications" && (

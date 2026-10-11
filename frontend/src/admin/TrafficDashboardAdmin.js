@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { COLORS, layout, header, cards, grids, section } from "../styles/dashboardStyles";
+import DashboardSidebar from "../components/DashboardSidebar";
 import { auth, API_BASE } from "../Database/firebase";
 
 // ============================================================
@@ -57,7 +58,7 @@ const TYPE_FILTERS = [
 // ============================================================
 // COMPONENT
 // ============================================================
-function TrafficDashboardAdmin() {
+function TrafficDashboardAdmin({ onLogout }) {
   const [tab, setTab] = useState("queue");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -440,7 +441,7 @@ function TrafficDashboardAdmin() {
   // RENDER
   // ============================================================
   return (
-    <main style={layout.page}>
+    <main className="dashboard-page" style={layout.page}>
       <div style={layout.container}>
         {/* HEADER */}
         <header style={header.wrapper}>
@@ -501,11 +502,8 @@ function TrafficDashboardAdmin() {
         </section>
 
         {/* TABS */}
-        <nav style={{
-          display: "flex", gap: 4, marginBottom: 24,
-          borderBottom: `1px solid ${COLORS.border}`, flexWrap: "wrap"
-        }}>
-          {[
+        <DashboardSidebar
+          items={[
             ["queue", "Application Queue"],
             ["fines", `Fines (${fines.length})`],
             ["clearances", `Clearances (${clearances.length})`],
@@ -513,16 +511,11 @@ function TrafficDashboardAdmin() {
             ["schools", `Driving Schools (${schools.length})`],
             ["payments", `Payments (${payments.length})`],
             ["audit", "Audit Log"]
-          ].map(([key, label]) => (
-            <button key={key} onClick={() => setTab(key)} style={{
-              padding: "12px 18px", border: 0, background: "transparent",
-              borderBottom: tab === key ? `3px solid ${COLORS.blue}` : "3px solid transparent",
-              color: tab === key ? COLORS.blue : COLORS.textMid,
-              fontWeight: 700, fontSize: 13, cursor: "pointer",
-              fontFamily: "inherit"
-            }}>{label}</button>
-          ))}
-        </nav>
+          ]}
+          activeTab={tab}
+          onTabChange={setTab}
+          onLogout={onLogout}
+        />
 
         {/* QUEUE TAB */}
         {tab === "queue" && (

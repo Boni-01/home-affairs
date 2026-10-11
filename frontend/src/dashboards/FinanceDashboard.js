@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback, useRef } from "react";
 import { COLORS, layout, header, section } from "../styles/dashboardStyles";
+import DashboardSidebar from "../components/DashboardSidebar";
 import { auth, API_BASE } from "../Database/firebase";
 
 async function api(path, opts = {}) {
@@ -125,7 +126,7 @@ const FIELD_GROUPS = {
   ]
 };
 
-function FinanceDashboard() {
+function FinanceDashboard({ onLogout }) {
   const [tab, setTab] = useState("services");
   const [me, setMe] = useState(null);
   const [services, setServices] = useState([]);
@@ -282,7 +283,7 @@ function FinanceDashboard() {
   const deletableStatuses = ["DRAFT", "SUBMITTED", "ACTION_REQUIRED"];
 
   return (
-    <main style={layout.page}>
+    <main className="dashboard-page" style={layout.page}>
       <div style={layout.container}>
         <header style={header.wrapper}>
           <div style={header.content}>
@@ -315,11 +316,8 @@ function FinanceDashboard() {
           <StatCard label="Notifications" value={unread} accent={COLORS.blue} />
         </section>
 
-        <nav style={{
-          display: "flex", gap: 4, marginBottom: 24,
-          borderBottom: `1px solid ${COLORS.border}`, flexWrap: "wrap"
-        }}>
-          {[
+        <DashboardSidebar
+          items={[
             ["services", "Browse services"],
             ["new", "Submit request"],
             ["mine", `My requests (${requests.length})`],
@@ -327,16 +325,11 @@ function FinanceDashboard() {
             ["payments", `Payments (${payments.length})`],
             ["tickets", `Enquiries (${tickets.length})`],
             ["notifications", `Notifications${unread ? ` (${unread})` : ""}`]
-          ].map(([key, label]) => (
-            <button key={key} onClick={() => setTab(key)} style={{
-              padding: "12px 18px", border: 0, background: "transparent",
-              borderBottom: tab === key ? `3px solid ${COLORS.blue}` : "3px solid transparent",
-              color: tab === key ? COLORS.blue : COLORS.textMid,
-              fontWeight: 700, fontSize: 13, cursor: "pointer",
-              fontFamily: "inherit"
-            }}>{label}</button>
-          ))}
-        </nav>
+          ]}
+          activeTab={tab}
+          onTabChange={setTab}
+          onLogout={onLogout}
+        />
 
         {tab === "services" && (
           <section>

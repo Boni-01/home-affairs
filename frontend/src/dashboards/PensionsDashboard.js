@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback, useRef } from "react";
 import { COLORS, layout, header, section } from "../styles/dashboardStyles";
+import DashboardSidebar from "../components/DashboardSidebar";
 import { auth, API_BASE } from "../Database/firebase";
 
 async function api(path, opts = {}) {
@@ -115,7 +116,7 @@ const ENQUIRY_TYPES = [
   { key: "OTHER",                  label: "Other" }
 ];
 
-function PensionsDashboard() {
+function PensionsDashboard({ onLogout }) {
   const [tab, setTab] = useState("overview");
   const [me, setMe] = useState(null);
   const [programmes, setProgrammes] = useState([]);
@@ -314,7 +315,7 @@ function PensionsDashboard() {
   const isMember = !!profile.member;
 
   return (
-    <main style={layout.page}>
+    <main className="dashboard-page" style={layout.page}>
       <div style={layout.container}>
         <header style={header.wrapper}>
           <div style={header.content}>
@@ -345,11 +346,8 @@ function PensionsDashboard() {
           <StatCard label="Notifications" value={unread} accent={COLORS.blue} />
         </section>
 
-        <nav style={{
-          display: "flex", gap: 4, marginBottom: 24,
-          borderBottom: `1px solid ${COLORS.border}`, flexWrap: "wrap"
-        }}>
-          {[
+        <DashboardSidebar
+          items={[
             ["overview", "Overview"],
             ["apply", "Submit application"],
             ["mine", `My applications (${applications.length})`],
@@ -357,16 +355,11 @@ function PensionsDashboard() {
             ["payments", `Payments (${payments.length})`],
             ["enquiries", `Enquiries (${enquiries.length})`],
             ["notifications", `Notifications${unread ? ` (${unread})` : ""}`]
-          ].map(([key, label]) => (
-            <button key={key} onClick={() => setTab(key)} style={{
-              padding: "12px 18px", border: 0, background: "transparent",
-              borderBottom: tab === key ? `3px solid ${COLORS.blue}` : "3px solid transparent",
-              color: tab === key ? COLORS.blue : COLORS.textMid,
-              fontWeight: 700, fontSize: 13, cursor: "pointer",
-              fontFamily: "inherit"
-            }}>{label}</button>
-          ))}
-        </nav>
+          ]}
+          activeTab={tab}
+          onTabChange={setTab}
+          onLogout={onLogout}
+        />
 
         {/* ---------------- Overview ---------------- */}
         {tab === "overview" && (

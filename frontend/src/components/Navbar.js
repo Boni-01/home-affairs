@@ -3,7 +3,6 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import flagImage from "./Flag.png"; // Adjust path if Flag.png is in a subfolder (e.g., "./assets/Flag.png")
 import "./Navbar.css";
 
-// Routes where the top navigation bar must be hidden (dashboards have their own sidebar)
 const HIDDEN_ROUTES = [
   "/home-affairs-dashboard",
   "/passport-office-dashboard",
@@ -18,9 +17,12 @@ function Navbar({ isAuthenticated, onLogout }) {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Hide the whole navbar if the current route is one of the dashboard routes
-  const shouldHide = HIDDEN_ROUTES.includes(location.pathname);
-  if (shouldHide) return null;
+  if (
+    HIDDEN_ROUTES.includes(location.pathname) ||
+    location.pathname.startsWith("/admin/")
+  ) {
+    return null;
+  }
 
   const handleLogout = () => {
     sessionStorage.removeItem("home-affairs-authenticated");

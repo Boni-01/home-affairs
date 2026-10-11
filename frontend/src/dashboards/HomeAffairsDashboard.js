@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { COLORS, layout, header, section } from "../styles/dashboardStyles";
+import DashboardSidebar from "../components/DashboardSidebar";
 import { auth, API_BASE } from "../Database/firebase";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
@@ -30,15 +31,6 @@ const MODULES = [
   { key: "NICR", label: "Civil Registration", desc: "Births, deaths, marriages, IDs" },
   { key: "IMMIGRATION", label: "Immigration", desc: "Visas, permits, citizenship" },
   { key: "LRMIS", label: "Livestock", desc: "Owner and animal registration" }
-];
-
-const MINISTRY_LINKS = [
-  { label: "Home Affairs", route: "/home-affairs-dashboard" },
-  { label: "Passport", route: "/passport-office-dashboard" },
-  { label: "Police", route: "/police-dashboard" },
-  { label: "Finance", route: "/finance-dashboard" },
-  { label: "Pensions", route: "/pensions-dashboard" },
-  { label: "Traffic", route: "/traffic-dashboard" }
 ];
 
 const ANNOUNCEMENTS = [
@@ -599,7 +591,7 @@ function HomeAffairsDashboard() {
     searchQuery.trim() && allModuleServices.some(s => isMatchingSearch(s, searchQuery));
 
   return (
-    <main style={pageWrapper}>
+    <main className="home-affairs-dashboard" style={pageWrapper}>
       {/* TOP INFO BAR */}
       <div style={topBar}>
         <div style={topBarLeft}>
@@ -677,7 +669,11 @@ function HomeAffairsDashboard() {
 
       {/* BODY */}
       <div style={bodyWrapper}>
-        <aside style={sidebar}>
+        <DashboardSidebar
+          items={[["apply", t.applyTab]]}
+          activeTab="apply"
+          action={{ label: t.logout, onClick: handleLogout }}
+        >
           <p style={sidebarHeading}>{t.selfDocuments}</p>
 
           <div style={sidebarCard}>
@@ -696,27 +692,7 @@ function HomeAffairsDashboard() {
             </svg>
             <span>{t.serviceCatalogue}</span>
           </button>
-
-          <p style={{ ...sidebarHeading, marginTop: 20 }}>{t.articles}</p>
-
-          <div style={sidebarMinistries}>
-            {MINISTRY_LINKS.map((m) => {
-              const isActive = m.route === "/home-affairs-dashboard";
-              return (
-                <button
-                  key={m.route}
-                  onClick={() => navigate(m.route)}
-                  style={{
-                    ...sidebarMinistryBtn,
-                    ...(isActive ? sidebarMinistryBtnActive : {})
-                  }}
-                >
-                  {m.label}
-                </button>
-              );
-            })}
-          </div>
-        </aside>
+        </DashboardSidebar>
 
         <div style={contentWrapper}>
           <div style={layout.container}>
@@ -758,25 +734,6 @@ function HomeAffairsDashboard() {
               <StatCard label={t.readyForCollection} value={readyApps} accent={COLORS.green} />
               <StatCard label={t.notifications} value={unread} accent={COLORS.blue} />
             </section>
-
-            <nav style={{
-              display: "flex", gap: 4, marginBottom: 24,
-              borderBottom: `1px solid ${COLORS.border}`, flexWrap: "wrap"
-            }}>
-              <button style={{
-                padding: "12px 18px", border: 0, background: "transparent",
-                borderBottom: `3px solid ${COLORS.blue}`,
-                color: COLORS.blue,
-                fontWeight: 700, fontSize: 13, cursor: "pointer",
-                fontFamily: "inherit"
-              }}>{t.applyTab}</button>
-
-              <button onClick={handleLogout} style={{
-                marginLeft: "auto", padding: "12px 18px", border: 0,
-                background: "transparent", color: COLORS.textMid,
-                fontWeight: 700, fontSize: 13, cursor: "pointer", fontFamily: "inherit"
-              }}>{t.logout}</button>
-            </nav>
 
             <div style={{
               display: "grid",
@@ -1893,17 +1850,6 @@ const bodyWrapper = {
   minHeight: "calc(100vh - 110px)"
 };
 
-const sidebar = {
-  width: 200,
-  background: COLORS.blue,
-  color: "#fff",
-  padding: "20px 14px",
-  flexShrink: 0,
-  display: "flex",
-  flexDirection: "column",
-  gap: 10
-};
-
 const sidebarHeading = {
   margin: 0,
   fontSize: 11,
@@ -1955,24 +1901,6 @@ const sidebarCatalogueBtn = {
   fontFamily: "inherit",
   textAlign: "left"
 };
-const sidebarMinistries = { display: "flex", flexDirection: "column", gap: 4 };
-const sidebarMinistryBtn = {
-  background: "transparent",
-  color: "rgba(255,255,255,0.85)",
-  border: 0,
-  padding: "7px 10px",
-  textAlign: "left",
-  fontSize: 12,
-  fontWeight: 600,
-  cursor: "pointer",
-  borderRadius: 6,
-  fontFamily: "inherit"
-};
-const sidebarMinistryBtnActive = {
-  background: "rgba(255,255,255,0.15)",
-  color: "#fff"
-};
-
 const contentWrapper = { flex: 1, minWidth: 0, background: "#F4F7FB" };
 const docSearchInput = {
   width: "100%", maxWidth: 420,

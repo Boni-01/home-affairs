@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback, useRef } from "react";
 import { COLORS, layout, header, section } from "../styles/dashboardStyles";
+import DashboardSidebar from "../components/DashboardSidebar";
 import { auth, API_BASE } from "../Database/firebase";
 import jsPDF from "jspdf";
 
@@ -192,7 +193,7 @@ const FIELDS_BY_TYPE = {
   ]
 };
 
-function PoliceDashboard() {
+function PoliceDashboard({ onLogout }) {
   const [tab, setTab] = useState("report");
   const [me, setMe] = useState(null);
   const [categories, setCategories] = useState([]);
@@ -509,7 +510,7 @@ function PoliceDashboard() {
   const deletableStatuses = ["submitted", "received", "more_information_required"];
 
   return (
-    <main style={layout.page}>
+    <main className="dashboard-page" style={layout.page}>
       <div style={layout.container}>
         <header style={header.wrapper}>
           <div style={header.content}>
@@ -554,27 +555,19 @@ function PoliceDashboard() {
           <StatCard label="Notifications" value={unread + unreadCertNotifs} accent={COLORS.blue} />
         </section>
 
-        <nav style={{
-          display: "flex", gap: 4, marginBottom: 24,
-          borderBottom: `1px solid ${COLORS.border}`, flexWrap: "wrap"
-        }}>
-          {[
+        <DashboardSidebar
+          items={[
             ["report", "Report / Apply"],
             ["mine", `My reports (${applications.length})`],
             ["letters", `Letters (${letters.length})`],
             ["certify", `Certify document (${certDocs.length})`],
             ["notifications", `Notifications${unread ? ` (${unread})` : ""}`],
             ["feedback", "Feedback"]
-          ].map(([key, label]) => (
-            <button key={key} onClick={() => setTab(key)} style={{
-              padding: "12px 18px", border: 0, background: "transparent",
-              borderBottom: tab === key ? `3px solid ${COLORS.blue}` : "3px solid transparent",
-              color: tab === key ? COLORS.blue : COLORS.textMid,
-              fontWeight: 700, fontSize: 13, cursor: "pointer",
-              fontFamily: "inherit"
-            }}>{label}</button>
-          ))}
-        </nav>
+          ]}
+          activeTab={tab}
+          onTabChange={setTab}
+          onLogout={onLogout}
+        />
 
         {/* ================= REPORT TAB ================= */}
         {tab === "report" && (

@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { COLORS, layout, header, cards, grids, section } from "../styles/dashboardStyles";
+import DashboardSidebar from "../components/DashboardSidebar";
 import { auth, API_BASE } from "../Database/firebase";
 
 async function api(path, opts = {}) {
@@ -37,7 +38,7 @@ const TYPE_FILTERS = [
   { key: "LRMIS", label: "Livestock" }
 ];
 
-function HomeAffairsDashboardAdmin() {
+function HomeAffairsDashboardAdmin({ onLogout }) {
   const [stats, setStats] = useState({});
   const [queue, setQueue] = useState([]);
   const [statusFilter, setStatusFilter] = useState("");
@@ -101,7 +102,8 @@ function HomeAffairsDashboardAdmin() {
     stats.byStatus?.find(s => s.status === key)?.count || 0;
 
   return (
-    <main style={layout.page}>
+    <main className="dashboard-page" style={layout.page}>
+      <DashboardSidebar items={[]} activeTab="" onLogout={onLogout} />
       <div style={layout.container}>
         <header style={header.wrapper}>
           <div style={{
