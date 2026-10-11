@@ -3,10 +3,24 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import flagImage from "./Flag.png"; // Adjust path if Flag.png is in a subfolder (e.g., "./assets/Flag.png")
 import "./Navbar.css";
 
+// Routes where the top navigation bar must be hidden (dashboards have their own sidebar)
+const HIDDEN_ROUTES = [
+  "/home-affairs-dashboard",
+  "/passport-office-dashboard",
+  "/police-dashboard",
+  "/finance-dashboard",
+  "/pensions-dashboard",
+  "/traffic-dashboard"
+];
+
 function Navbar({ isAuthenticated, onLogout }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Hide the whole navbar if the current route is one of the dashboard routes
+  const shouldHide = HIDDEN_ROUTES.includes(location.pathname);
+  if (shouldHide) return null;
 
   const handleLogout = () => {
     sessionStorage.removeItem("home-affairs-authenticated");
@@ -35,10 +49,10 @@ function Navbar({ isAuthenticated, onLogout }) {
       <div className="navbar-container">
         {/* Logo */}
         <Link to="/" className="navbar-logo" onClick={handleNavClick}>
-          <img 
-            src={flagImage} 
-            alt="Kingdom of Lesotho Flag" 
-            className="logo-flag-img" 
+          <img
+            src={flagImage}
+            alt="Kingdom of Lesotho Flag"
+            className="logo-flag-img"
           />
           <span className="logo-text">
             <span className="logo-title">Home Affairs</span>
