@@ -882,7 +882,7 @@ function StatusBadge({ status }) {
 function Overlay({ children, onClose }) {
   return (
     <div onClick={onClose} style={{
-      position: "fixed", inset: 0, zIndex: 1000,
+      position: "fixed", inset: 0, zIndex: 1300,
       background: "rgba(15,23,42,0.5)",
       display: "flex", alignItems: "center", justifyContent: "center", padding: 24
     }}>

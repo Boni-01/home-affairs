@@ -66,11 +66,11 @@ const styles = {
   }
 };
 
-function Footer() {
+function Footer({ className }) {
   const year = new Date().getFullYear();
 
   return (
-    <footer style={styles.footer}>
+    <footer className={className} style={styles.footer}>
       {/* Flag stripe */}
       <div style={styles.flagStripe}>
         <div style={{ flex: 1, background: COLORS.blue }} />

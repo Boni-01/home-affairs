@@ -5,11 +5,11 @@ import "./DashboardSidebar.css";
 
 const ministries = [
   { label: "Home Affairs", route: "/home-affairs-dashboard" },
-  { label: "Passport", route: "/passport-office-dashboard" },
-  { label: "Police", route: "/police-dashboard" },
-  { label: "Finance", route: "/finance-dashboard" },
+  { label: "Passport Office", route: "/passport-office-dashboard" },
+  { label: "Police Services", route: "/police-dashboard" },
+  { label: "Finance Services", route: "/finance-dashboard" },
   { label: "Pensions", route: "/pensions-dashboard" },
-  { label: "Traffic", route: "/traffic-dashboard" }
+  { label: "Traffic & Transport", route: "/traffic-dashboard" }
 ];
 
 const adminOffices = [
@@ -33,6 +33,7 @@ function DashboardSidebar({
   const [mobileOpen, setMobileOpen] = useState(false);
   const isAdmin = location.pathname.startsWith("/admin/");
   const links = isAdmin ? adminOffices : ministries;
+  const currentBrand = links.find(({ route }) => route === location.pathname)?.label || (isAdmin ? "Home Affairs Admin" : "Home Affairs");
 
   const closeMobile = () => setMobileOpen(false);
 
@@ -61,7 +62,7 @@ function DashboardSidebar({
           className="dashboard-sidebar-brand"
           onClick={closeMobile}
         >
-          <span className="dashboard-sidebar-brand-title">Home Affairs</span>
+          <span className="dashboard-sidebar-brand-title">{currentBrand}</span>
           <span className="dashboard-sidebar-brand-subtitle">Kingdom of Lesotho</span>
         </Link>
 
@@ -88,17 +89,6 @@ function DashboardSidebar({
                   {label}
                 </button>
               ))}
-              {action && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    action.onClick();
-                    closeMobile();
-                  }}
-                >
-                  {action.label}
-                </button>
-              )}
             </nav>
           </>
         )}
@@ -120,16 +110,17 @@ function DashboardSidebar({
           ))}
         </nav>
 
-        {onLogout && (
+        {(action || onLogout) && (
           <button
             type="button"
             className="dashboard-sidebar-logout"
             onClick={() => {
-              onLogout();
+              if (action) action.onClick();
+              else onLogout();
               closeMobile();
             }}
           >
-            Log out
+            {action ? action.label : "Log out"}
           </button>
         )}
       </aside>

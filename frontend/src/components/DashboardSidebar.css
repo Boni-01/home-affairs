@@ -98,9 +98,8 @@
   padding-left: 260px !important;
 }
 
-.home-affairs-dashboard {
+.dashboard-route-container:has(.dashboard-sidebar) + .site-footer {
   margin-left: 224px;
-  width: calc(100% - 224px);
 }
 
 @media (max-width: 768px) {
@@ -108,9 +107,8 @@
     padding-left: 24px !important;
   }
 
-  .home-affairs-dashboard {
+  .dashboard-route-container:has(.dashboard-sidebar) + .site-footer {
     margin-left: 0;
-    width: 100%;
   }
 
   .dashboard-sidebar {

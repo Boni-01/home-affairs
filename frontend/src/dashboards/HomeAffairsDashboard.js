@@ -6,9 +6,6 @@ import { auth, API_BASE } from "../Database/firebase";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 
-// Flag image — same source as Navbar.js so both look identical
-import Flag from "../components/Flag.png";
-
 // ============================================================
 // API helper
 // ============================================================
@@ -133,11 +130,6 @@ const TRANSLATIONS = {
     home: "Home",
     language: "Language",
     searchPlaceholder: "Search for an article or service",
-    loginSelfDocuments: "Log into self-documents",
-    selfDocuments: "SELF-DOCUMENTS",
-    selfDocumentsDesc:
-      "Log in to the self-documents environment to view your data and perform company-related operations.",
-    enter: "Enter",
     serviceCatalogue: "Service catalogue",
     articles: "ARTICLES",
     generalInfo: "General information",
@@ -166,7 +158,7 @@ const TRANSLATIONS = {
     settingsTabs: {
       profile: "Profile",
       applications: "My applications",
-      documents: "Self documents",
+      documents: "Documents",
       notifications: "Notifications",
       preferences: "Preferences",
       security: "Security",
@@ -241,12 +233,6 @@ const TRANSLATIONS = {
 
     close: "Close",
 
-    selfDocumentsTitle: "My self-documents",
-    selfDocumentsIntro:
-      "Your approved documents are listed below. Click any card to open and download it.",
-    searchSelfDocuments: "Search my documents…",
-    noSelfDocuments: "You don't have any approved documents yet.",
-
     serviceCatalogueTitle: "Service catalogue",
     serviceCatalogueIntro: "Browse all available services. Type to highlight matches.",
     searchServices: "Search services…"
@@ -255,11 +241,6 @@ const TRANSLATIONS = {
     home: "Lehae",
     language: "Puo",
     searchPlaceholder: "Batla sengoloa kapa tšebeletso",
-    loginSelfDocuments: "Kena ho litokomane tsa ka",
-    selfDocuments: "LITOKOMANE TSA KA",
-    selfDocumentsDesc:
-      "Kena tikolohong ea litokomane tsa hau ho bona lintlha tsa hau le ho etsa mesebetsi e amanang le k'hamphani.",
-    enter: "Kena",
     serviceCatalogue: "Lenane la litšebeletso",
     articles: "LINGOLOA",
     generalInfo: "Tlhahisoleseling e akaretsang",
@@ -288,7 +269,7 @@ const TRANSLATIONS = {
     settingsTabs: {
       profile: "Boitsebiso",
       applications: "Likopo tsa ka",
-      documents: "Litokomane tsa ka",
+      documents: "Litokomane",
       notifications: "Tsebiso",
       preferences: "Likhetho",
       security: "Ts'ireletso",
@@ -363,12 +344,6 @@ const TRANSLATIONS = {
 
     close: "Koala",
 
-    selfDocumentsTitle: "Litokomane tsa ka",
-    selfDocumentsIntro:
-      "Litokomane tsa hau tse amohetsoeng li thathamisitsoe ka tlase. Tobetsa karete efe kapa efe ho e bula le ho e khoasolla.",
-    searchSelfDocuments: "Batla litokomane tsa ka…",
-    noSelfDocuments: "Ha u na litokomane tse amohetsoeng ho fihlela joale.",
-
     serviceCatalogueTitle: "Lenane la litšebeletso",
     serviceCatalogueIntro: "Sheba litšebeletso tsohle tse fumanehang. Ngola ho totobatsa liphetho.",
     searchServices: "Batla litšebeletso…"
@@ -378,7 +353,7 @@ const TRANSLATIONS = {
 // ============================================================
 // MAIN COMPONENT
 // ============================================================
-function HomeAffairsDashboard() {
+function HomeAffairsDashboard({ onLogout }) {
   const navigate = useNavigate();
   const [lang, setLang] = useState("en");
   const t = TRANSLATIONS[lang];
@@ -411,11 +386,9 @@ function HomeAffairsDashboard() {
   const [settingsTab, setSettingsTab] = useState("profile");
   const [docSearch, setDocSearch] = useState("");
 
-  const [selfDocsOpen, setSelfDocsOpen] = useState(false);
-  const [selfDocsSearch, setSelfDocsSearch] = useState("");
-
   const [catalogueOpen, setCatalogueOpen] = useState(false);
   const [catalogueSearch, setCatalogueSearch] = useState("");
+  const [activeDashboardTab, setActiveDashboardTab] = useState("apply");
 
   const load = useCallback(async () => {
     try {
@@ -438,12 +411,12 @@ function HomeAffairsDashboard() {
     setSubmitError("");
     setValues({});
     setFiles({});
+    setActiveDashboardTab("apply");
     try {
       const data = await api(`/services/${serviceId}`);
       setActiveService(data.service);
       setFields(data.fields);
       setCatalogueOpen(false);
-      setSelfDocsOpen(false);
     } catch (err) { alert(err.message); }
   }
 
@@ -525,10 +498,6 @@ function HomeAffairsDashboard() {
     }
   }
 
-  function handleLogout() {
-    auth.signOut().then(() => navigate("/login"));
-  }
-
   const allModuleServices = useMemo(
     () => services.filter(s => s.module === activeModule),
     [services, activeModule]
@@ -556,19 +525,6 @@ function HomeAffairsDashboard() {
     );
   }, [applications, docSearch]);
 
-  const selfDocsFiltered = useMemo(() => {
-    const approved = applications.filter(a =>
-      ["approved", "ready_for_collection", "completed"].includes(a.status)
-    );
-    if (!selfDocsSearch.trim()) return approved;
-    const q = selfDocsSearch.toLowerCase();
-    return approved.filter(a =>
-      (a.reference_number || "").toLowerCase().includes(q) ||
-      (a.service_type || "").toLowerCase().includes(q) ||
-      (a.module || "").toLowerCase().includes(q)
-    );
-  }, [applications, selfDocsSearch]);
-
   const unread = notifications.filter(n => !n.read_at).length;
   const activeApps = applications.filter(a =>
     ["submitted", "under_review", "more_information_required", "awaiting_payment"].includes(a.status)
@@ -577,280 +533,231 @@ function HomeAffairsDashboard() {
     ["approved", "ready_for_collection", "completed"].includes(a.status)
   ).length;
 
-  const openSelfDocuments = () => {
-    setSelfDocsOpen(true);
-    setSelfDocsSearch("");
-  };
-
   const openServiceCatalogue = () => {
     setCatalogueOpen(true);
     setCatalogueSearch(searchQuery || "");
   };
 
+  const closeServiceCatalogue = () => {
+    setCatalogueOpen(false);
+    setActiveDashboardTab("apply");
+  };
+
+  function handleDashboardTabChange(tab) {
+    setActiveDashboardTab(tab);
+    if (tab === "catalogue") {
+      setSettingsOpen(false);
+      openServiceCatalogue();
+      return;
+    }
+    if (tab === "apply") {
+      setSettingsOpen(false);
+      return;
+    }
+    setSettingsTab(tab);
+    setSettingsOpen(true);
+  }
+
+  function handleLogout() {
+    if (onLogout) {
+      onLogout();
+      return;
+    }
+    auth.signOut().then(() => navigate("/login"));
+  }
+
   const anyDashboardMatch =
     searchQuery.trim() && allModuleServices.some(s => isMatchingSearch(s, searchQuery));
 
   return (
-    <main className="home-affairs-dashboard" style={pageWrapper}>
-      {/* TOP INFO BAR */}
-      <div style={topBar}>
-        <div style={topBarLeft}>
-          <button onClick={() => navigate("/home-dashboard")} style={topBarLink}>
-            {t.home}
-          </button>
-        </div>
-        <div style={topBarRight}>
-          <span style={{ fontSize: 13, opacity: 0.9 }}>{t.language}:</span>
-          <select
-            value={lang}
-            onChange={(e) => setLang(e.target.value)}
-            style={langSelect}
-          >
-            <option value="en">ENG</option>
-            <option value="st">SES</option>
-          </select>
-
-          <button
-            onClick={() => { setSettingsOpen(true); setSettingsTab("profile"); }}
-            title={t.settings}
-            aria-label={t.settings}
-            style={settingsBtnIconOnly}
-          >
-            <img
-              src="/settings.png"
-              alt=""
-              style={settingsIcon}
-              onError={(e) => { e.target.style.display = "none"; }}
-            />
-          </button>
-        </div>
-      </div>
-
-      {/* MAIN HEADER — matches the Navbar's logo strip */}
-      <div style={mainHeader}>
-        <div
-          style={logoStrip}
-          onClick={() => navigate("/home-affairs-dashboard")}
-        >
-          <img
-            src={Flag}
-            alt="Kingdom of Lesotho Flag"
-            style={logoStripImg}
-          />
-          <div style={logoStripText}>
-            <span style={logoStripTitle}>Home Affairs</span>
-            <span style={logoStripSubtitle}>KINGDOM OF LESOTHO</span>
-          </div>
-        </div>
-
-        <div style={headerRightGroup}>
-          <div style={searchWrapper}>
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder={t.searchPlaceholder}
-              style={searchInput}
-            />
-            <button style={searchButton} aria-label="Search">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
-                stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="11" cy="11" r="7" />
-                <path d="M21 21l-4.3-4.3" />
-              </svg>
-            </button>
-          </div>
-
-          <button onClick={openSelfDocuments} style={selfDocumentsBtn}>
-            {t.loginSelfDocuments}
-          </button>
-        </div>
-      </div>
-
-      {/* BODY */}
-      <div style={bodyWrapper}>
-        <DashboardSidebar
-          items={[["apply", t.applyTab]]}
-          activeTab="apply"
-          action={{ label: t.logout, onClick: handleLogout }}
-        >
-          <p style={sidebarHeading}>{t.selfDocuments}</p>
-
-          <div style={sidebarCard}>
-            <p style={sidebarDesc}>{t.selfDocumentsDesc}</p>
-            <button onClick={openSelfDocuments} style={sidebarEnterBtn}>
-              <span>{t.enter}</span>
-              <span style={{ fontSize: 18, lineHeight: 1 }}>›</span>
-            </button>
-          </div>
-
-          <button onClick={openServiceCatalogue} style={sidebarCatalogueBtn}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
-              stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="3" y="4" width="18" height="16" rx="2" />
-              <path d="M3 10h18" />
-            </svg>
-            <span>{t.serviceCatalogue}</span>
-          </button>
-        </DashboardSidebar>
-
-        <div style={contentWrapper}>
-          <div style={layout.container}>
-
-            <img
-              src="/HomeAffairs.png"
-              alt="Home Affairs"
-              style={heroImage}
-            />
-
-            <header style={header.wrapper}>
-              <div style={header.content}>
-                <p style={header.eyebrow}>Department of Home Affairs</p>
-                <h1 style={header.title}>
-                  {t.welcome}, {me?.full_name || "citizen"}
-                </h1>
-                {me && (
-                  <p style={header.subtitle}>
-                    {t.nationalId}:{" "}
-                    <strong>
-                      {me.national_id_number || me.national_id || "—"}
-                    </strong>
-                  </p>
-                )}
-              </div>
-              <div style={header.flagStripe}>
-                <div style={{ flex: 1, background: COLORS.blue }} />
-                <div style={{ flex: 1, background: COLORS.white }} />
-                <div style={{ flex: 1, background: COLORS.green }} />
-              </div>
-            </header>
-
-            <section style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
-              gap: 16, marginBottom: 28
-            }}>
-              <StatCard label={t.activeApplications} value={activeApps} accent={COLORS.blue} />
-              <StatCard label={t.readyForCollection} value={readyApps} accent={COLORS.green} />
-              <StatCard label={t.notifications} value={unread} accent={COLORS.blue} />
-            </section>
-
-            <div style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-              gap: 12, marginBottom: 24
-            }}>
-              {MODULES.map(m => (
-                <button key={m.key} onClick={() => setActiveModule(m.key)} style={{
-                  textAlign: "left", padding: "16px 18px",
-                  border: `1px solid ${activeModule === m.key ? COLORS.blue : COLORS.border}`,
-                  background: activeModule === m.key ? COLORS.blue : "#fff",
-                  color: activeModule === m.key ? "#fff" : COLORS.textDark,
-                  borderRadius: 10, cursor: "pointer",
-                  fontFamily: "inherit", transition: "all 0.15s"
-                }}>
-                  <div style={{ fontSize: 14, fontWeight: 700 }}>{m.label}</div>
-                  <div style={{
-                    fontSize: 12, marginTop: 4,
-                    opacity: activeModule === m.key ? 0.85 : 0.65
-                  }}>{m.desc}</div>
-                </button>
-              ))}
-            </div>
-
-            <section style={section.wrapper}>
-              <h2 style={section.title}>{t.availableServices}</h2>
-              <p style={section.subtitle}>{t.availableServicesDesc}</p>
-
-              {anyDashboardMatch && (
-                <p style={{
-                  margin: "0 0 12px", fontSize: 12,
-                  color: COLORS.blue, fontWeight: 600
-                }}>
-                  {t.showingMatches} "{searchQuery}"
+    <main className="dashboard-page" style={layout.page}>
+      <div style={layout.container}>
+        <header style={header.wrapper}>
+          <div style={{
+            ...header.content,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 24,
+            flexWrap: "wrap"
+          }}>
+            <div>
+              <p style={header.eyebrow}>Department of Home Affairs</p>
+              <h1 style={header.title}>
+                {t.welcome}, {me?.full_name || "citizen"}
+              </h1>
+              {me && (
+                <p style={header.subtitle}>
+                  {t.nationalId}:{" "}
+                  <strong>{me.national_id_number || me.national_id || "—"}</strong>
                 </p>
               )}
+            </div>
 
-              <div style={cardsGrid}>
-                {allModuleServices.map(svc => {
-                  const highlighted = isMatchingSearch(svc, searchQuery);
-                  return (
-                    <article
-                      key={svc.service_id}
-                      onClick={() => openService(svc.service_id)}
-                      style={{
-                        ...cardStyle,
-                        ...(highlighted ? cardHighlighted : {})
-                      }}
-                      onMouseEnter={e => {
-                        e.currentTarget.style.transform = "translateY(-3px)";
-                        e.currentTarget.style.boxShadow = highlighted
-                          ? "0 0 0 3px rgba(0,32,159,0.20), 0 12px 28px rgba(0,32,159,0.20)"
-                          : "0 12px 28px rgba(0,32,159,0.12)";
-                      }}
-                      onMouseLeave={e => {
-                        e.currentTarget.style.transform = "translateY(0)";
-                        e.currentTarget.style.boxShadow = highlighted
-                          ? "0 0 0 3px rgba(0,32,159,0.15), 0 12px 28px rgba(0,32,159,0.15)"
-                          : "0 2px 8px rgba(0,32,159,0.05)";
-                      }}
-                    >
-                      <div style={cardIconBox}>
-                        <img
-                          src={getServiceIcon(svc.service_name)}
-                          alt={svc.service_name}
-                          style={cardIconImg}
-                          onError={(e) => { e.target.src = "/verify.png"; }}
-                        />
-                      </div>
-
-                      <div style={cardContent}>
-                        <h3 style={cardTitle}>{svc.service_name}</h3>
-                        <span style={cardChip}>{svc.module}</span>
-                        <div style={cardMeta}>
-                          <span><strong>{svc.processing_days}</strong> {t.days}</span>
-                          {svc.requires_payment
-                            ? <span>· {t.feeApplies}</span>
-                            : <span>· {t.free}</span>}
-                          {svc.requires_appointment
-                            ? <span>· {t.appointment}</span>
-                            : null}
-                        </div>
-                      </div>
-                    </article>
-                  );
-                })}
-                {allModuleServices.length === 0 && (
-                  <p style={{ color: COLORS.textMuted, fontSize: 13 }}>
-                    {t.noServices}
-                  </p>
-                )}
+            <div style={headerActions}>
+              <div style={searchWrapper}>
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder={t.searchPlaceholder}
+                  style={searchInput}
+                />
+                <button style={searchButton} aria-label="Search">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                    stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="11" cy="11" r="7" />
+                    <path d="M21 21l-4.3-4.3" />
+                  </svg>
+                </button>
               </div>
-            </section>
 
-            <section style={{ ...section.wrapper, marginTop: 32 }}>
-              <h2 style={section.title}>{t.announcements}</h2>
-              <p style={section.subtitle}>{t.announcementsDesc}</p>
-
-              <div style={cardsGrid}>
-                {ANNOUNCEMENTS.map(a => (
-                  <article key={a.id} style={announceCardStyle}>
-                    <img
-                      src={a.image}
-                      alt={a.title}
-                      style={announceImage}
-                      onError={(e) => { e.target.style.display = "none"; }}
-                    />
-                    <div style={announceBody}>
-                      <h3 style={announceTitle}>{a.title}</h3>
-                      <p style={announceText}>{a.body}</p>
-                    </div>
-                  </article>
-                ))}
-              </div>
-            </section>
+            </div>
           </div>
+          <div style={header.flagStripe}>
+            <div style={{ flex: 1, background: COLORS.blue }} />
+            <div style={{ flex: 1, background: COLORS.white }} />
+            <div style={{ flex: 1, background: COLORS.green }} />
+          </div>
+        </header>
+
+        <section style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+          gap: 16, marginBottom: 28
+        }}>
+          <StatCard label={t.activeApplications} value={activeApps} accent={COLORS.blue} />
+          <StatCard label={t.readyForCollection} value={readyApps} accent={COLORS.green} />
+          <StatCard label={t.notifications} value={unread} accent={COLORS.blue} />
+        </section>
+
+        <DashboardSidebar
+          items={[
+            ["apply", t.applyTab],
+            ["applications", t.settingsTabs.applications],
+            ["notifications", `${t.settingsTabs.notifications}${unread ? ` (${unread})` : ""}`],
+            ["profile", t.settingsTabs.profile],
+            ["catalogue", t.serviceCatalogue]
+          ]}
+          activeTab={activeDashboardTab}
+          onTabChange={handleDashboardTabChange}
+          action={{ label: t.logout, onClick: handleLogout }}
+        />
+
+        <div style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+          gap: 12, marginBottom: 24
+        }}>
+          {MODULES.map(m => (
+            <button key={m.key} onClick={() => setActiveModule(m.key)} style={{
+              textAlign: "left", padding: "16px 18px",
+              border: `1px solid ${activeModule === m.key ? COLORS.blue : COLORS.border}`,
+              background: activeModule === m.key ? COLORS.blue : "#fff",
+              color: activeModule === m.key ? "#fff" : COLORS.textDark,
+              borderRadius: 10, cursor: "pointer",
+              fontFamily: "inherit", transition: "all 0.15s"
+            }}>
+              <div style={{ fontSize: 14, fontWeight: 700 }}>{m.label}</div>
+              <div style={{
+                fontSize: 12, marginTop: 4,
+                opacity: activeModule === m.key ? 0.85 : 0.65
+              }}>{m.desc}</div>
+            </button>
+          ))}
         </div>
+
+        <section style={section.wrapper}>
+          <h2 style={section.title}>{t.availableServices}</h2>
+          <p style={section.subtitle}>{t.availableServicesDesc}</p>
+
+          {anyDashboardMatch && (
+            <p style={{
+              margin: "0 0 12px", fontSize: 12,
+              color: COLORS.blue, fontWeight: 600
+            }}>
+              {t.showingMatches} "{searchQuery}"
+            </p>
+          )}
+
+          <div style={cardsGrid}>
+            {allModuleServices.map(svc => {
+              const highlighted = isMatchingSearch(svc, searchQuery);
+              return (
+                <article
+                  key={svc.service_id}
+                  onClick={() => openService(svc.service_id)}
+                  style={{
+                    ...cardStyle,
+                    ...(highlighted ? cardHighlighted : {})
+                  }}
+                  onMouseEnter={e => {
+                    e.currentTarget.style.transform = "translateY(-3px)";
+                    e.currentTarget.style.boxShadow = highlighted
+                      ? "0 0 0 3px rgba(0,32,159,0.20), 0 12px 28px rgba(0,32,159,0.20)"
+                      : "0 12px 28px rgba(0,32,159,0.12)";
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.transform = "translateY(0)";
+                    e.currentTarget.style.boxShadow = highlighted
+                      ? "0 0 0 3px rgba(0,32,159,0.15), 0 12px 28px rgba(0,32,159,0.15)"
+                      : "0 2px 8px rgba(0,32,159,0.05)";
+                  }}
+                >
+                  <div style={cardIconBox}>
+                    <img
+                      src={getServiceIcon(svc.service_name)}
+                      alt={svc.service_name}
+                      style={cardIconImg}
+                      onError={(e) => { e.target.src = "/verify.png"; }}
+                    />
+                  </div>
+
+                  <div style={cardContent}>
+                    <h3 style={cardTitle}>{svc.service_name}</h3>
+                    <span style={cardChip}>{svc.module}</span>
+                    <div style={cardMeta}>
+                      <span><strong>{svc.processing_days}</strong> {t.days}</span>
+                      {svc.requires_payment
+                        ? <span>· {t.feeApplies}</span>
+                        : <span>· {t.free}</span>}
+                      {svc.requires_appointment
+                        ? <span>· {t.appointment}</span>
+                        : null}
+                    </div>
+                  </div>
+                </article>
+              );
+            })}
+            {allModuleServices.length === 0 && (
+              <p style={{ color: COLORS.textMuted, fontSize: 13 }}>
+                {t.noServices}
+              </p>
+            )}
+          </div>
+        </section>
+
+        <section style={{ ...section.wrapper, marginTop: 32 }}>
+          <h2 style={section.title}>{t.announcements}</h2>
+          <p style={section.subtitle}>{t.announcementsDesc}</p>
+
+          <div style={cardsGrid}>
+            {ANNOUNCEMENTS.map(a => (
+              <article key={a.id} style={announceCardStyle}>
+                <img
+                  src={a.image}
+                  alt={a.title}
+                  style={announceImage}
+                  onError={(e) => { e.currentTarget.style.display = "none"; }}
+                />
+                <div style={announceBody}>
+                  <h3 style={announceTitle}>{a.title}</h3>
+                  <p style={announceText}>{a.body}</p>
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
       </div>
 
       {/* SERVICE FORM */}
@@ -948,94 +855,9 @@ function HomeAffairsDashboard() {
         </Overlay>
       )}
 
-      {/* SELF-DOCUMENTS MODAL */}
-      {selfDocsOpen && (
-        <Overlay onClose={() => setSelfDocsOpen(false)}>
-          <h2 style={{ margin: "0 0 4px", color: COLORS.blue }}>
-            {t.selfDocumentsTitle}
-          </h2>
-          <p style={{ margin: "0 0 16px", fontSize: 13, color: COLORS.textMuted }}>
-            {t.selfDocumentsIntro}
-          </p>
-
-          <div style={{ marginBottom: 16 }}>
-            <input
-              type="text"
-              value={selfDocsSearch}
-              onChange={(e) => setSelfDocsSearch(e.target.value)}
-              placeholder={t.searchSelfDocuments}
-              style={docSearchInput}
-            />
-          </div>
-
-          <div style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
-            gap: 14
-          }}>
-            {selfDocsFiltered.length === 0 && (
-              <div style={{
-                gridColumn: "1 / -1", padding: 30, textAlign: "center",
-                background: "#F4F7FB", border: `1px dashed ${COLORS.border}`,
-                borderRadius: 10, color: COLORS.textMuted, fontSize: 13
-              }}>{t.noSelfDocuments}</div>
-            )}
-            {selfDocsFiltered.map(a => (
-              <article
-                key={a.application_id}
-                onClick={() => { setSelfDocsOpen(false); viewCertificate(a.application_id); }}
-                style={{
-                  ...cardStyle,
-                  alignItems: "center"
-                }}
-                onMouseEnter={e => {
-                  e.currentTarget.style.transform = "translateY(-3px)";
-                  e.currentTarget.style.boxShadow = "0 12px 28px rgba(0,32,159,0.12)";
-                }}
-                onMouseLeave={e => {
-                  e.currentTarget.style.transform = "translateY(0)";
-                  e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,32,159,0.05)";
-                }}
-              >
-                <div style={cardIconBox}>
-                  <img
-                    src={getServiceIcon(a.service_type)}
-                    alt={a.service_type}
-                    style={cardIconImg}
-                    onError={(e) => { e.target.src = "/verify.png"; }}
-                  />
-                </div>
-                <div style={cardContent}>
-                  <div style={{
-                    display: "flex", justifyContent: "space-between",
-                    alignItems: "center", gap: 8, marginBottom: 4
-                  }}>
-                    <span style={{
-                      fontSize: 11, fontWeight: 700, color: COLORS.blue,
-                      fontFamily: "Consolas, monospace"
-                    }}>{a.reference_number}</span>
-                    <StatusBadge status={a.status} />
-                  </div>
-                  <h3 style={{ ...cardTitle, fontSize: 13 }}>{a.service_type}</h3>
-                  <div style={cardMeta}>
-                    <span>{a.module} · {t.download}</span>
-                  </div>
-                </div>
-              </article>
-            ))}
-          </div>
-
-          <div style={{ textAlign: "right", marginTop: 22 }}>
-            <button onClick={() => setSelfDocsOpen(false)} style={btnPrimary}>
-              {t.close}
-            </button>
-          </div>
-        </Overlay>
-      )}
-
       {/* SERVICE CATALOGUE MODAL */}
       {catalogueOpen && (
-        <Overlay onClose={() => setCatalogueOpen(false)}>
+        <Overlay onClose={closeServiceCatalogue}>
           <h2 style={{ margin: "0 0 4px", color: COLORS.blue }}>
             {t.serviceCatalogueTitle}
           </h2>
@@ -1124,7 +946,7 @@ function HomeAffairsDashboard() {
           </div>
 
           <div style={{ textAlign: "right", marginTop: 22 }}>
-            <button onClick={() => setCatalogueOpen(false)} style={btnPrimary}>
+            <button onClick={closeServiceCatalogue} style={btnPrimary}>
               {t.close}
             </button>
           </div>
@@ -1145,7 +967,10 @@ function HomeAffairsDashboard() {
           setDocSearch={setDocSearch}
           settingsTab={settingsTab}
           setSettingsTab={setSettingsTab}
-          onClose={() => setSettingsOpen(false)}
+          onClose={() => {
+            setSettingsOpen(false);
+            setActiveDashboardTab("apply");
+          }}
           photoInputRef={photoInputRef}
           photoUploading={photoUploading}
           photoError={photoError}
@@ -1701,116 +1526,13 @@ function LinkedRow({ label, status, connected }) {
 // ============================================================
 // LAYOUT STYLES
 // ============================================================
-const pageWrapper = {
-  minHeight: "100vh",
-  background: "#F4F7FB",
-  fontFamily: "Arial, Helvetica, sans-serif"
-};
-
-const topBar = {
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "space-between",
-  background: COLORS.blue,
-  color: "#fff",
-  padding: "10px 24px",
-  fontSize: 13,
-  minHeight: 42
-};
-const topBarLeft = { display: "flex", alignItems: "center", gap: 20 };
-const topBarRight = { display: "flex", alignItems: "center", gap: 10 };
-const topBarLink = {
-  background: "transparent", border: 0, color: "#fff",
-  fontSize: 13, fontWeight: 600, cursor: "pointer",
-  fontFamily: "inherit", padding: 0
-};
-const langSelect = {
-  background: "transparent", color: "#fff",
-  border: `1px solid rgba(255,255,255,0.4)`,
-  borderRadius: 4, padding: "3px 8px",
-  fontSize: 12, fontWeight: 700, cursor: "pointer",
-  fontFamily: "inherit"
-};
-
-const settingsBtnIconOnly = {
-  display: "inline-flex",
-  alignItems: "center",
-  justifyContent: "center",
-  width: 32,
-  height: 32,
-  background: "rgba(255,255,255,0.12)",
-  border: `1px solid rgba(255,255,255,0.35)`,
-  color: "#fff",
-  borderRadius: 999,
-  cursor: "pointer",
-  fontFamily: "inherit",
-  padding: 0
-};
-const settingsIcon = {
-  height: 16,
-  width: 16,
-  objectFit: "contain",
-  filter: "brightness(0) invert(1)"
-};
-
-const mainHeader = {
-  display: "flex",
-  alignItems: "center",
-  background: "#fff",
-  borderBottom: `1px solid ${COLORS.border}`,
-  padding: 0,
-  minHeight: 70
-};
-
-// Logo strip — now matches the Navbar's appearance.
-// The container grows to fit the natural aspect ratio of Flag.png
-// instead of squeezing it into a tiny square.
-const logoStrip = {
-  width: 240,
-  display: "flex",
-  alignItems: "center",
-  gap: 12,
-  padding: "0 16px",
-  cursor: "pointer",
-  flexShrink: 0,
-  alignSelf: "stretch",
-  borderRight: `1px solid ${COLORS.border}`
-};
-const logoStripImg = {
-  // Same displayed height as the flag in Navbar.js — no squeeze, no crop
-  height: "auto",
-  maxHeight: 42,
-  width: "auto",
-  maxWidth: 80,
-  objectFit: "contain",
-  flexShrink: 0
-};
-const logoStripText = {
-  display: "flex",
-  flexDirection: "column",
-  lineHeight: 1.05
-};
-const logoStripTitle = {
-  fontSize: 15,
-  fontWeight: 700,
-  color: COLORS.blue
-};
-const logoStripSubtitle = {
-  fontSize: 9,
-  fontWeight: 600,
-  color: COLORS.textMuted,
-  letterSpacing: 1.2,
-  textTransform: "uppercase",
-  marginTop: 2
-};
-
-const headerRightGroup = {
+const headerActions = {
   display: "flex",
   alignItems: "center",
   gap: 16,
-  flex: 1,
-  padding: "14px 24px",
+  flex: "1 1 320px",
   justifyContent: "flex-end",
+  flexWrap: "wrap",
   minWidth: 0
 };
 
@@ -1818,12 +1540,13 @@ const searchWrapper = {
   display: "flex",
   alignItems: "center",
   width: 320,
+  maxWidth: "100%",
   border: `1px solid ${COLORS.border}`,
   borderRadius: 4,
   overflow: "hidden",
   background: "#fff",
   height: 42,
-  flexShrink: 0
+  flex: "1 1 240px"
 };
 const searchInput = {
   flex: 1, border: 0, outline: "none",
@@ -1837,71 +1560,6 @@ const searchButton = {
   cursor: "pointer"
 };
 
-const selfDocumentsBtn = {
-  background: COLORS.blue, color: "#fff", border: 0,
-  borderRadius: 999, padding: "12px 24px",
-  fontSize: 14, fontWeight: 700, cursor: "pointer",
-  fontFamily: "inherit", whiteSpace: "nowrap"
-};
-
-const bodyWrapper = {
-  display: "flex",
-  alignItems: "stretch",
-  minHeight: "calc(100vh - 110px)"
-};
-
-const sidebarHeading = {
-  margin: 0,
-  fontSize: 11,
-  fontWeight: 700,
-  letterSpacing: 1.4,
-  textTransform: "uppercase",
-  color: "rgba(255,255,255,0.75)"
-};
-const sidebarCard = {
-  background: "rgba(255,255,255,0.08)",
-  borderRadius: 8,
-  padding: 10,
-  display: "flex",
-  flexDirection: "column",
-  gap: 10
-};
-const sidebarDesc = {
-  margin: 0,
-  fontSize: 11,
-  lineHeight: 1.45,
-  color: "rgba(255,255,255,0.9)"
-};
-const sidebarEnterBtn = {
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "space-between",
-  background: "#fff",
-  color: COLORS.blue,
-  border: 0,
-  borderRadius: 6,
-  padding: "9px 12px",
-  fontSize: 12.5,
-  fontWeight: 700,
-  cursor: "pointer",
-  fontFamily: "inherit"
-};
-const sidebarCatalogueBtn = {
-  display: "flex",
-  alignItems: "center",
-  gap: 8,
-  background: "rgba(255,255,255,0.08)",
-  color: "#fff",
-  border: `1px solid rgba(255,255,255,0.18)`,
-  borderRadius: 6,
-  padding: "9px 10px",
-  fontSize: 11.5,
-  fontWeight: 600,
-  cursor: "pointer",
-  fontFamily: "inherit",
-  textAlign: "left"
-};
-const contentWrapper = { flex: 1, minWidth: 0, background: "#F4F7FB" };
 const docSearchInput = {
   width: "100%", maxWidth: 420,
   padding: "10px 14px",
@@ -1910,20 +1568,9 @@ const docSearchInput = {
   fontFamily: "inherit", outline: "none", background: "#fff"
 };
 
-const heroImage = {
-  display: "block",
-  width: "100%",
-  height: "auto",
-  maxHeight: 300,
-  objectFit: "cover",
-  borderRadius: 8,
-  marginBottom: 24,
-  boxShadow: "0 4px 14px rgba(0,32,159,0.10)"
-};
-
 const cardsGrid = {
   display: "grid",
-  gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+  gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
   gap: 14
 };
 
@@ -2229,7 +1876,7 @@ function Field({ field, value, onChange, onFile }) {
 function Overlay({ children, onClose }) {
   return (
     <div onClick={onClose} style={{
-      position: "fixed", inset: 0, zIndex: 1000,
+      position: "fixed", inset: 0, zIndex: 1300,
       background: "rgba(15,23,42,0.5)",
       display: "flex", alignItems: "center", justifyContent: "center", padding: 24
     }}>

@@ -105,7 +105,7 @@ function App() {
           onLogout={handleLogout}
         />
 
-        <div style={{ flexGrow: 1 }}>
+        <div className="dashboard-route-container" style={{ flexGrow: 1 }}>
           <Routes>
             {/* PUBLIC */}
             <Route
@@ -237,7 +237,7 @@ function App() {
           </Routes>
         </div>
 
-        <Footer />
+        <Footer className="site-footer" />
       </div>
     </BrowserRouter>
   );
