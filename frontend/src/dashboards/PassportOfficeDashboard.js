@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import { COLORS, layout, header, section } from "../styles/dashboardStyles";
 import Navbar from "../components/Navbar";
+import DashboardSearch, { matchesDashboardSearch } from "../components/DashboardSearch";
 import { auth, API_BASE } from "../Database/firebase";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
@@ -42,6 +43,7 @@ const DELETABLE_STATUSES = ["submitted", "more_information_required"];
 
 function PassportOfficeDashboard({ onLogout }) {
   const [tab, setTab] = useState("apply");
+  const [searchQuery, setSearchQuery] = useState("");
   const [me, setMe] = useState(null);
   const [services, setServices] = useState([]);
   const [applications, setApplications] = useState([]);
@@ -266,15 +268,22 @@ function PassportOfficeDashboard({ onLogout }) {
     <main className="dashboard-page" style={layout.page}>
       <div style={layout.container}>
         <header style={header.wrapper}>
-          <div style={header.content}>
-            <p style={header.eyebrow}>Department of Home Affairs · Passport Office</p>
-            <h1 style={header.title}>Passport Services</h1>
-            {me && (
-              <p style={header.subtitle}>
-                Signed in as {me.full_name} · National ID:{" "}
-                <strong>{me.national_id_number || me.national_id || "—"}</strong>
-              </p>
-            )}
+          <div style={{
+            ...header.content,
+            display: "flex", alignItems: "center",
+            justifyContent: "space-between", gap: 24, flexWrap: "wrap"
+          }}>
+            <div>
+              <p style={header.eyebrow}>Department of Home Affairs · Passport Office</p>
+              <h1 style={header.title}>Passport Services</h1>
+              {me && (
+                <p style={header.subtitle}>
+                  Signed in as {me.full_name} · National ID:{" "}
+                  <strong>{me.national_id_number || me.national_id || "—"}</strong>
+                </p>
+              )}
+            </div>
+            <DashboardSearch onSearch={setSearchQuery} />
           </div>
           <div style={header.flagStripe}>
             <div style={{ flex: 1, background: COLORS.blue }} />
@@ -358,7 +367,7 @@ function PassportOfficeDashboard({ onLogout }) {
                     {TIER_ORDER.filter(t => tiers[t]).map(tierKey => {
                       const list = tiers[tierKey];
                       const meta = TIER_META[tierKey] || TIER_META.standard;
-                      return list.map(svc => (
+                      return list.filter(svc => matchesDashboardSearch(svc, searchQuery)).map(svc => (
                         <article key={svc.service_id} style={{
                           position: "relative", background: "#fff",
                           border: `1px solid ${COLORS.border}`,
@@ -453,7 +462,7 @@ function PassportOfficeDashboard({ onLogout }) {
                   borderRadius: 12, color: COLORS.textMuted, fontSize: 13
                 }}>You have no passport applications yet.</div>
               )}
-              {applications.map(a => {
+              {applications.filter(a => matchesDashboardSearch(a, searchQuery)).map(a => {
                 const canDelete = DELETABLE_STATUSES.includes(a.status);
                 const isDeleting = deletingId === a.application_id;
 
@@ -548,7 +557,7 @@ function PassportOfficeDashboard({ onLogout }) {
                   color: COLORS.textMuted, fontSize: 13
                 }}>No notifications yet.</div>
               )}
-              {notifications.map(n => (
+              {notifications.filter(n => matchesDashboardSearch(n, searchQuery)).map(n => (
                 <article key={n.notification_id} style={{
                   background: n.read_at ? "#fff" : COLORS.blueLight,
                   border: `1px solid ${n.read_at ? COLORS.border : COLORS.blue}`,
@@ -623,7 +632,7 @@ function PassportOfficeDashboard({ onLogout }) {
             {complaints.length === 0 && (
               <p style={{ color: COLORS.textMuted, fontSize: 13 }}>No complaints submitted yet.</p>
             )}
-            {complaints.map(c => (
+            {complaints.filter(c => matchesDashboardSearch(c, searchQuery)).map(c => (
               <article key={c.complaint_id} style={{
                 background: "#fff", border: `1px solid ${COLORS.border}`,
                 borderRadius: 10, padding: 16, marginBottom: 12

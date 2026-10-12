@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback, useRef } from "react";
 import { COLORS, layout, header, section } from "../styles/dashboardStyles";
 import Navbar from "../components/Navbar";
+import DashboardSearch, { matchesDashboardSearch } from "../components/DashboardSearch";
 import { auth, API_BASE } from "../Database/firebase";
 import jsPDF from "jspdf";
 
@@ -195,6 +196,7 @@ const FIELDS_BY_TYPE = {
 
 function PoliceDashboard({ onLogout }) {
   const [tab, setTab] = useState("report");
+  const [searchQuery, setSearchQuery] = useState("");
   const [me, setMe] = useState(null);
   const [categories, setCategories] = useState([]);
   const [applications, setApplications] = useState([]);
@@ -513,15 +515,22 @@ function PoliceDashboard({ onLogout }) {
     <main className="dashboard-page" style={layout.page}>
       <div style={layout.container}>
         <header style={header.wrapper}>
-          <div style={header.content}>
-            <p style={header.eyebrow}>Lesotho Mounted Police Service</p>
-            <h1 style={header.title}>Police Services</h1>
-            {me && (
-              <p style={header.subtitle}>
-                Signed in as {me.full_name} · National ID:{" "}
-                <strong>{me.national_id_number || me.national_id || "—"}</strong>
-              </p>
-            )}
+          <div style={{
+            ...header.content,
+            display: "flex", alignItems: "center",
+            justifyContent: "space-between", gap: 24, flexWrap: "wrap"
+          }}>
+            <div>
+              <p style={header.eyebrow}>Lesotho Mounted Police Service</p>
+              <h1 style={header.title}>Police Services</h1>
+              {me && (
+                <p style={header.subtitle}>
+                  Signed in as {me.full_name} · National ID:{" "}
+                  <strong>{me.national_id_number || me.national_id || "—"}</strong>
+                </p>
+              )}
+            </div>
+            <DashboardSearch onSearch={setSearchQuery} />
           </div>
           <div style={header.flagStripe}>
             <div style={{ flex: 1, background: COLORS.blue }} />
@@ -583,7 +592,7 @@ function PoliceDashboard({ onLogout }) {
               gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
               gap: 16
             }}>
-              {APPLICATION_TYPES.map(t => {
+              {APPLICATION_TYPES.filter(t => matchesDashboardSearch(t, searchQuery)).map(t => {
                 const Icon = t.icon;
                 return (
                   <article key={t.key} style={{
@@ -630,7 +639,7 @@ function PoliceDashboard({ onLogout }) {
                   color: COLORS.textMuted, fontSize: 13
                 }}>You have not submitted any reports yet.</div>
               )}
-              {applications.map(a => {
+              {applications.filter(a => matchesDashboardSearch(a, searchQuery)).map(a => {
                 const canDelete = deletableStatuses.includes(a.status);
                 const isDeleting = deletingId === a.application_id;
                 return (
@@ -723,7 +732,7 @@ function PoliceDashboard({ onLogout }) {
                   onChange={e => setLetterForm(p => ({ ...p, application_id: e.target.value }))}
                   style={{ ...inputStyle, marginBottom: 14 }}>
                   <option value="">— None —</option>
-                  {applications.map(a => (
+                  {applications.filter(a => matchesDashboardSearch(a, searchQuery)).map(a => (
                     <option key={a.application_id} value={a.application_id}>
                       {a.reference_number} · {a.title}
                     </option>
@@ -803,7 +812,7 @@ function PoliceDashboard({ onLogout }) {
                 No letters generated yet.
               </p>
             )}
-            {letters.map(l => (
+            {letters.filter(l => matchesDashboardSearch(l, searchQuery)).map(l => (
               <article key={l.letter_id} style={{
                 background: "#fff", border: `1px solid ${COLORS.border}`,
                 borderRadius: 10, padding: 16, marginBottom: 10
@@ -909,7 +918,7 @@ function PoliceDashboard({ onLogout }) {
                 You have not submitted any documents for certification.
               </p>
             )}
-            {certDocs.map(d => (
+            {certDocs.filter(d => matchesDashboardSearch(d, searchQuery)).map(d => (
               <article key={d.certified_doc_id} style={{
                 background: "#fff", border: `1px solid ${COLORS.border}`,
                 borderRadius: 10, padding: 16, marginBottom: 10
@@ -951,7 +960,7 @@ function PoliceDashboard({ onLogout }) {
                   color: COLORS.textMuted, fontSize: 13
                 }}>No notifications yet.</div>
               )}
-              {notifications.map(n => (
+              {notifications.filter(n => matchesDashboardSearch(n, searchQuery)).map(n => (
                 <article key={n.notification_id} style={{
                   background: n.read_at ? "#fff" : COLORS.blueLight,
                   border: `1px solid ${n.read_at ? COLORS.border : COLORS.blue}`,
@@ -995,7 +1004,7 @@ function PoliceDashboard({ onLogout }) {
                   onChange={e => setFeedbackForm(p => ({ ...p, application_id: e.target.value }))}
                   style={{ ...inputStyle, marginBottom: 14 }}>
                   <option value="">— None —</option>
-                  {applications.map(a => (
+                  {applications.filter(a => matchesDashboardSearch(a, searchQuery)).map(a => (
                     <option key={a.application_id} value={a.application_id}>
                       {a.reference_number} · {a.title}
                     </option>
@@ -1028,7 +1037,7 @@ function PoliceDashboard({ onLogout }) {
             {feedback.length === 0 && (
               <p style={{ color: COLORS.textMuted, fontSize: 13 }}>No feedback submitted yet.</p>
             )}
-            {feedback.map(f => (
+            {feedback.filter(f => matchesDashboardSearch(f, searchQuery)).map(f => (
               <article key={f.feedback_id} style={{
                 background: "#fff", border: `1px solid ${COLORS.border}`,
                 borderRadius: 10, padding: 16, marginBottom: 10

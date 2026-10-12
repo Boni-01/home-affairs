@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback, useRef } from "react";
 import { COLORS, layout, header, section } from "../styles/dashboardStyles";
 import Navbar from "../components/Navbar";
+import DashboardSearch, { matchesDashboardSearch } from "../components/DashboardSearch";
 import { auth, API_BASE } from "../Database/firebase";
 
 async function api(path, opts = {}) {
@@ -128,6 +129,7 @@ const FIELD_GROUPS = {
 
 function FinanceDashboard({ onLogout }) {
   const [tab, setTab] = useState("services");
+  const [searchQuery, setSearchQuery] = useState("");
   const [me, setMe] = useState(null);
   const [services, setServices] = useState([]);
   const [requests, setRequests] = useState([]);
@@ -286,15 +288,22 @@ function FinanceDashboard({ onLogout }) {
     <main className="dashboard-page" style={layout.page}>
       <div style={layout.container}>
         <header style={header.wrapper}>
-          <div style={header.content}>
-            <p style={header.eyebrow}>Ministry of Finance</p>
-            <h1 style={header.title}>Finance Services</h1>
-            {me && (
-              <p style={header.subtitle}>
-                Signed in as {me.full_name} · National ID:{" "}
-                <strong>{me.national_id_number || me.national_id || "—"}</strong>
-              </p>
-            )}
+          <div style={{
+            ...header.content,
+            display: "flex", alignItems: "center",
+            justifyContent: "space-between", gap: 24, flexWrap: "wrap"
+          }}>
+            <div>
+              <p style={header.eyebrow}>Ministry of Finance</p>
+              <h1 style={header.title}>Finance Services</h1>
+              {me && (
+                <p style={header.subtitle}>
+                  Signed in as {me.full_name} · National ID:{" "}
+                  <strong>{me.national_id_number || me.national_id || "—"}</strong>
+                </p>
+              )}
+            </div>
+            <DashboardSearch onSearch={setSearchQuery} />
           </div>
           <div style={header.flagStripe}>
             <div style={{ flex: 1, background: COLORS.blue }} />
@@ -343,7 +352,7 @@ function FinanceDashboard({ onLogout }) {
               gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
               gap: 16
             }}>
-              {services.map(s => (
+              {services.filter(s => matchesDashboardSearch(s, searchQuery)).map(s => (
                 <article key={s.service_id} style={{
                   background: "#fff", border: `1px solid ${COLORS.border}`,
                   borderRadius: 12, padding: 20,
@@ -383,7 +392,7 @@ function FinanceDashboard({ onLogout }) {
               gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
               gap: 16
             }}>
-              {REQUEST_TYPES.map(t => {
+              {REQUEST_TYPES.filter(t => matchesDashboardSearch(t, searchQuery)).map(t => {
                 const Icon = t.icon;
                 return (
                   <article key={t.key} style={{
@@ -424,7 +433,7 @@ function FinanceDashboard({ onLogout }) {
                   color: COLORS.textMuted, fontSize: 13
                 }}>You haven't submitted any Finance requests yet.</div>
               )}
-              {requests.map(r => {
+              {requests.filter(r => matchesDashboardSearch(r, searchQuery)).map(r => {
                 const canDelete = deletableStatuses.includes(r.status);
                 const isDel = deletingId === r.request_id;
                 return (
@@ -486,7 +495,7 @@ function FinanceDashboard({ onLogout }) {
                 No supplier registrations yet. Use "Submit request → Supplier registration".
               </p>
             )}
-            {suppliers.map(s => (
+            {suppliers.filter(s => matchesDashboardSearch(s, searchQuery)).map(s => (
               <article key={s.supplier_id} style={{
                 background: "#fff", border: `1px solid ${COLORS.border}`,
                 borderRadius: 10, padding: 16, marginBottom: 10
@@ -514,7 +523,7 @@ function FinanceDashboard({ onLogout }) {
             {payments.length === 0 && (
               <p style={{ color: COLORS.textMuted, fontSize: 13 }}>No payments yet.</p>
             )}
-            {payments.map(p => (
+            {payments.filter(p => matchesDashboardSearch(p, searchQuery)).map(p => (
               <article key={p.payment_id} style={{
                 background: "#fff", border: `1px solid ${COLORS.border}`,
                 borderRadius: 10, padding: 16, marginBottom: 10
@@ -590,7 +599,7 @@ function FinanceDashboard({ onLogout }) {
             {tickets.length === 0 && (
               <p style={{ color: COLORS.textMuted, fontSize: 13 }}>No enquiries yet.</p>
             )}
-            {tickets.map(t => (
+            {tickets.filter(t => matchesDashboardSearch(t, searchQuery)).map(t => (
               <article key={t.ticket_id} style={{
                 background: "#fff", border: `1px solid ${COLORS.border}`,
                 borderRadius: 10, padding: 16, marginBottom: 10
@@ -631,7 +640,7 @@ function FinanceDashboard({ onLogout }) {
                   color: COLORS.textMuted, fontSize: 13
                 }}>No notifications yet.</div>
               )}
-              {notifications.map(n => (
+              {notifications.filter(n => matchesDashboardSearch(n, searchQuery)).map(n => (
                 <article key={n.notification_id} style={{
                   background: n.read_at ? "#fff" : COLORS.blueLight,
                   border: `1px solid ${n.read_at ? COLORS.border : COLORS.blue}`,

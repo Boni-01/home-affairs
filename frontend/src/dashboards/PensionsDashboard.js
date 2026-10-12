@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback, useRef } from "react";
 import { COLORS, layout, header, section } from "../styles/dashboardStyles";
 import Navbar from "../components/Navbar";
+import DashboardSearch, { matchesDashboardSearch } from "../components/DashboardSearch";
 import { auth, API_BASE } from "../Database/firebase";
 
 async function api(path, opts = {}) {
@@ -118,6 +119,7 @@ const ENQUIRY_TYPES = [
 
 function PensionsDashboard({ onLogout }) {
   const [tab, setTab] = useState("overview");
+  const [searchQuery, setSearchQuery] = useState("");
   const [me, setMe] = useState(null);
   const [programmes, setProgrammes] = useState([]);
   const [profile, setProfile] = useState({ member: null, programme: null, contributions_summary: null });
@@ -318,15 +320,22 @@ function PensionsDashboard({ onLogout }) {
     <main className="dashboard-page" style={layout.page}>
       <div style={layout.container}>
         <header style={header.wrapper}>
-          <div style={header.content}>
-            <p style={header.eyebrow}>Ministry of Pensions</p>
-            <h1 style={header.title}>Pensions Dashboard</h1>
-            {me && (
-              <p style={header.subtitle}>
-                Signed in as {me.full_name} · National ID:{" "}
-                <strong>{me.national_id_number || me.national_id || "—"}</strong>
-              </p>
-            )}
+          <div style={{
+            ...header.content,
+            display: "flex", alignItems: "center",
+            justifyContent: "space-between", gap: 24, flexWrap: "wrap"
+          }}>
+            <div>
+              <p style={header.eyebrow}>Ministry of Pensions</p>
+              <h1 style={header.title}>Pensions Dashboard</h1>
+              {me && (
+                <p style={header.subtitle}>
+                  Signed in as {me.full_name} · National ID:{" "}
+                  <strong>{me.national_id_number || me.national_id || "—"}</strong>
+                </p>
+              )}
+            </div>
+            <DashboardSearch onSearch={setSearchQuery} />
           </div>
           <div style={header.flagStripe}>
             <div style={{ flex: 1, background: COLORS.blue }} />
@@ -381,7 +390,7 @@ function PensionsDashboard({ onLogout }) {
                   <select value={regForm.programme_code}
                     onChange={e => setRegForm(p => ({ ...p, programme_code: e.target.value }))}
                     style={{ ...inputStyle, marginBottom: 14 }}>
-                    {programmes.map(p => (
+                    {programmes.filter(p => matchesDashboardSearch(p, searchQuery)).map(p => (
                       <option key={p.programme_code} value={p.programme_code}>
                         {p.programme_name}
                       </option>
@@ -511,7 +520,7 @@ function PensionsDashboard({ onLogout }) {
               gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
               gap: 16
             }}>
-              {APPLICATION_TYPES.map(t => {
+              {APPLICATION_TYPES.filter(t => matchesDashboardSearch(t, searchQuery)).map(t => {
                 const Icon = t.icon;
                 return (
                   <article key={t.key} style={{
@@ -553,7 +562,7 @@ function PensionsDashboard({ onLogout }) {
                   color: COLORS.textMuted, fontSize: 13
                 }}>You haven't submitted any pension applications yet.</div>
               )}
-              {applications.map(a => {
+              {applications.filter(a => matchesDashboardSearch(a, searchQuery)).map(a => {
                 const canDelete = deletableStatuses.includes(a.status);
                 const isDel = deletingId === a.application_id;
                 return (
@@ -614,7 +623,7 @@ function PensionsDashboard({ onLogout }) {
             {contributions.length === 0 && (
               <p style={{ color: COLORS.textMuted, fontSize: 13 }}>No contribution records.</p>
             )}
-            {contributions.map(c => (
+            {contributions.filter(c => matchesDashboardSearch(c, searchQuery)).map(c => (
               <article key={c.contribution_id} style={{
                 background: "#fff", border: `1px solid ${COLORS.border}`,
                 borderRadius: 10, padding: 16, marginBottom: 10
@@ -643,7 +652,7 @@ function PensionsDashboard({ onLogout }) {
             {payments.length === 0 && (
               <p style={{ color: COLORS.textMuted, fontSize: 13 }}>No payments yet.</p>
             )}
-            {payments.map(p => (
+            {payments.filter(p => matchesDashboardSearch(p, searchQuery)).map(p => (
               <article key={p.payment_id} style={{
                 background: "#fff", border: `1px solid ${COLORS.border}`,
                 borderRadius: 10, padding: 16, marginBottom: 10
@@ -719,7 +728,7 @@ function PensionsDashboard({ onLogout }) {
             {enquiries.length === 0 && (
               <p style={{ color: COLORS.textMuted, fontSize: 13 }}>No enquiries yet.</p>
             )}
-            {enquiries.map(e => (
+            {enquiries.filter(e => matchesDashboardSearch(e, searchQuery)).map(e => (
               <article key={e.enquiry_id} style={{
                 background: "#fff", border: `1px solid ${COLORS.border}`,
                 borderRadius: 10, padding: 16, marginBottom: 10
@@ -761,7 +770,7 @@ function PensionsDashboard({ onLogout }) {
                   color: COLORS.textMuted, fontSize: 13
                 }}>No notifications yet.</div>
               )}
-              {notifications.map(n => (
+              {notifications.filter(n => matchesDashboardSearch(n, searchQuery)).map(n => (
                 <article key={n.notification_id} style={{
                   background: n.read_at ? "#fff" : COLORS.blueLight,
                   border: `1px solid ${n.read_at ? COLORS.border : COLORS.blue}`,

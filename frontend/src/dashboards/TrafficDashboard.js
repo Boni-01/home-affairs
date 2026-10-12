@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback, useRef } from "react";
 import { COLORS, layout, header, section } from "../styles/dashboardStyles";
 import Navbar from "../components/Navbar";
+import DashboardSearch, { matchesDashboardSearch } from "../components/DashboardSearch";
 import { auth, API_BASE } from "../Database/firebase";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
@@ -431,6 +432,7 @@ const SERVICE_CONFIG = {
 // ============================================================
 function TrafficDashboard({ onLogout }) {
   const [tab, setTab] = useState("overview");
+  const [searchQuery, setSearchQuery] = useState("");
   const [me, setMe] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -736,15 +738,22 @@ function TrafficDashboard({ onLogout }) {
       <div style={layout.container}>
         {/* HEADER */}
         <header style={header.wrapper}>
-          <div style={header.content}>
-            <p style={header.eyebrow}>Department of Traffic & Transport · Lesotho</p>
-            <h1 style={header.title}>Traffic Services Dashboard</h1>
-            {me && (
-              <p style={header.subtitle}>
-                Signed in as {me.full_name} · National ID:{" "}
-                <strong>{me.national_id_number || me.national_id || "—"}</strong>
-              </p>
-            )}
+          <div style={{
+            ...header.content,
+            display: "flex", alignItems: "center",
+            justifyContent: "space-between", gap: 24, flexWrap: "wrap"
+          }}>
+            <div>
+              <p style={header.eyebrow}>Department of Traffic & Transport · Lesotho</p>
+              <h1 style={header.title}>Traffic Services Dashboard</h1>
+              {me && (
+                <p style={header.subtitle}>
+                  Signed in as {me.full_name} · National ID:{" "}
+                  <strong>{me.national_id_number || me.national_id || "—"}</strong>
+                </p>
+              )}
+            </div>
+            <DashboardSearch onSearch={setSearchQuery} />
           </div>
           <div style={header.flagStripe}>
             <div style={{ flex: 1, background: COLORS.blue }} />
@@ -842,7 +851,7 @@ function TrafficDashboard({ onLogout }) {
                       </tr>
                     </thead>
                     <tbody>
-                      {applications.slice(0, 5).map(app => (
+                      {applications.filter(app => matchesDashboardSearch(app, searchQuery)).slice(0, 5).map(app => (
                         <tr key={app.application_id}>
                           <td style={tdStyle}><strong>{app.reference_number}</strong></td>
                           <td style={tdStyle}>{app.title}</td>
@@ -870,7 +879,7 @@ function TrafficDashboard({ onLogout }) {
                       </tr>
                     </thead>
                     <tbody>
-                      {unpaidFines.map(fine => (
+                      {unpaidFines.filter(fine => matchesDashboardSearch(fine, searchQuery)).map(fine => (
                         <tr key={fine.fine_id}>
                           <td style={tdStyle}><strong>{fine.fine_reference}</strong></td>
                           <td style={tdStyle}>{fine.offence_description}</td>
@@ -900,7 +909,7 @@ function TrafficDashboard({ onLogout }) {
               gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
               gap: 18
             }}>
-              {Object.entries(SERVICE_CONFIG).map(([key, cfg]) => (
+              {Object.entries(SERVICE_CONFIG).filter(([key, cfg]) => matchesDashboardSearch([key, cfg], searchQuery)).map(([key, cfg]) => (
                 <article key={key} style={{
                   background: "#fff",
                   border: `1px solid ${COLORS.border}`,
@@ -972,7 +981,7 @@ function TrafficDashboard({ onLogout }) {
                     </tr>
                   </thead>
                   <tbody>
-                    {applications.map(app => (
+                    {applications.filter(app => matchesDashboardSearch(app, searchQuery)).map(app => (
                       <tr key={app.application_id}>
                         <td style={tdStyle}><strong>{app.reference_number}</strong></td>
                         <td style={tdStyle}>{app.title}</td>
@@ -1025,7 +1034,7 @@ function TrafficDashboard({ onLogout }) {
                 gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
                 gap: 20
               }}>
-                {licences.map(lic => (
+                {licences.filter(lic => matchesDashboardSearch(lic, searchQuery)).map(lic => (
                   <article key={lic.licence_id} style={{
                     background: "#fff",
                     border: `1px solid ${COLORS.border}`,
@@ -1104,7 +1113,7 @@ function TrafficDashboard({ onLogout }) {
                     </tr>
                   </thead>
                   <tbody>
-                    {vehicles.map(v => (
+                    {vehicles.filter(v => matchesDashboardSearch(v, searchQuery)).map(v => (
                       <tr key={v.vehicle_id}>
                         <td style={tdStyle}><strong>{v.registration_number || "—"}</strong></td>
                         <td style={tdStyle}>{v.make} {v.model}</td>
@@ -1143,7 +1152,7 @@ function TrafficDashboard({ onLogout }) {
                     </tr>
                   </thead>
                   <tbody>
-                    {fines.map(f => (
+                    {fines.filter(f => matchesDashboardSearch(f, searchQuery)).map(f => (
                       <tr key={f.fine_id}>
                         <td style={tdStyle}><strong>{f.fine_reference}</strong></td>
                         <td style={tdStyle}>{f.vehicle_registration || "—"}</td>
@@ -1186,7 +1195,7 @@ function TrafficDashboard({ onLogout }) {
                     </tr>
                   </thead>
                   <tbody>
-                    {payments.map(p => (
+                    {payments.filter(p => matchesDashboardSearch(p, searchQuery)).map(p => (
                       <tr key={p.payment_id}>
                         <td style={tdStyle}><strong>{p.payment_reference}</strong></td>
                         <td style={tdStyle}>{p.payment_purpose}</td>
@@ -1220,7 +1229,7 @@ function TrafficDashboard({ onLogout }) {
               </div>
             ) : (
               <div style={{ display: "grid", gap: 14 }}>
-                {complaints.map(c => (
+                {complaints.filter(c => matchesDashboardSearch(c, searchQuery)).map(c => (
                   <article key={c.complaint_id} style={{
                     background: "#fff", border: `1px solid ${COLORS.border}`,
                     borderRadius: 12, padding: 18
@@ -1262,7 +1271,7 @@ function TrafficDashboard({ onLogout }) {
               </div>
             ) : (
               <div style={{ display: "grid", gap: 12 }}>
-                {notifications.map(n => (
+                {notifications.filter(n => matchesDashboardSearch(n, searchQuery)).map(n => (
                   <article key={n.notification_id} style={{
                     background: n.read_at ? "#fff" : "#eff8ff",
                     border: `1px solid ${n.read_at ? COLORS.border : COLORS.blue}`,
@@ -1460,7 +1469,7 @@ function TrafficDashboard({ onLogout }) {
                 style={inputStyle}
               >
                 <option value="">Select a service…</option>
-                {Object.entries(SERVICE_CONFIG).map(([key, cfg]) => (
+                {Object.entries(SERVICE_CONFIG).filter(([key, cfg]) => matchesDashboardSearch([key, cfg], searchQuery)).map(([key, cfg]) => (
                   <option key={key} value={key}>{cfg.label} (M {cfg.fee})</option>
                 ))}
               </select>

@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { COLORS, layout, header, section } from "../styles/dashboardStyles";
+import DashboardSearch from "../components/DashboardSearch";
 import Navbar from "../components/Navbar";
 import { auth, API_BASE } from "../Database/firebase";
 import jsPDF from "jspdf";
@@ -594,25 +595,7 @@ function HomeAffairsDashboard({ onLogout }) {
               )}
             </div>
 
-            <div style={headerActions}>
-              <div style={searchWrapper}>
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder={t.searchPlaceholder}
-                  style={searchInput}
-                />
-                <button style={searchButton} aria-label="Search">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
-                    stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="11" cy="11" r="7" />
-                    <path d="M21 21l-4.3-4.3" />
-                  </svg>
-                </button>
-              </div>
-
-            </div>
+            <DashboardSearch onSearch={setSearchQuery} placeholder={t.searchPlaceholder} />
           </div>
           <div style={header.flagStripe}>
             <div style={{ flex: 1, background: COLORS.blue }} />
@@ -1527,40 +1510,6 @@ function LinkedRow({ label, status, connected }) {
 // ============================================================
 // LAYOUT STYLES
 // ============================================================
-const headerActions = {
-  display: "flex",
-  alignItems: "center",
-  gap: 16,
-  flex: "1 1 320px",
-  justifyContent: "flex-end",
-  flexWrap: "wrap",
-  minWidth: 0
-};
-
-const searchWrapper = {
-  display: "flex",
-  alignItems: "center",
-  width: 320,
-  maxWidth: "100%",
-  border: `1px solid ${COLORS.border}`,
-  borderRadius: 4,
-  overflow: "hidden",
-  background: "#fff",
-  height: 42,
-  flex: "1 1 240px"
-};
-const searchInput = {
-  flex: 1, border: 0, outline: "none",
-  fontSize: 14, padding: "0 12px", height: "100%",
-  fontFamily: "inherit", color: COLORS.textDark, background: "#fff",
-  minWidth: 0
-};
-const searchButton = {
-  background: COLORS.blue, border: 0, width: 44,
-  height: "100%", display: "grid", placeItems: "center",
-  cursor: "pointer"
-};
-
 const docSearchInput = {
   width: "100%", maxWidth: 420,
   padding: "10px 14px",
