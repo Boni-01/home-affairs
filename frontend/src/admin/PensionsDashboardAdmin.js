@@ -335,8 +335,8 @@ export default function PensionsDashboardAdmin({ onLogout }) {
             alignItems: "center", gap: 16, flexWrap: "wrap"
           }}>
             <div>
-              <p style={header.eyebrow}>Ministry of Pensions · Administrator</p>
-              <h1 style={header.title}>Pensions Admin Dashboard</h1>
+              <p style={header.eyebrow}>Ministry of Pensions</p>
+              <h1 style={header.title}>Pensions Admin </h1>
               <p style={header.subtitle}>
                 Review registrations, verify members, process benefits and monitor payments.
               </p>

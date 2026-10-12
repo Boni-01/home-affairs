@@ -451,8 +451,8 @@ function TrafficDashboardAdmin({ onLogout }) {
             alignItems: "center", gap: 16, flexWrap: "wrap"
           }}>
             <div>
-              <p style={header.eyebrow}>Traffic Department · Administrator</p>
-              <h1 style={header.title}>Traffic Admin Dashboard</h1>
+              <p style={header.eyebrow}>Traffic Department</p>
+              <h1 style={header.title}>Traffic Admin </h1>
               <p style={header.subtitle}>
                 Manage applications, licences, vehicles, inspections, permits and fines.
               </p>

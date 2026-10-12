@@ -289,7 +289,7 @@ function PassportOfficeDashboardAdmin({ onLogout }) {
           }}>
             <div>
               <p style={header.eyebrow}>Passport Services</p>
-              <h1 style={header.title}>Passport Administrator</h1>
+              <h1 style={header.title}>Passport Admin</h1>
               <p style={header.subtitle}>
                 Review, approve, and issue passports
               </p>

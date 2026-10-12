@@ -113,7 +113,7 @@ function HomeAffairsDashboardAdmin({ onLogout }) {
           }}>
             <div>
               <p style={header.eyebrow}>Ministry of Home Affairs</p>
-              <h1 style={header.title}>Applications Admin</h1>
+              <h1 style={header.title}>Home Affairs Admin</h1>
               <p style={header.subtitle}>
                 Review citizen applications across Home Affairs services
               </p>

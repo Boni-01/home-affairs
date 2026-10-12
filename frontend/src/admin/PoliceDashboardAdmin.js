@@ -318,7 +318,7 @@ export default function PoliceDashboardAdmin({ onLogout }) {
           }}>
             <div>
               <p style={header.eyebrow}>Lesotho Mounted Police Service</p>
-              <h1 style={header.title}>Police Admin Dashboard</h1>
+              <h1 style={header.title}>LMPS Admin</h1>
               <p style={header.subtitle}>
                 Review, categorise, refer and manage police reports
               </p>
