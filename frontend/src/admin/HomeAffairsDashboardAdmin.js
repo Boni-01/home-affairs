@@ -112,8 +112,8 @@ function HomeAffairsDashboardAdmin({ onLogout }) {
             alignItems: "center", gap: 16, flexWrap: "wrap"
           }}>
             <div>
-              <p style={header.eyebrow}>Home Affairs</p>
-              <h1 style={header.title}>Home Affairs - Applications Admin</h1>
+              <p style={header.eyebrow}>Ministry of Home Affairs</p>
+              <h1 style={header.title}>Applications Admin</h1>
               <p style={header.subtitle}>
                 Review citizen applications across Home Affairs services
               </p>

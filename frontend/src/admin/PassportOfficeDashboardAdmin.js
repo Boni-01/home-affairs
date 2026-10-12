@@ -288,8 +288,8 @@ function PassportOfficeDashboardAdmin({ onLogout }) {
             alignItems: "center", gap: 16, flexWrap: "wrap"
           }}>
             <div>
-              <p style={header.eyebrow}>Home Affairs</p>
-              <h1 style={header.title}>Home Affairs - Passport Administrator</h1>
+              <p style={header.eyebrow}>Passport Services</p>
+              <h1 style={header.title}>Passport Administrator</h1>
               <p style={header.subtitle}>
                 Review, approve, and issue passports
               </p>
