@@ -231,7 +231,7 @@ export default function FinanceDashboardAdmin({ onLogout }) {
           }}>
             <div>
               <p style={header.eyebrow}>Ministry of Finance</p>
-              <h1 style={header.title}>Finance Admin Dashboard</h1>
+              <h1 style={header.title}>Finance Admin</h1>
               <p style={header.subtitle}>
                 Review, validate and route Finance submissions.
               </p>
