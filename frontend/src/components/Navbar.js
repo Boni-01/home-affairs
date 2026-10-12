@@ -57,7 +57,7 @@ function Navbar({ isAuthenticated, onLogout }) {
             className="logo-flag-img"
           />
           <span className="logo-text">
-            <span className="logo-title">Home Affairs</span>
+            <span className="logo-title">Integrated Digital Public Services System</span>
             <span className="logo-subtitle">Kingdom of Lesotho</span>
           </span>
         </Link>
