@@ -585,14 +585,8 @@ function HomeAffairsDashboard({ onLogout }) {
             <div>
               <p style={header.eyebrow}>Department of Home Affairs</p>
               <h1 style={header.title}>
-                {t.welcome}, {me?.full_name || "citizen"}
+                Home Affairs Services
               </h1>
-              {me && (
-                <p style={header.subtitle}>
-                  {t.nationalId}:{" "}
-                  <strong>{me.national_id_number || me.national_id || "—"}</strong>
-                </p>
-              )}
             </div>
 
             <DashboardSearch onSearch={setSearchQuery} placeholder={t.searchPlaceholder} />
