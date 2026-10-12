@@ -534,13 +534,27 @@ function PoliceDashboard({ onLogout }) {
         </header>
 
         {/* Emergency banner */}
-        <aside style={{
+        <aside className="police-emergency-banner" style={{
           display: "flex", gap: 12, alignItems: "flex-start",
           marginBottom: 24, padding: "14px 18px",
           background: "#fff9e9", border: "1px solid #f0d28b",
           borderRadius: 12, color: "#654b12", fontSize: 13, lineHeight: 1.5
         }}>
-          <span style={{ fontSize: 18 }}>⚠️</span>
+          <svg
+            className="police-emergency-icon"
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M10.3 3.9 2.2 18a2 2 0 0 0 1.7 3h16.2a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z" />
+            <path d="M12 9v4M12 17h.01" />
+          </svg>
           <span>
             <strong style={{ color: "#92400e" }}>Immediate danger?</strong>{" "}
             Call your local emergency number. This portal is not an emergency reporting channel.
@@ -1310,7 +1324,7 @@ function StatusBadge({ status }) {
   };
   const s = map[status] || { bg: "#f1f5f9", fg: "#475569" };
   return (
-    <span style={{
+    <span className="dashboard-status-badge" style={{
       display: "inline-block", padding: "3px 10px",
       background: s.bg, color: s.fg, borderRadius: 20,
       fontSize: 11, fontWeight: 700, textTransform: "uppercase",

@@ -1,0 +1,318 @@
+.dashboard-settings-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1400;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgb(15 23 42 / 55%);
+}
+
+.dashboard-settings-modal {
+  display: flex;
+  width: min(1040px, 100%);
+  max-height: min(92vh, 900px);
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 24px 70px rgb(0 32 159 / 35%);
+  color: #1e293b;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.dashboard-settings-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 20px 24px;
+  border-bottom: 1px solid #cbd5e1;
+  background: #fff;
+}
+
+.dashboard-settings-header h2 {
+  margin: 0;
+  color: #00209f;
+  font-size: 20px;
+}
+
+.dashboard-settings-header p {
+  margin: 4px 0 0;
+  color: #64748b;
+  font-size: 13px;
+}
+
+.dashboard-settings-close {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 36px;
+  place-items: center;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background: #fff;
+  color: #1e293b;
+  cursor: pointer;
+}
+
+.dashboard-settings-close svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-width: 2;
+}
+
+.dashboard-settings-tabs {
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  padding: 0 20px;
+  border-bottom: 1px solid #cbd5e1;
+  scrollbar-width: thin;
+}
+
+.dashboard-settings-tabs button {
+  flex: 0 0 auto;
+  padding: 12px 14px 10px;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  background: transparent;
+  color: #526174;
+  font: 700 13px Arial, Helvetica, sans-serif;
+  cursor: pointer;
+}
+
+.dashboard-settings-tabs button:hover,
+.dashboard-settings-tabs button.active {
+  color: #00209f;
+}
+
+.dashboard-settings-tabs button.active {
+  border-bottom-color: #00209f;
+}
+
+.dashboard-settings-content {
+  overflow-y: auto;
+  padding: 22px 24px 26px;
+  background: #f8fafd;
+}
+
+.dashboard-settings-card {
+  padding: 20px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.dashboard-settings-card h3 {
+  margin: 0 0 12px;
+  color: #00209f;
+  font-size: 15px;
+}
+
+.dashboard-settings-card p {
+  margin: 0 0 14px;
+  color: #526174;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.dashboard-settings-profile {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0 20px;
+  margin: 0;
+}
+
+.dashboard-settings-profile div {
+  padding: 12px 0;
+  border-bottom: 1px solid #e2e8f0;
+  overflow-wrap: anywhere;
+}
+
+.dashboard-settings-profile dt {
+  margin-bottom: 5px;
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.dashboard-settings-profile dd {
+  margin: 0;
+  color: #1e293b;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.dashboard-settings-primary {
+  padding: 10px 16px;
+  border: 0;
+  border-radius: 6px;
+  background: #00209f;
+  color: #fff;
+  font: 700 13px Arial, Helvetica, sans-serif;
+  cursor: pointer;
+}
+
+.dashboard-settings-primary:hover {
+  background: #001a80;
+}
+
+.dashboard-settings-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.dashboard-settings-preference {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.dashboard-settings-switch {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #1e293b;
+  font: 600 13px Arial, Helvetica, sans-serif;
+  cursor: pointer;
+}
+
+.dashboard-settings-switch-track {
+  display: flex;
+  width: 42px;
+  height: 24px;
+  align-items: center;
+  padding: 3px;
+  border-radius: 999px;
+  background: #64748b;
+  transition: background 0.15s ease;
+}
+
+.dashboard-settings-switch[aria-checked="true"] .dashboard-settings-switch-track {
+  background: #009543;
+}
+
+.dashboard-settings-switch-track span {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 0.15s ease;
+}
+
+.dashboard-settings-switch[aria-checked="true"] .dashboard-settings-switch-track span {
+  transform: translateX(18px);
+}
+
+.dashboard-settings-service-links {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 8px;
+}
+
+.dashboard-settings-service-links a {
+  padding: 12px 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background: #f8fafd;
+  color: #00209f;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.dashboard-settings-service-links a:hover {
+  border-color: #009543;
+  background: #e6f6ee;
+}
+
+body[data-theme="dark"] .dashboard-settings-modal {
+  border-color: #34516c;
+  background: #06182d;
+  color: #fff;
+}
+
+body[data-theme="dark"] .dashboard-settings-header,
+body[data-theme="dark"] .dashboard-settings-card {
+  border-color: #34516c;
+  background: #102b48;
+}
+
+body[data-theme="dark"] .dashboard-settings-header h2,
+body[data-theme="dark"] .dashboard-settings-header p,
+body[data-theme="dark"] .dashboard-settings-card h3,
+body[data-theme="dark"] .dashboard-settings-card p,
+body[data-theme="dark"] .dashboard-settings-tabs button,
+body[data-theme="dark"] .dashboard-settings-profile dt,
+body[data-theme="dark"] .dashboard-settings-profile dd,
+body[data-theme="dark"] .dashboard-settings-switch {
+  color: #fff;
+}
+
+body[data-theme="dark"] .dashboard-settings-tabs {
+  border-color: #34516c;
+}
+
+body[data-theme="dark"] .dashboard-settings-tabs button.active {
+  border-bottom-color: #009543;
+  color: #fff;
+}
+
+body[data-theme="dark"] .dashboard-settings-content {
+  background: #06182d;
+}
+
+body[data-theme="dark"] .dashboard-settings-close {
+  border-color: #49647d;
+  background: #102b48;
+  color: #fff;
+}
+
+body[data-theme="dark"] .dashboard-settings-profile div {
+  border-color: #34516c;
+}
+
+body[data-theme="dark"] .dashboard-settings-service-links a {
+  border-color: #34516c;
+  background: #06182d;
+  color: #fff;
+}
+
+body[data-theme="dark"] .dashboard-settings-service-links a:hover {
+  border-color: #009543;
+  background: #102b48;
+}
+
+@media (max-width: 600px) {
+  .dashboard-settings-backdrop {
+    align-items: stretch;
+    padding: 12px;
+  }
+
+  .dashboard-settings-header,
+  .dashboard-settings-content {
+    padding-right: 16px;
+    padding-left: 16px;
+  }
+
+  .dashboard-settings-tabs {
+    padding-right: 12px;
+    padding-left: 12px;
+  }
+
+  .dashboard-settings-preference {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

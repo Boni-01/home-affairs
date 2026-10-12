@@ -210,7 +210,7 @@ function Login({ onSuccess, getPostAuthRoute }) {
   }
 
   return (
-    <main style={{
+    <main className="auth-page" style={{
       minHeight: "100vh",
       display: "grid",
       placeItems: "center",

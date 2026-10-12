@@ -206,7 +206,7 @@ function HomeDashboard({ isAuthenticated }) {
   };
 
   return (
-    <main style={styles.page}>
+    <main className="home-dashboard-page" style={styles.page}>
       {/* ============================================================
           HERO
           ============================================================ */}

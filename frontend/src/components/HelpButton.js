@@ -1,9 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import "./HelpButton.css";
 
 const HELP_PATHS = new Set([
   "/",
+  "/login",
+  "/register",
   "/home-affairs-dashboard",
   "/police-dashboard",
   "/traffic-dashboard",
@@ -15,8 +17,35 @@ const HELP_PATHS = new Set([
 export default function HelpButton() {
   const { pathname } = useLocation();
   const [isOpen, setIsOpen] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(
+    () => localStorage.getItem("home-affairs-theme") === "dark"
+  );
+
+  useEffect(() => {
+    if (HELP_PATHS.has(pathname) && isDarkMode) {
+      document.body.dataset.theme = "dark";
+    } else {
+      delete document.body.dataset.theme;
+    }
+  }, [isDarkMode, pathname]);
+
+  useEffect(() => {
+    const syncTheme = event => {
+      setIsDarkMode(
+        event.detail?.isDarkMode ?? localStorage.getItem("home-affairs-theme") === "dark"
+      );
+    };
+    window.addEventListener("home-affairs-theme-change", syncTheme);
+    return () => window.removeEventListener("home-affairs-theme-change", syncTheme);
+  }, []);
 
   if (!HELP_PATHS.has(pathname)) return null;
+
+  const toggleDarkMode = () => {
+    const nextDarkMode = !isDarkMode;
+    localStorage.setItem("home-affairs-theme", nextDarkMode ? "dark" : "light");
+    setIsDarkMode(nextDarkMode);
+  };
 
   return (
     <div className="help-widget">
@@ -27,6 +56,34 @@ export default function HelpButton() {
           <a href="mailto:helpdesk@gov.ls">helpdesk@gov.ls</a>
         </section>
       )}
+      <button
+        className="dark-mode-button"
+        type="button"
+        aria-label={isDarkMode ? "Turn dark mode off" : "Turn dark mode on"}
+        aria-pressed={isDarkMode}
+        onClick={toggleDarkMode}
+      >
+        <svg
+          className="dark-mode-icon"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          {isDarkMode ? (
+            <>
+              <circle cx="12" cy="12" r="4" />
+              <path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42" />
+            </>
+          ) : (
+            <path d="M20.9 13A9 9 0 0 1 11 3.1 9 9 0 1 0 20.9 13Z" />
+          )}
+        </svg>
+        <span>Dark Mode</span>
+      </button>
       <button
         className="help-button"
         type="button"

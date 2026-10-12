@@ -1297,15 +1297,19 @@ function TrafficDashboard({ onLogout }) {
         {/* PROFILE TAB */}
         {tab === "profile" && me && (
           <section style={section.wrapper}>
-            <h2 style={section.title}>My Profile</h2>
-            <p style={section.subtitle}>Your verified identity on the Lesotho Government Services platform.</p>
+            <h3 style={{ margin: "0 0 4px", fontSize: 20, fontWeight: 700, color: COLORS.blue }}>
+              My Profile
+            </h3>
+            <p style={{ margin: "0 0 8px", fontSize: 13, color: COLORS.textMuted, lineHeight: 1.5 }}>
+              Your verified identity on the Lesotho Government Services platform.
+            </p>
 
-            <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) minmax(0, 2fr)", gap: 20 }}>
+            <div className="profile-settings-grid" style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) minmax(0, 2fr)", gap: 20, marginTop: 16 }}>
               {/* ID Card */}
               <div style={{
                 background: `linear-gradient(135deg, ${COLORS.blue} 0%, #001a80 100%)`,
                 color: "#fff", borderRadius: 12, padding: 22,
-                aspectRatio: "85/54", maxWidth: 480,
+                aspectRatio: "85/54", maxWidth: 420,
                 display: "flex", flexDirection: "column",
                 justifyContent: "space-between",
                 boxShadow: "0 12px 28px rgba(0,32,159,0.25)"
@@ -1348,9 +1352,9 @@ function TrafficDashboard({ onLogout }) {
 
               {/* Details */}
               <div>
-                <div style={{
+                <div className="profile-settings-card" style={{
                   background: "#fff", border: `1px solid ${COLORS.border}`,
-                  borderRadius: 12, padding: 24, marginBottom: 20
+                  borderRadius: 12, padding: 20, marginBottom: 16
                 }}>
                   <h3 style={{ margin: "0 0 16px", fontSize: 14, color: COLORS.blue, fontWeight: 700 }}>
                     Profile Details
@@ -1363,9 +1367,9 @@ function TrafficDashboard({ onLogout }) {
                   <ProfileRow label="Member Since" value={new Date(me.created_at).toLocaleDateString()} />
                 </div>
 
-                <div style={{
+                <div className="profile-settings-card" style={{
                   background: "#fff", border: `1px solid ${COLORS.border}`,
-                  borderRadius: 12, padding: 24
+                  borderRadius: 12, padding: 20, marginBottom: 16
                 }}>
                   <h3 style={{ margin: "0 0 6px", fontSize: 14, color: COLORS.blue, fontWeight: 700 }}>
                     Identity Photo
@@ -1375,7 +1379,7 @@ function TrafficDashboard({ onLogout }) {
                   </p>
 
                   <div style={{ display: "flex", gap: 20, alignItems: "center", flexWrap: "wrap" }}>
-                    <div style={{
+                    <div className="profile-settings-photo-placeholder" style={{
                       width: 90, height: 116, borderRadius: 6,
                       border: `1px solid ${COLORS.border}`,
                       background: COLORS.lightBg,
@@ -2022,7 +2026,7 @@ function StatusBadge({ status }) {
   };
   const s = map[status?.toUpperCase()] || { bg: "#f1f5f9", fg: "#475569" };
   return (
-    <span style={{
+    <span className="dashboard-status-badge" style={{
       display: "inline-block", padding: "3px 10px",
       background: s.bg, color: s.fg, borderRadius: 20,
       fontSize: 10, fontWeight: 700, textTransform: "uppercase",

@@ -599,7 +599,12 @@ function HomeAffairsDashboard({ onLogout }) {
           gap: 12, marginBottom: 24
         }}>
           {MODULES.map(m => (
-            <button key={m.key} onClick={() => setActiveModule(m.key)} style={{
+            <button
+              key={m.key}
+              className="home-affairs-module-button"
+              data-active={activeModule === m.key}
+              onClick={() => setActiveModule(m.key)}
+              style={{
               textAlign: "left", padding: "16px 18px",
               border: `1px solid ${activeModule === m.key ? COLORS.blue : COLORS.border}`,
               background: activeModule === m.key ? COLORS.blue : "#fff",
@@ -653,7 +658,7 @@ function HomeAffairsDashboard({ onLogout }) {
                       : "0 2px 8px rgba(0,32,159,0.05)";
                   }}
                 >
-                  <div style={cardIconBox}>
+                  <div className="home-affairs-service-icon-box" style={cardIconBox}>
                     <img
                       src={getServiceIcon(svc.service_name)}
                       alt={svc.service_name}
@@ -664,7 +669,9 @@ function HomeAffairsDashboard({ onLogout }) {
 
                   <div style={cardContent}>
                     <h3 style={cardTitle}>{svc.service_name}</h3>
-                    <span style={cardChip}>{svc.module}</span>
+                    <span className="home-affairs-service-module-chip" style={cardChip}>
+                      {svc.module}
+                    </span>
                     <div style={cardMeta}>
                       <span><strong>{svc.processing_days}</strong> {t.days}</span>
                       {svc.requires_payment
@@ -862,8 +869,8 @@ function SettingsModal({
 
   return (
     <div onClick={onClose} style={settingsOverlay}>
-      <div onClick={e => e.stopPropagation()} style={settingsPanel}>
-        <div style={settingsHeader}>
+      <div className="home-affairs-settings-panel" onClick={e => e.stopPropagation()} style={settingsPanel}>
+        <div className="home-affairs-settings-header" style={settingsHeader}>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <img
               src="/settings.png"
@@ -883,7 +890,7 @@ function SettingsModal({
           <button onClick={onClose} style={settingsCloseBtn}>✕</button>
         </div>
 
-        <div style={settingsTabsRow}>
+        <div className="home-affairs-settings-tabs" style={settingsTabsRow}>
           {tabs.map(([key, label]) => {
             const badge = key === "notifications" && unread ? ` (${unread})` : "";
             return (
@@ -901,13 +908,13 @@ function SettingsModal({
           })}
         </div>
 
-        <div style={settingsBody}>
+        <div className="home-affairs-settings-body" style={settingsBody}>
           {settingsTab === "profile" && me && (
             <>
               <h3 style={settingsSectionTitle}>{t.myProfile}</h3>
               <p style={settingsSectionDesc}>{t.profileDesc}</p>
 
-              <div style={{
+              <div className="profile-settings-grid" style={{
                 display: "grid",
                 gridTemplateColumns: "minmax(0, 1fr) minmax(0, 2fr)",
                 gap: 20, marginTop: 16
@@ -979,7 +986,7 @@ function SettingsModal({
                 </div>
 
                 <div>
-                  <div style={settingsCard}>
+                  <div className="profile-settings-card" style={settingsCard}>
                     <h4 style={settingsCardTitle}>{t.profileDetails}</h4>
                     <ProfileRow label={t.fullName} value={me.full_name} />
                     <ProfileRow label={t.email} value={me.email || "—"} />
@@ -990,7 +997,7 @@ function SettingsModal({
                     <ProfileRow label={t.memberSince} value={new Date(me.created_at).toLocaleDateString()} />
                   </div>
 
-                  <div style={settingsCard}>
+                  <div className="profile-settings-card" style={settingsCard}>
                     <h4 style={settingsCardTitle}>{t.identityPhoto}</h4>
                     <p style={{
                       margin: "0 0 14px", fontSize: 12,
@@ -998,7 +1005,7 @@ function SettingsModal({
                     }}>{t.identityPhotoDesc}</p>
 
                     <div style={{ display: "flex", gap: 20, alignItems: "center", flexWrap: "wrap" }}>
-                      <div style={{
+                      <div className="profile-settings-photo-placeholder" style={{
                         width: 90, height: 116, borderRadius: 6,
                         border: `1px solid ${COLORS.border}`,
                         background: COLORS.lightBg,
@@ -1724,7 +1731,7 @@ function StatusBadge({ status }) {
   };
   const s = map[status] || { bg: "#f1f5f9", fg: "#475569" };
   return (
-    <span style={{
+    <span className="dashboard-status-badge" style={{
       display: "inline-block", padding: "3px 10px",
       background: s.bg, color: s.fg, borderRadius: 20,
       fontSize: 11, fontWeight: 700, textTransform: "uppercase",

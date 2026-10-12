@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import flagImage from "./Flag.png";
+import DashboardSettingsModal from "./DashboardSettingsModal";
 import "./Navbar.css";
 
 const ministries = [
@@ -22,6 +23,13 @@ const adminOffices = [
 ];
 
 const accountKeys = new Set(["profile", "mine", "applications", "requests", "notifications"]);
+const SETTINGS_DASHBOARD_PATHS = new Set([
+  "/finance-dashboard",
+  "/police-dashboard",
+  "/passport-office-dashboard",
+  "/pensions-dashboard",
+  "/traffic-dashboard"
+]);
 
 function readStoredProfile() {
   const storedProfile = sessionStorage.getItem("user-profile");
@@ -60,6 +68,8 @@ function Navbar({
   const navigationRef = useRef(null);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [settingsTab, setSettingsTab] = useState("applications");
   const [storedProfile] = useState(readStoredProfile);
   const isDashboard = items !== undefined;
   const authenticated = isAuthenticated ??
@@ -83,6 +93,7 @@ function Navbar({
   useEffect(() => {
     setMobileOpen(false);
     setProfileOpen(false);
+    setSettingsOpen(false);
   }, [location.pathname]);
 
   useEffect(() => {
@@ -120,6 +131,28 @@ function Navbar({
     onTabChange?.(key);
     setProfileOpen(false);
     setMobileOpen(false);
+  };
+
+  const handleAccountMenuItemClick = key => {
+    if (SETTINGS_DASHBOARD_PATHS.has(location.pathname)) {
+      const nextSettingsTab = key === "profile"
+        ? "profile"
+        : applicationItems.some(([itemKey]) => itemKey === key)
+          ? "applications"
+          : notificationItems.some(([itemKey]) => itemKey === key)
+            ? "notifications"
+            : null;
+
+      if (nextSettingsTab) {
+        setSettingsTab(nextSettingsTab);
+        setSettingsOpen(true);
+        setProfileOpen(false);
+        setMobileOpen(false);
+        return;
+      }
+    }
+
+    handleTabChange(key);
   };
 
   const isActive = path => location.pathname === path;
@@ -220,7 +253,7 @@ function Navbar({
                           <button
                             type="button"
                             className={activeTab === "profile" ? "active" : ""}
-                            onClick={() => handleTabChange("profile")}
+                            onClick={() => handleAccountMenuItemClick("profile")}
                           >
                             Profile details
                           </button>
@@ -230,7 +263,7 @@ function Navbar({
                             key={key}
                             type="button"
                             className={key === activeTab ? "active" : ""}
-                            onClick={() => handleTabChange(key)}
+                            onClick={() => handleAccountMenuItemClick(key)}
                           >
                             {label}
                           </button>
@@ -240,7 +273,7 @@ function Navbar({
                             key={key}
                             type="button"
                             className={key === activeTab ? "active" : ""}
-                            onClick={() => handleTabChange(key)}
+                            onClick={() => handleAccountMenuItemClick(key)}
                           >
                             {label}
                           </button>
@@ -293,6 +326,17 @@ function Navbar({
           items={workflowItems}
           activeTab={activeTab}
           onTabChange={onTabChange}
+        />
+      )}
+      {settingsOpen && (
+        <DashboardSettingsModal
+          user={profile}
+          applicationItem={applicationItems[0]}
+          notificationItem={notificationItems[0]}
+          activeTab={settingsTab}
+          onTabChange={setSettingsTab}
+          onClose={() => setSettingsOpen(false)}
+          onNavigateToTab={handleTabChange}
         />
       )}
     </>

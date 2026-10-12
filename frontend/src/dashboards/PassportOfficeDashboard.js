@@ -380,7 +380,7 @@ function PassportOfficeDashboard({ onLogout }) {
                             e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,32,159,0.05)";
                           }}
                         >
-                          <span style={{
+                          <span className={`passport-tier-badge passport-tier-${tierKey}`} style={{
                             position: "absolute", top: -12, left: 18,
                             background: meta.bg, color: meta.color,
                             fontSize: 10, fontWeight: 800,
@@ -420,7 +420,7 @@ function PassportOfficeDashboard({ onLogout }) {
                           }}>
                             {svc.requires_appointment ? <Chip>Appointment required</Chip> : null}
                             {svc.requires_biometrics ? <Chip>Biometrics</Chip> : null}
-                            {svc.requires_approval ? <Chip tone="warn">Approval required</Chip> : null}
+                            {svc.requires_approval ? <Chip tone="warn" className="passport-approval-chip">Approval required</Chip> : null}
                           </div>
 
                           <button onClick={() => openService(svc.service_id)} style={{
@@ -656,16 +656,18 @@ function PassportOfficeDashboard({ onLogout }) {
 
         {tab === "profile" && me && (
           <section>
-            <h2 style={section.title}>My profile</h2>
-            <p style={section.subtitle}>
+            <h3 style={{ margin: "0 0 4px", fontSize: 20, fontWeight: 700, color: COLORS.blue }}>
+              My profile
+            </h3>
+            <p style={{ margin: "0 0 8px", fontSize: 13, color: COLORS.textMuted, lineHeight: 1.5 }}>
               Your verified identity on the Lesotho Government Services platform.
             </p>
 
-            <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) minmax(0, 2fr)", gap: 20 }}>
+            <div className="profile-settings-grid" style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) minmax(0, 2fr)", gap: 20, marginTop: 16 }}>
               <div style={{
                 background: `linear-gradient(135deg, ${COLORS.blue} 0%, #001a80 100%)`,
                 color: "#fff", borderRadius: 12, padding: 22,
-                aspectRatio: "85/54", maxWidth: 480,
+                aspectRatio: "85/54", maxWidth: 420,
                 display: "flex", flexDirection: "column", justifyContent: "space-between",
                 boxShadow: "0 12px 28px rgba(0,32,159,0.25)"
               }}>
@@ -706,9 +708,9 @@ function PassportOfficeDashboard({ onLogout }) {
               </div>
 
               <div>
-                <div style={{
+                <div className="profile-settings-card" style={{
                   background: "#fff", border: `1px solid ${COLORS.border}`,
-                  borderRadius: 12, padding: 24, marginBottom: 20
+                  borderRadius: 12, padding: 20, marginBottom: 16
                 }}>
                   <h3 style={{ margin: "0 0 16px", fontSize: 14, color: COLORS.blue }}>
                     Profile details
@@ -721,9 +723,9 @@ function PassportOfficeDashboard({ onLogout }) {
                   <ProfileRow label="Member since" value={new Date(me.created_at).toLocaleDateString()} />
                 </div>
 
-                <div style={{
+                <div className="profile-settings-card" style={{
                   background: "#fff", border: `1px solid ${COLORS.border}`,
-                  borderRadius: 12, padding: 24
+                  borderRadius: 12, padding: 20, marginBottom: 16
                 }}>
                   <h3 style={{ margin: "0 0 6px", fontSize: 14, color: COLORS.blue }}>
                     Identity photo
@@ -732,7 +734,7 @@ function PassportOfficeDashboard({ onLogout }) {
                     This photo appears on your ID and will be used on your passport.
                   </p>
                   <div style={{ display: "flex", gap: 20, alignItems: "center", flexWrap: "wrap" }}>
-                    <div style={{
+                    <div className="profile-settings-photo-placeholder" style={{
                       width: 90, height: 116, borderRadius: 6,
                       border: `1px solid ${COLORS.border}`,
                       background: COLORS.lightBg,
@@ -1076,12 +1078,12 @@ function ProfileRow({ label, value }) {
   );
 }
 
-function Chip({ children, tone }) {
+function Chip({ children, tone, className }) {
   const colors = tone === "warn"
     ? { bg: "#fff4df", fg: "#b45309" }
     : { bg: "#eff8ff", fg: "#175cd3" };
   return (
-    <span style={{
+    <span className={className} style={{
       display: "inline-block", padding: "3px 9px",
       background: colors.bg, color: colors.fg,
       borderRadius: 20, fontWeight: 700, letterSpacing: 0.3
@@ -1167,7 +1169,7 @@ function StatusBadge({ status }) {
   };
   const s = map[status] || { bg: "#f1f5f9", fg: "#475569" };
   return (
-    <span style={{
+    <span className="dashboard-status-badge" style={{
       display: "inline-block", padding: "3px 10px",
       background: s.bg, color: s.fg, borderRadius: 20,
       fontSize: 11, fontWeight: 700, textTransform: "uppercase",
