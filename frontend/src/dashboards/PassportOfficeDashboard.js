@@ -276,12 +276,6 @@ function PassportOfficeDashboard({ onLogout }) {
             <div>
               <p style={header.eyebrow}>Department of Home Affairs · Passport Office</p>
               <h1 style={header.title}>Passport Services</h1>
-              {me && (
-                <p style={header.subtitle}>
-                  Signed in as {me.full_name} · National ID:{" "}
-                  <strong>{me.national_id_number || me.national_id || "—"}</strong>
-                </p>
-              )}
             </div>
             <DashboardSearch onSearch={setSearchQuery} />
           </div>

@@ -523,12 +523,6 @@ function PoliceDashboard({ onLogout }) {
             <div>
               <p style={header.eyebrow}>Lesotho Mounted Police Service</p>
               <h1 style={header.title}>Police Services</h1>
-              {me && (
-                <p style={header.subtitle}>
-                  Signed in as {me.full_name} · National ID:{" "}
-                  <strong>{me.national_id_number || me.national_id || "—"}</strong>
-                </p>
-              )}
             </div>
             <DashboardSearch onSearch={setSearchQuery} />
           </div>
