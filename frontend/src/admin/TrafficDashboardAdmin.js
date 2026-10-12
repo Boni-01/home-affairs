@@ -1354,7 +1354,7 @@ function StatusBadge({ status }) {
   };
   const s = map[status?.toUpperCase()] || { bg: "#f1f5f9", fg: "#475569" };
   return (
-    <span style={{
+    <span className="admin-status-badge" style={{
       display: "inline-block", padding: "3px 10px",
       background: s.bg, color: s.fg, borderRadius: 20,
       fontSize: 10, fontWeight: 700, textTransform: "uppercase",

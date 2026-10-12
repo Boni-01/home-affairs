@@ -858,7 +858,7 @@ function TierBadge({ tier }) {
   if (!tier) return <span style={{ color: COLORS.textMuted, fontSize: 11 }}>—</span>;
   const color = TIER_COLORS[tier] || COLORS.blue;
   return (
-    <span style={{
+    <span className="admin-tier-badge" style={{
       display: "inline-block", padding: "3px 10px",
       background: `${color}15`, color: color,
       borderRadius: 20, fontSize: 11, fontWeight: 700,
@@ -888,7 +888,7 @@ function StatusBadge({ status }) {
   };
   const s = map[status] || { bg: "#f1f5f9", fg: "#475569" };
   return (
-    <span style={{
+    <span className="admin-status-badge" style={{
       display: "inline-block", padding: "3px 10px",
       background: s.bg, color: s.fg, borderRadius: 20,
       fontSize: 11, fontWeight: 700, textTransform: "uppercase",

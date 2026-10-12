@@ -123,6 +123,13 @@ body[data-theme="dark"] .dashboard-page article {
   border-color: #34516c !important;
 }
 
+body[data-theme="dark"] .dashboard-page .admin-status-badge,
+body[data-theme="dark"] .dashboard-page .admin-tier-badge {
+  border: 1px solid #009543 !important;
+  background: #173c5e !important;
+  color: #fff !important;
+}
+
 body[data-theme="dark"] .home-affairs-settings-panel,
 body[data-theme="dark"] .home-affairs-settings-header,
 body[data-theme="dark"] .profile-settings-card {
