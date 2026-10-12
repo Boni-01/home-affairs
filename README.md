@@ -3727,13 +3727,13 @@ Advanced reporting and analytics
 Mobile application
 
 # Team Responsibilities
-Member	Student Number	Primary Focus
-Lehakoe Panyane	901019088	Backend, Firebase Auth
-Sehloho Tsiu	901018558	MySQL schema, data modelling
-Bonang Sakoane	901019739	Citizen frontend pages
-Katleho Ramohlabi	901018965	Officer dashboards, admin
-Malefu Mokitimi	901018843	Evaluation, documentation
-All members: contribute to their own branch, submit PRs, and participate in the presentation.
+Member	           Primary Focus
+Lehakoe Panyane	   Backend, Firebase Auth
+Sehloho Tsiu	   MySQL schema, data modelling, admin
+Bonang Sakoane	   Citizen frontend pages
+Katleho Ramohlabi  Officer dashboards, admin
+Malefu Mokitimi	   Evaluation, documentation
+All members: contribute to the same branch, submit PRs, and participate in the presentation.
 
 # Need Help?
 First: check the Troubleshooting section
