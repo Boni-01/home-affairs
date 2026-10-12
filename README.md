@@ -1749,6 +1749,12 @@ VALUES
 ON DUPLICATE KEY UPDATE service_name = VALUES(service_name);
 
 -- 12.2 Finance service requests
+-- Backend startup adds GOV_PAYMENT automatically. If the DB user lacks ALTER privileges,
+-- run this one-time update manually:
+-- ALTER TABLE finance_service_requests MODIFY COLUMN request_type ENUM(
+--     'TAX_REQUEST','TAX_CLEARANCE','TAX_DECLARATION',
+--     'SUPPLIER_REGISTRATION','INVOICE_CLAIM','TAX_REFUND','GOV_PAYMENT','GENERAL_ENQUIRY'
+-- ) NOT NULL;
 CREATE TABLE finance_service_requests (
     request_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     reference_no VARCHAR(30) NOT NULL UNIQUE,
@@ -1756,7 +1762,7 @@ CREATE TABLE finance_service_requests (
     service_id INT UNSIGNED NOT NULL,
     request_type ENUM(
         'TAX_REQUEST','TAX_CLEARANCE','TAX_DECLARATION',
-        'SUPPLIER_REGISTRATION','INVOICE_CLAIM','TAX_REFUND','GENERAL_ENQUIRY'
+        'SUPPLIER_REGISTRATION','INVOICE_CLAIM','TAX_REFUND','GOV_PAYMENT','GENERAL_ENQUIRY'
     ) NOT NULL,
     subject VARCHAR(200) NOT NULL,
     description TEXT,

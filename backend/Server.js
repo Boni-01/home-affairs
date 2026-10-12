@@ -45,16 +45,29 @@ const db = mysql.createPool({
   queueLimit: 0
 });
 
-(async () => {
+async function initializeDatabase() {
+  const c = await db.getConnection();
   try {
-    const c = await db.getConnection();
+    const [columns] = await c.query(
+      "SHOW COLUMNS FROM finance_service_requests LIKE 'request_type'"
+    );
+    if (!columns.length) {
+      throw new Error("finance_service_requests.request_type column is missing");
+    }
+    if (!columns[0].Type.includes("'GOV_PAYMENT'")) {
+      await c.query(`ALTER TABLE finance_service_requests
+        MODIFY COLUMN request_type ENUM(
+          'TAX_REQUEST','TAX_CLEARANCE','TAX_DECLARATION',
+          'SUPPLIER_REGISTRATION','INVOICE_CLAIM','TAX_REFUND',
+          'GOV_PAYMENT','GENERAL_ENQUIRY'
+        ) NOT NULL`);
+      console.log("Finance request type updated to support GOV_PAYMENT");
+    }
     console.log("MySQL connected →", process.env.DB_NAME || "lesotho_gov");
+  } finally {
     c.release();
-  } catch (err) {
-    console.error("MySQL connection failed:", err.message);
-    process.exit(1);
   }
-})();
+}
 
 // ------------------------------------------------------------
 // CONSTANTS
@@ -3768,6 +3781,9 @@ app.post(
       return res.status(400).json({ error: "subject and description are required" });
     }
     if (!serviceId) return res.status(400).json({ error: "serviceId is required" });
+    if (requestType === "GOV_PAYMENT" && (!Number.isFinite(Number(amount)) || Number(amount) <= 0)) {
+      return res.status(400).json({ error: "A payment amount greater than zero is required" });
+    }
 
     let fields = {};
     try {
@@ -3786,6 +3802,13 @@ app.post(
       );
       if (!svcRows.length) throw new Error("Finance service not available");
       const service = svcRows[0];
+      if (requestType === "GOV_PAYMENT" && service.service_code !== "GOV-PAYMENT") {
+        throw new Error("Government payment requests must use the Government payment service");
+      }
+      if (requestType === "GOV_PAYMENT" &&
+          (!String(fields.payment_reference || "").trim() || !String(fields.payer_name || "").trim())) {
+        throw new Error("Government reference number and payer name are required");
+      }
 
       const ref = await generateFinanceReference(conn, requestType);
 
@@ -8016,16 +8039,23 @@ app.get("/api/traffic/admin/instructors", verifyToken, requireAdmin, async (req,
 // START SERVER
 // ============================================================
 const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => {
-  console.log("");
-  console.log("====================================================");
-  console.log("Lesotho Government Services API");
-  console.log("====================================================");
-  console.log(`Server running on http://localhost:${PORT}`);
-  console.log(`Admin emails: ${ADMIN_EMAILS.join(", ")}`);
-  console.log(`Stamp loaded: ${fs.existsSync(POLICE_STAMP_PATH) ? "yes" : "NO (missing police_stamp.png)"}`);
-  console.log("====================================================");
-});
+initializeDatabase()
+  .then(() => {
+    app.listen(PORT, () => {
+      console.log("");
+      console.log("====================================================");
+      console.log("Lesotho Government Services API");
+      console.log("====================================================");
+      console.log(`Server running on http://localhost:${PORT}`);
+      console.log(`Admin emails: ${ADMIN_EMAILS.join(", ")}`);
+      console.log(`Stamp loaded: ${fs.existsSync(POLICE_STAMP_PATH) ? "yes" : "NO (missing police_stamp.png)"}`);
+      console.log("====================================================");
+    });
+  })
+  .catch(err => {
+    console.error("Database initialization failed:", err.message);
+    process.exit(1);
+  });
 
 process.on("SIGINT", async () => { await db.end(); process.exit(0); });
 process.on("SIGTERM", async () => { await db.end(); process.exit(0); });

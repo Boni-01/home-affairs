@@ -76,6 +76,7 @@ const REQUEST_TYPES = [
   { key: "SUPPLIER_REGISTRATION", label: "Supplier registration",     icon: REQUEST_ICONS.SUPPLIER_REGISTRATION, serviceCode: "SUPPLIER-REG" },
   { key: "INVOICE_CLAIM",         label: "Invoice / payment claim",   icon: REQUEST_ICONS.INVOICE_CLAIM, serviceCode: "INVOICE-CLAIM" },
   { key: "TAX_REFUND",            label: "Tax refund request",        icon: REQUEST_ICONS.TAX_REFUND, serviceCode: "TAX-REFUND" },
+  { key: "GOV_PAYMENT",           label: "Government payment",        icon: REQUEST_ICONS.INVOICE_CLAIM, serviceCode: "GOV-PAYMENT" },
   { key: "GENERAL_ENQUIRY",       label: "Finance enquiry",           icon: REQUEST_ICONS.GENERAL_ENQUIRY, serviceCode: "FINANCE-ENQUIRY" }
 ];
 
@@ -121,6 +122,10 @@ const FIELD_GROUPS = {
     { key: "tax_id", label: "Tax ID / TIN", type: "text" },
     { key: "tax_period", label: "Tax period", type: "text" },
     { key: "amount_claimed", label: "Amount claimed (LSL)", type: "number" }
+  ],
+  GOV_PAYMENT: [
+    { key: "payment_reference", label: "Government reference number", type: "text", required: true },
+    { key: "payer_name", label: "Payer name", type: "text", required: true }
   ],
   GENERAL_ENQUIRY: [
     { key: "related_reference", label: "Related reference (optional)", type: "text" }
@@ -370,6 +375,19 @@ function FinanceDashboard({ onLogout }) {
                     <p style={{ margin: 0, fontSize: 12, color: COLORS.textMuted }}>
                       <strong>Fee:</strong> M {Number(s.fee_amount).toFixed(2)}
                     </p>
+                  )}
+                  {REQUEST_TYPES.find(t => t.serviceCode === s.service_code) && (
+                    <button type="button" onClick={() => {
+                      const requestType = REQUEST_TYPES.find(t => t.serviceCode === s.service_code);
+                      setTab("new");
+                      openType(requestType);
+                    }} style={{
+                      alignSelf: "flex-start", marginTop: "auto", padding: "8px 12px",
+                      border: 0, background: COLORS.blue, color: "#fff", borderRadius: 6,
+                      fontWeight: 700, fontSize: 12, cursor: "pointer", fontFamily: "inherit"
+                    }}>
+                      Open Service
+                    </button>
                   )}
                 </article>
               ))}
@@ -680,10 +698,11 @@ function FinanceDashboard({ onLogout }) {
               onChange={e => setForm(p => ({ ...p, description: e.target.value }))}
               style={{ ...inputStyle, marginBottom: 14 }} />
 
-            {["INVOICE_CLAIM","TAX_REFUND"].includes(activeType.key) && (
+            {["INVOICE_CLAIM","TAX_REFUND","GOV_PAYMENT"].includes(activeType.key) && (
               <>
-                <label style={labelStyle}>Amount (LSL)</label>
-                <input type="number" step="0.01" value={form.amount}
+                <label style={labelStyle}>{activeType.key === "GOV_PAYMENT" ? "Payment amount (LSL) *" : "Amount (LSL)"}</label>
+                <input type="number" min={activeType.key === "GOV_PAYMENT" ? "0.01" : undefined}
+                  step="0.01" required={activeType.key === "GOV_PAYMENT"} value={form.amount}
                   onChange={e => setForm(p => ({ ...p, amount: e.target.value }))}
                   style={{ ...inputStyle, marginBottom: 14 }} />
               </>
@@ -693,18 +712,18 @@ function FinanceDashboard({ onLogout }) {
               <div key={f.key} style={{ marginBottom: 14 }}>
                 <label style={labelStyle}>{f.label}</label>
                 {f.type === "textarea" ? (
-                  <textarea rows={3} value={fields[f.key] || ""}
+                  <textarea rows={3} required={f.required} value={fields[f.key] || ""}
                     onChange={e => setFields(p => ({ ...p, [f.key]: e.target.value }))}
                     style={inputStyle} />
                 ) : f.type === "select" ? (
-                  <select value={fields[f.key] || ""}
+                  <select required={f.required} value={fields[f.key] || ""}
                     onChange={e => setFields(p => ({ ...p, [f.key]: e.target.value }))}
                     style={inputStyle}>
                     <option value="">Select…</option>
                     {(f.options || []).map(o => <option key={o} value={o}>{o}</option>)}
                   </select>
                 ) : (
-                  <input type={f.type} value={fields[f.key] || ""}
+                  <input type={f.type} required={f.required} value={fields[f.key] || ""}
                     onChange={e => setFields(p => ({ ...p, [f.key]: e.target.value }))}
                     style={inputStyle} />
                 )}
