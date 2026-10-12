@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import { COLORS, layout, header, section } from "../styles/dashboardStyles";
-import DashboardSidebar from "../components/DashboardSidebar";
+import Navbar from "../components/Navbar";
 import { auth, API_BASE } from "../Database/firebase";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
@@ -293,7 +293,7 @@ function PassportOfficeDashboard({ onLogout }) {
           <StatCard label="Notifications" value={unread} accent={COLORS.blue} />
         </section>
 
-        <DashboardSidebar
+        <Navbar
           items={[
             ["apply", "Apply"],
             ["mine", `My applications (${applications.length})`],
@@ -304,6 +304,7 @@ function PassportOfficeDashboard({ onLogout }) {
           activeTab={tab}
           onTabChange={setTab}
           onLogout={onLogout}
+          user={me}
         />
 
         {tab === "apply" && (

@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { COLORS, layout, header, section } from "../styles/dashboardStyles";
-import DashboardSidebar from "../components/DashboardSidebar";
+import Navbar from "../components/Navbar";
 import { auth, API_BASE } from "../Database/firebase";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
@@ -631,7 +631,7 @@ function HomeAffairsDashboard({ onLogout }) {
           <StatCard label={t.notifications} value={unread} accent={COLORS.blue} />
         </section>
 
-        <DashboardSidebar
+        <Navbar
           items={[
             ["apply", t.applyTab],
             ["applications", t.settingsTabs.applications],
@@ -642,6 +642,7 @@ function HomeAffairsDashboard({ onLogout }) {
           activeTab={activeDashboardTab}
           onTabChange={handleDashboardTabChange}
           action={{ label: t.logout, onClick: handleLogout }}
+          user={me}
         />
 
         <div style={{

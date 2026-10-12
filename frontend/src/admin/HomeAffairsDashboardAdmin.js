@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { COLORS, layout, header, cards, grids, section } from "../styles/dashboardStyles";
-import DashboardSidebar from "../components/DashboardSidebar";
+import Navbar from "../components/Navbar";
 import { auth, API_BASE } from "../Database/firebase";
 
 async function api(path, opts = {}) {
@@ -103,7 +103,7 @@ function HomeAffairsDashboardAdmin({ onLogout }) {
 
   return (
     <main className="dashboard-page" style={layout.page}>
-      <DashboardSidebar items={[]} activeTab="" onLogout={onLogout} />
+      <Navbar items={[]} activeTab="" onLogout={onLogout} />
       <div style={layout.container}>
         <header style={header.wrapper}>
           <div style={{

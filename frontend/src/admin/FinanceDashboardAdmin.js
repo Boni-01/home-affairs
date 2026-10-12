@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { COLORS, layout, header, cards, grids, section } from "../styles/dashboardStyles";
-import DashboardSidebar from "../components/DashboardSidebar";
+import Navbar from "../components/Navbar";
 import { auth, API_BASE } from "../Database/firebase";
 
 async function api(path, opts = {}) {
@@ -257,7 +257,7 @@ export default function FinanceDashboardAdmin({ onLogout }) {
           <Metric label="Open enquiries" value={stats.openTickets || 0} />
         </section>
 
-        <DashboardSidebar
+        <Navbar
           items={[
             ["requests", "Requests"],
             ["suppliers", `Suppliers (${suppliers.length})`],

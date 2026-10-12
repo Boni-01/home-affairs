@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback, useRef } from "react";
 import { COLORS, layout, header, section } from "../styles/dashboardStyles";
-import DashboardSidebar from "../components/DashboardSidebar";
+import Navbar from "../components/Navbar";
 import { auth, API_BASE } from "../Database/firebase";
 import jsPDF from "jspdf";
 
@@ -555,7 +555,7 @@ function PoliceDashboard({ onLogout }) {
           <StatCard label="Notifications" value={unread + unreadCertNotifs} accent={COLORS.blue} />
         </section>
 
-        <DashboardSidebar
+        <Navbar
           items={[
             ["report", "Report / Apply"],
             ["mine", `My reports (${applications.length})`],
@@ -567,6 +567,7 @@ function PoliceDashboard({ onLogout }) {
           activeTab={tab}
           onTabChange={setTab}
           onLogout={onLogout}
+          user={me}
         />
 
         {/* ================= REPORT TAB ================= */}

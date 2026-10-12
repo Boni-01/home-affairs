@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { COLORS, layout, header, cards, grids, section } from "../styles/dashboardStyles";
-import DashboardSidebar from "../components/DashboardSidebar";
+import Navbar from "../components/Navbar";
 import { auth, API_BASE } from "../Database/firebase";
 
 async function api(path, opts = {}) {
@@ -314,7 +314,7 @@ function PassportOfficeDashboardAdmin({ onLogout }) {
           <Metric label="Open complaints" value={stats.openComplaints || 0} />
         </section>
 
-        <DashboardSidebar
+        <Navbar
           items={[
             ["queue", "Application queue"],
             ["complaints", "Complaints"],

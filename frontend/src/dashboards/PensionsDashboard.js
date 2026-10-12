@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback, useRef } from "react";
 import { COLORS, layout, header, section } from "../styles/dashboardStyles";
-import DashboardSidebar from "../components/DashboardSidebar";
+import Navbar from "../components/Navbar";
 import { auth, API_BASE } from "../Database/firebase";
 
 async function api(path, opts = {}) {
@@ -346,7 +346,7 @@ function PensionsDashboard({ onLogout }) {
           <StatCard label="Notifications" value={unread} accent={COLORS.blue} />
         </section>
 
-        <DashboardSidebar
+        <Navbar
           items={[
             ["overview", "Overview"],
             ["apply", "Submit application"],
@@ -359,6 +359,7 @@ function PensionsDashboard({ onLogout }) {
           activeTab={tab}
           onTabChange={setTab}
           onLogout={onLogout}
+          user={me}
         />
 
         {/* ---------------- Overview ---------------- */}

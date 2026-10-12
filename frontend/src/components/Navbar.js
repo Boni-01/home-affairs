@@ -1,28 +1,95 @@
-import React, { useState } from "react";
-import { Link, useNavigate, useLocation } from "react-router-dom";
-import flagImage from "./Flag.png"; // Adjust path if Flag.png is in a subfolder (e.g., "./assets/Flag.png")
+import React, { useEffect, useRef, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import flagImage from "./Flag.png";
 import "./Navbar.css";
 
-const HIDDEN_ROUTES = [
-  "/home-affairs-dashboard",
-  "/passport-office-dashboard",
-  "/police-dashboard",
-  "/finance-dashboard",
-  "/pensions-dashboard",
-  "/traffic-dashboard"
+const ministries = [
+  { label: "Home Affairs", route: "/home-affairs-dashboard" },
+  { label: "Passport", route: "/passport-office-dashboard" },
+  { label: "Police", route: "/police-dashboard" },
+  { label: "Finance", route: "/finance-dashboard" },
+  { label: "Pensions", route: "/pensions-dashboard" },
+  { label: "Traffic", route: "/traffic-dashboard" }
 ];
 
-function Navbar({ isAuthenticated, onLogout }) {
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const navigate = useNavigate();
-  const location = useLocation();
+const adminOffices = [
+  { label: "Home Affairs", route: "/admin/home-affairs" },
+  { label: "Passport", route: "/admin/passport" },
+  { label: "Police", route: "/admin/police" },
+  { label: "Finance", route: "/admin/finance" },
+  { label: "Pensions", route: "/admin/pensions" },
+  { label: "Traffic", route: "/admin/traffic" }
+];
 
-  if (
-    HIDDEN_ROUTES.includes(location.pathname) ||
-    location.pathname.startsWith("/admin/")
-  ) {
+const accountKeys = new Set(["profile", "mine", "applications", "requests", "notifications"]);
+
+function readStoredProfile() {
+  const storedProfile = sessionStorage.getItem("user-profile");
+  if (!storedProfile) return null;
+  try {
+    return JSON.parse(storedProfile);
+  } catch (error) {
+    console.error("Unable to read the signed-in profile.", error);
     return null;
   }
+}
+
+function Navbar({
+  isAuthenticated,
+  onLogout,
+  items,
+  activeTab,
+  onTabChange,
+  action,
+  user
+}) {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const navigationRef = useRef(null);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [storedProfile] = useState(readStoredProfile);
+  const isDashboard = items !== undefined;
+  const authenticated = isAuthenticated ??
+    (sessionStorage.getItem("home-affairs-authenticated") === "true");
+  const isAdmin = location.pathname.startsWith("/admin/");
+  const routes = isAdmin ? adminOffices : ministries;
+  const dashboardItems = items || [];
+  const profile = user || storedProfile;
+  const isAccountItem = ([key]) =>
+    isAdmin ? key === "notifications" : accountKeys.has(key);
+  const accountItems = dashboardItems.filter(isAccountItem);
+  const workflowItems = dashboardItems.filter(item => !isAccountItem(item));
+  const applicationItems = accountItems.filter(([key]) =>
+    ["mine", "applications", "requests"].includes(key)
+  );
+  const notificationItems = accountItems.filter(([key]) => key === "notifications");
+  const hasProfileItem = accountItems.some(([key]) => key === "profile");
+  const isProfileTabActive = accountItems.some(([key]) => key === activeTab);
+  const logout = action?.onClick || onLogout;
+
+  useEffect(() => {
+    setMobileOpen(false);
+    setProfileOpen(false);
+  }, [location.pathname]);
+
+  useEffect(() => {
+    if (!profileOpen) return undefined;
+
+    const closeOnOutsideClick = event => {
+      if (!navigationRef.current?.contains(event.target)) setProfileOpen(false);
+    };
+    const closeOnEscape = event => {
+      if (event.key === "Escape") setProfileOpen(false);
+    };
+
+    document.addEventListener("mousedown", closeOnOutsideClick);
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.removeEventListener("mousedown", closeOnOutsideClick);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [profileOpen]);
 
   const handleLogout = () => {
     sessionStorage.removeItem("home-affairs-authenticated");
@@ -30,146 +97,210 @@ function Navbar({ isAuthenticated, onLogout }) {
     sessionStorage.removeItem("account-type");
     sessionStorage.removeItem("user-profile");
     sessionStorage.removeItem("selected-ministry");
-
-    if (onLogout) onLogout();
+    sessionStorage.removeItem("is-admin");
+    onLogout?.();
     navigate("/");
+    setProfileOpen(false);
     setMobileOpen(false);
   };
 
-  const handleNavClick = () => setMobileOpen(false);
-  const isActive = (path) => location.pathname === path;
+  const handleTabChange = key => {
+    onTabChange?.(key);
+    setProfileOpen(false);
+    setMobileOpen(false);
+  };
+
+  const isActive = path => location.pathname === path;
+  const navClassName = [
+    "navbar",
+    isDashboard ? "navbar-dashboard" : "",
+    mobileOpen ? "navbar-mobile-open" : ""
+  ].filter(Boolean).join(" ");
+
+  if (!isDashboard && (
+    ["/home-affairs-dashboard", "/passport-office-dashboard", "/police-dashboard",
+      "/finance-dashboard", "/pensions-dashboard", "/traffic-dashboard"].includes(location.pathname) ||
+    isAdmin
+  )) {
+    return null;
+  }
 
   return (
-    <header className="navbar">
-      {/* Lesotho flag stripe */}
-      <div className="flag-stripe">
-        <div className="flag-blue" />
-        <div className="flag-white" />
-        <div className="flag-green" />
-      </div>
+    <>
+      <header className={navClassName} ref={navigationRef}>
+        <div className="flag-stripe" aria-hidden="true">
+          <div className="flag-blue" />
+          <div className="flag-white" />
+          <div className="flag-green" />
+        </div>
 
-      <div className="navbar-container">
-        {/* Logo */}
-        <Link to="/" className="navbar-logo" onClick={handleNavClick}>
-          <img
-            src={flagImage}
-            alt="Kingdom of Lesotho Flag"
-            className="logo-flag-img"
-          />
-          <span className="logo-text">
-            <span className="logo-title">Integrated Digital Public Services System</span>
-            <span className="logo-subtitle">Kingdom of Lesotho</span>
-          </span>
-        </Link>
+        <div className="navbar-container">
+          <Link to="/" className="navbar-logo" onClick={() => setMobileOpen(false)}>
+            <img
+              src={flagImage}
+              alt="Kingdom of Lesotho Flag"
+              className="logo-flag-img"
+            />
+            <span className="logo-text">
+              <span className="logo-title">Integrated Digital Public Services System</span>
+              <span className="logo-subtitle">Kingdom of Lesotho</span>
+            </span>
+          </Link>
 
-        {/* Mobile toggle */}
-        <button
-          className="navbar-toggle"
-          aria-label="Toggle navigation menu"
-          aria-expanded={mobileOpen}
-          onClick={() => setMobileOpen((prev) => !prev)}
-        >
-          <span className="hamburger-line" />
-          <span className="hamburger-line" />
-          <span className="hamburger-line" />
-        </button>
+          <button
+            type="button"
+            className="navbar-toggle"
+            aria-label="Toggle navigation menu"
+            aria-expanded={mobileOpen}
+            onClick={() => setMobileOpen(open => !open)}
+          >
+            <span className="hamburger-line" />
+            <span className="hamburger-line" />
+            <span className="hamburger-line" />
+          </button>
 
-        {/* Nav links */}
-        <nav className={`navbar-nav ${mobileOpen ? "open" : ""}`}>
-          {isAuthenticated ? (
-            <>
+          <nav className={`navbar-nav${mobileOpen ? " open" : ""}`} aria-label="Main navigation">
+            {authenticated ? (
+              <>
+                <ul className="nav-links">
+                  {routes.map(({ label, route }) => (
+                    <li key={route}>
+                      <Link
+                        to={route}
+                        className={`nav-link${isActive(route) ? " active" : ""}`}
+                        aria-current={isActive(route) ? "page" : undefined}
+                        onClick={() => setMobileOpen(false)}
+                      >
+                        {label}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+
+                <div className="nav-actions">
+                  <div className="navbar-profile">
+                    <button
+                      type="button"
+                      className={`navbar-profile-trigger${isProfileTabActive ? " active" : ""}`}
+                      aria-expanded={profileOpen}
+                      onClick={() => setProfileOpen(open => !open)}
+                    >
+                      Profile
+                    </button>
+                    {profileOpen && (
+                      <div className="navbar-profile-menu">
+                        <div className="navbar-profile-details">
+                          <strong>{profile?.full_name || profile?.name || "Account profile"}</strong>
+                          {profile?.email && <span>{profile.email}</span>}
+                          {(profile?.national_id_number || profile?.national_id) && (
+                            <span>
+                              National ID: {profile.national_id_number || profile.national_id}
+                            </span>
+                          )}
+                          {profile?.phone && <span>Phone: {profile.phone}</span>}
+                          {(profile?.account_type || profile?.role) && (
+                            <span>Account: {profile.account_type || profile.role}</span>
+                          )}
+                        </div>
+                        {hasProfileItem && (
+                          <button
+                            type="button"
+                            className={activeTab === "profile" ? "active" : ""}
+                            onClick={() => handleTabChange("profile")}
+                          >
+                            Profile details
+                          </button>
+                        )}
+                        {applicationItems.map(([key, label]) => (
+                          <button
+                            key={key}
+                            type="button"
+                            className={key === activeTab ? "active" : ""}
+                            onClick={() => handleTabChange(key)}
+                          >
+                            {label}
+                          </button>
+                        ))}
+                        {notificationItems.map(([key, label]) => (
+                          <button
+                            key={key}
+                            type="button"
+                            className={key === activeTab ? "active" : ""}
+                            onClick={() => handleTabChange(key)}
+                          >
+                            {label}
+                          </button>
+                        ))}
+                        {logout && (
+                          <button
+                            type="button"
+                            className="navbar-profile-logout"
+                            onClick={isDashboard ? () => {
+                              setProfileOpen(false);
+                              setMobileOpen(false);
+                              logout();
+                            } : handleLogout}
+                          >
+                            {action?.label || "Log out"}
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </>
+            ) : (
               <ul className="nav-links">
                 <li>
                   <Link
-                    to="/home-affairs-dashboard"
-                    className={`nav-link ${isActive("/home-affairs-dashboard") ? "active" : ""}`}
-                    onClick={handleNavClick}
+                    to="/login"
+                    className={`nav-link${isActive("/login") ? " active" : ""}`}
+                    onClick={() => setMobileOpen(false)}
                   >
-                    Home Affairs
+                    Login
                   </Link>
                 </li>
                 <li>
                   <Link
-                    to="/passport-office-dashboard"
-                    className={`nav-link ${isActive("/passport-office-dashboard") ? "active" : ""}`}
-                    onClick={handleNavClick}
+                    to="/register"
+                    className="nav-link nav-link-cta"
+                    onClick={() => setMobileOpen(false)}
                   >
-                    Passport
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    to="/police-dashboard"
-                    className={`nav-link ${isActive("/police-dashboard") ? "active" : ""}`}
-                    onClick={handleNavClick}
-                  >
-                    Police
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    to="/finance-dashboard"
-                    className={`nav-link ${isActive("/finance-dashboard") ? "active" : ""}`}
-                    onClick={handleNavClick}
-                  >
-                    Finance
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    to="/pensions-dashboard"
-                    className={`nav-link ${isActive("/pensions-dashboard") ? "active" : ""}`}
-                    onClick={handleNavClick}
-                  >
-                    Pensions
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    to="/traffic-dashboard"
-                    className={`nav-link ${isActive("/traffic-dashboard") ? "active" : ""}`}
-                    onClick={handleNavClick}
-                  >
-                    Traffic
+                    Register
                   </Link>
                 </li>
               </ul>
+            )}
+          </nav>
+        </div>
+      </header>
+      {isDashboard && (
+        <DashboardSectionNavigation
+          items={workflowItems}
+          activeTab={activeTab}
+          onTabChange={onTabChange}
+        />
+      )}
+    </>
+  );
+}
 
-              <div className="nav-actions">
-                <button
-                  onClick={handleLogout}
-                  className="btn-logout"
-                  aria-label="Log out"
-                >
-                  Logout
-                </button>
-              </div>
-            </>
-          ) : (
-            <ul className="nav-links">
-              <li>
-                <Link
-                  to="/login"
-                  className={`nav-link ${isActive("/login") ? "active" : ""}`}
-                  onClick={handleNavClick}
-                >
-                  Login
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/register"
-                  className="nav-link nav-link-cta"
-                  onClick={handleNavClick}
-                >
-                  Register
-                </Link>
-              </li>
-            </ul>
-          )}
-        </nav>
-      </div>
-    </header>
+function DashboardSectionNavigation({ items, activeTab, onTabChange }) {
+  if (items.length === 0) return null;
+  return (
+    <nav className="dashboard-section-navigation" aria-label="Dashboard sections">
+      {items.map(([key, label]) => (
+        <button
+          key={key}
+          type="button"
+          className={key === activeTab ? "active" : ""}
+          aria-current={key === activeTab ? "page" : undefined}
+          onClick={() => onTabChange?.(key)}
+        >
+          {label}
+        </button>
+      ))}
+    </nav>
   );
 }
 

@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { COLORS, layout, header, cards, grids, section } from "../styles/dashboardStyles";
-import DashboardSidebar from "../components/DashboardSidebar";
+import Navbar from "../components/Navbar";
 import { auth, API_BASE } from "../Database/firebase";
 
 // ============================================================
@@ -502,7 +502,7 @@ function TrafficDashboardAdmin({ onLogout }) {
         </section>
 
         {/* TABS */}
-        <DashboardSidebar
+        <Navbar
           items={[
             ["queue", "Application Queue"],
             ["fines", `Fines (${fines.length})`],

@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback, useRef } from "react";
 import { COLORS, layout, header, section } from "../styles/dashboardStyles";
-import DashboardSidebar from "../components/DashboardSidebar";
+import Navbar from "../components/Navbar";
 import { auth, API_BASE } from "../Database/firebase";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
@@ -721,7 +721,7 @@ function TrafficDashboard({ onLogout }) {
   if (loading && !me) {
     return (
       <main className="dashboard-page" style={layout.page}>
-        <DashboardSidebar items={[]} activeTab="" onLogout={onLogout} />
+        <Navbar items={[]} activeTab="" onLogout={onLogout} user={me} />
         <div style={layout.container}>
           <div style={{ textAlign: "center", padding: 60, color: COLORS.textMuted }}>
             Loading traffic services…
@@ -783,7 +783,7 @@ function TrafficDashboard({ onLogout }) {
         </section>
 
         {/* TABS */}
-        <DashboardSidebar
+        <Navbar
           items={[
             ["overview", "Overview"],
             ["apply", "Apply"],
@@ -799,6 +799,7 @@ function TrafficDashboard({ onLogout }) {
           activeTab={tab}
           onTabChange={setTab}
           onLogout={onLogout}
+          user={me}
         />
 
         {/* OVERVIEW TAB */}
