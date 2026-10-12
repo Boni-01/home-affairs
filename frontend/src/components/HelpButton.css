@@ -1,0 +1,77 @@
+.help-widget {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+.help-button {
+  display: inline-flex;
+  min-height: 52px;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  padding: 0 20px;
+  border: 0;
+  border-radius: 999px;
+  background: #00209f;
+  box-shadow: 0 5px 18px rgb(15 23 42 / 24%);
+  color: #fff;
+  cursor: pointer;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.help-button:hover {
+  background: #001a80;
+}
+
+.help-button:focus-visible {
+  outline: 3px solid #009543;
+  outline-offset: 3px;
+}
+
+.help-button-icon {
+  width: 22px;
+  height: 22px;
+}
+
+.help-panel {
+  width: min(300px, calc(100vw - 48px));
+  box-sizing: border-box;
+  padding: 18px 20px;
+  border: 1px solid #d4dbe5;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 8px 28px rgb(15 23 42 / 18%);
+  color: #1e293b;
+}
+
+.help-panel h2 {
+  margin: 0 0 8px;
+  font-size: 17px;
+}
+
+.help-panel p {
+  margin: 0 0 10px;
+  color: #526174;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.help-panel a {
+  color: #00209f;
+  font-weight: 700;
+}
+
+@media (max-width: 480px) {
+  .help-widget {
+    right: 16px;
+    bottom: 16px;
+  }
+}

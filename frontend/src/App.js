@@ -16,6 +16,7 @@ import TrafficDashboardAdmin from "./admin/TrafficDashboardAdmin";
 
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
+import HelpButton from "./components/HelpButton";
 
 import { useState } from "react";
 import {
@@ -238,6 +239,7 @@ function App() {
         </div>
 
         <Footer className="site-footer" />
+        <HelpButton />
       </div>
     </BrowserRouter>
   );
