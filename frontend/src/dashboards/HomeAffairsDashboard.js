@@ -131,7 +131,6 @@ const TRANSLATIONS = {
     home: "Home",
     language: "Language",
     searchPlaceholder: "Search for an article or service",
-    serviceCatalogue: "Service catalogue",
     articles: "ARTICLES",
     generalInfo: "General information",
     logout: "Logout",
@@ -233,16 +232,11 @@ const TRANSLATIONS = {
     request: "Request",
 
     close: "Close",
-
-    serviceCatalogueTitle: "Service catalogue",
-    serviceCatalogueIntro: "Browse all available services. Type to highlight matches.",
-    searchServices: "Search services…"
   },
   st: {
     home: "Lehae",
     language: "Puo",
     searchPlaceholder: "Batla sengoloa kapa tšebeletso",
-    serviceCatalogue: "Lenane la litšebeletso",
     articles: "LINGOLOA",
     generalInfo: "Tlhahisoleseling e akaretsang",
     logout: "Tsoa",
@@ -344,10 +338,6 @@ const TRANSLATIONS = {
     request: "Kopa",
 
     close: "Koala",
-
-    serviceCatalogueTitle: "Lenane la litšebeletso",
-    serviceCatalogueIntro: "Sheba litšebeletso tsohle tse fumanehang. Ngola ho totobatsa liphetho.",
-    searchServices: "Batla litšebeletso…"
   }
 };
 
@@ -387,8 +377,6 @@ function HomeAffairsDashboard({ onLogout }) {
   const [settingsTab, setSettingsTab] = useState("profile");
   const [docSearch, setDocSearch] = useState("");
 
-  const [catalogueOpen, setCatalogueOpen] = useState(false);
-  const [catalogueSearch, setCatalogueSearch] = useState("");
   const [activeDashboardTab, setActiveDashboardTab] = useState("apply");
 
   const load = useCallback(async () => {
@@ -417,7 +405,6 @@ function HomeAffairsDashboard({ onLogout }) {
       const data = await api(`/services/${serviceId}`);
       setActiveService(data.service);
       setFields(data.fields);
-      setCatalogueOpen(false);
     } catch (err) { alert(err.message); }
   }
 
@@ -534,23 +521,8 @@ function HomeAffairsDashboard({ onLogout }) {
     ["approved", "ready_for_collection", "completed"].includes(a.status)
   ).length;
 
-  const openServiceCatalogue = () => {
-    setCatalogueOpen(true);
-    setCatalogueSearch(searchQuery || "");
-  };
-
-  const closeServiceCatalogue = () => {
-    setCatalogueOpen(false);
-    setActiveDashboardTab("apply");
-  };
-
   function handleDashboardTabChange(tab) {
     setActiveDashboardTab(tab);
-    if (tab === "catalogue") {
-      setSettingsOpen(false);
-      openServiceCatalogue();
-      return;
-    }
     if (tab === "apply") {
       setSettingsOpen(false);
       return;
@@ -613,8 +585,7 @@ function HomeAffairsDashboard({ onLogout }) {
             ["apply", t.applyTab],
             ["applications", t.settingsTabs.applications],
             ["notifications", `${t.settingsTabs.notifications}${unread ? ` (${unread})` : ""}`],
-            ["profile", t.settingsTabs.profile],
-            ["catalogue", t.serviceCatalogue]
+            ["profile", t.settingsTabs.profile]
           ]}
           activeTab={activeDashboardTab}
           onTabChange={handleDashboardTabChange}
@@ -830,104 +801,6 @@ function HomeAffairsDashboard({ onLogout }) {
       {certificate && (
         <Overlay onClose={() => setCertificate(null)}>
           <CertificateView data={certificate} onClose={() => setCertificate(null)} />
-        </Overlay>
-      )}
-
-      {/* SERVICE CATALOGUE MODAL */}
-      {catalogueOpen && (
-        <Overlay onClose={closeServiceCatalogue}>
-          <h2 style={{ margin: "0 0 4px", color: COLORS.blue }}>
-            {t.serviceCatalogueTitle}
-          </h2>
-          <p style={{ margin: "0 0 16px", fontSize: 13, color: COLORS.textMuted }}>
-            {t.serviceCatalogueIntro}
-          </p>
-
-          <div style={{ marginBottom: 16 }}>
-            <input
-              type="text"
-              value={catalogueSearch}
-              onChange={(e) => setCatalogueSearch(e.target.value)}
-              placeholder={t.searchServices}
-              style={docSearchInput}
-            />
-          </div>
-
-          {catalogueSearch.trim() && (
-            <p style={{
-              margin: "0 0 12px", fontSize: 12,
-              color: COLORS.blue, fontWeight: 600
-            }}>
-              {t.showingMatches} "{catalogueSearch}"
-            </p>
-          )}
-
-          <div style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
-            gap: 14
-          }}>
-            {services.length === 0 && (
-              <div style={{
-                gridColumn: "1 / -1", padding: 30, textAlign: "center",
-                background: "#F4F7FB", border: `1px dashed ${COLORS.border}`,
-                borderRadius: 10, color: COLORS.textMuted, fontSize: 13
-              }}>{t.noServices}</div>
-            )}
-            {services.map(svc => {
-              const highlighted = isMatchingSearch(svc, catalogueSearch);
-              return (
-                <article
-                  key={svc.service_id}
-                  onClick={() => openService(svc.service_id)}
-                  style={{
-                    ...cardStyle,
-                    ...(highlighted ? cardHighlighted : {})
-                  }}
-                  onMouseEnter={e => {
-                    e.currentTarget.style.transform = "translateY(-3px)";
-                    e.currentTarget.style.boxShadow = highlighted
-                      ? "0 0 0 3px rgba(0,32,159,0.20), 0 12px 28px rgba(0,32,159,0.20)"
-                      : "0 12px 28px rgba(0,32,159,0.12)";
-                  }}
-                  onMouseLeave={e => {
-                    e.currentTarget.style.transform = "translateY(0)";
-                    e.currentTarget.style.boxShadow = highlighted
-                      ? "0 0 0 3px rgba(0,32,159,0.15), 0 12px 28px rgba(0,32,159,0.15)"
-                      : "0 2px 8px rgba(0,32,159,0.05)";
-                  }}
-                >
-                  <div style={cardIconBox}>
-                    <img
-                      src={getServiceIcon(svc.service_name)}
-                      alt={svc.service_name}
-                      style={cardIconImg}
-                      onError={(e) => { e.target.src = "/verify.png"; }}
-                    />
-                  </div>
-                  <div style={cardContent}>
-                    <h3 style={cardTitle}>{svc.service_name}</h3>
-                    <span style={cardChip}>{svc.module}</span>
-                    <div style={cardMeta}>
-                      <span><strong>{svc.processing_days}</strong> {t.days}</span>
-                      {svc.requires_payment
-                        ? <span>· {t.feeApplies}</span>
-                        : <span>· {t.free}</span>}
-                      {svc.requires_appointment
-                        ? <span>· {t.appointment}</span>
-                        : null}
-                    </div>
-                  </div>
-                </article>
-              );
-            })}
-          </div>
-
-          <div style={{ textAlign: "right", marginTop: 22 }}>
-            <button onClick={closeServiceCatalogue} style={btnPrimary}>
-              {t.close}
-            </button>
-          </div>
         </Overlay>
       )}
 
