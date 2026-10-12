@@ -34,6 +34,18 @@ function readStoredProfile() {
   }
 }
 
+function getUserInitials(profile) {
+  const name = profile?.full_name || profile?.name || "";
+  const initials = name
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map(part => part[0])
+    .join("");
+  return initials.toUpperCase() || "U";
+}
+
 function Navbar({
   isAuthenticated,
   onLogout,
@@ -142,7 +154,7 @@ function Navbar({
               className="logo-flag-img"
             />
             <span className="logo-text">
-              <span className="logo-title">Integrated Digital Public Services System</span>
+              <span className="logo-title">IDPSS</span>
               <span className="logo-subtitle">Kingdom of Lesotho</span>
             </span>
           </Link>
@@ -185,7 +197,9 @@ function Navbar({
                       aria-expanded={profileOpen}
                       onClick={() => setProfileOpen(open => !open)}
                     >
-                      Profile
+                      <span className="navbar-profile-initials" aria-hidden="true">
+                        {getUserInitials(profile)}
+                      </span>
                     </button>
                     {profileOpen && (
                       <div className="navbar-profile-menu">

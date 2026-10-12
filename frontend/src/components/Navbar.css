@@ -249,19 +249,42 @@
 }
 
 .navbar-profile-trigger {
-  padding: 8px 16px;
-  border: 1px solid transparent;
-  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 4px 8px;
+  border: 0;
+  border-radius: 999px;
   background: transparent;
   color: var(--nav-text-dark);
   font: 600 15px Arial, Helvetica, sans-serif;
   cursor: pointer;
 }
 
+.navbar-profile-initials {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  border: 1px solid rgba(0, 32, 159, 0.18);
+  border-radius: 50%;
+  background: var(--nav-light-bg);
+  color: var(--nav-blue);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+}
+
 .navbar-profile-trigger:hover,
 .navbar-profile-trigger.active {
   background: var(--nav-light-bg);
   color: var(--nav-blue);
+}
+
+.navbar-profile-trigger:hover .navbar-profile-initials,
+.navbar-profile-trigger.active .navbar-profile-initials {
+  border-color: var(--nav-blue);
+  background: #fff;
 }
 
 .navbar-profile-menu {
@@ -484,6 +507,11 @@
 
   .navbar-dashboard .navbar-profile-menu {
     top: calc(100% + 8px);
+  }
+
+  .navbar-profile-initials {
+    width: 34px;
+    height: 34px;
   }
 
   .btn-logout {
