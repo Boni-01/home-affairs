@@ -312,7 +312,6 @@ function PensionsDashboard({ onLogout }) {
     } catch (err) { console.error(err); }
   }
 
-  const unread = notifications.filter(n => !n.read_at).length;
   const deletableStatuses = ["DRAFT","SUBMITTED","MORE_INFORMATION_REQUIRED"];
   const isMember = !!profile.member;
 
@@ -338,25 +337,10 @@ function PensionsDashboard({ onLogout }) {
           </div>
         </header>
 
-        <section style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
-          gap: 16, marginBottom: 28
-        }}>
-          <StatCard label="My applications" value={applications.length} accent={COLORS.blue} />
-          <StatCard label="Payments" value={payments.length} accent={COLORS.green} />
-          <StatCard label="Contributions" value={contributions.length} accent={COLORS.blue} />
-        </section>
-
         <Navbar
           items={[
             ["overview", "Overview"],
-            ["apply", "Submit application"],
-            ["mine", `My applications (${applications.length})`],
-            ["contributions", `Contributions (${contributions.length})`],
-            ["payments", `Payments (${payments.length})`],
-            ["enquiries", `Enquiries (${enquiries.length})`],
-            ["notifications", `Notifications${unread ? ` (${unread})` : ""}`]
+            ["apply", "Submit application"]
           ]}
           activeTab={tab}
           onTabChange={setTab}
@@ -924,22 +908,6 @@ function PensionsDashboard({ onLogout }) {
 }
 
 // ============================================================
-function StatCard({ label, value, accent }) {
-  return (
-    <article style={{
-      background: "#fff", border: `1px solid ${COLORS.border}`,
-      borderLeft: `4px solid ${accent}`, borderRadius: 10,
-      padding: "18px 22px"
-    }}>
-      <p style={{
-        margin: "0 0 6px", fontSize: 11, textTransform: "uppercase",
-        letterSpacing: 0.6, color: COLORS.textMuted, fontWeight: 700
-      }}>{label}</p>
-      <p style={{ margin: 0, fontSize: 28, fontWeight: 700, color: accent }}>{value}</p>
-    </article>
-  );
-}
-
 function Row({ label, value }) {
   return (
     <div style={{

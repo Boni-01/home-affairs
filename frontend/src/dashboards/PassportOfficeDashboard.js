@@ -391,10 +391,6 @@ function PassportOfficeDashboard({ onLogout }) {
 
         {tab === "apply" && (
           <section style={section.wrapper}>
-            <h2 style={section.title}>Choose your passport</h2>
-            <p style={section.subtitle}>
-              First-time applications are M130 Standard or M600 Emergency. Renewal and replacement are M130.
-            </p>
 
             <div style={{
               marginBottom: 20, padding: 14, background: "#eff8ff",
@@ -430,8 +426,8 @@ function PassportOfficeDashboard({ onLogout }) {
 
                   <div style={{
                     display: "grid",
-                    gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-                    gap: 18
+                    gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
+                    gap: 12
                   }}>
                     {TIER_ORDER.filter(t => tiers[t]).map(tierKey => {
                       const list = tiers[tierKey];
@@ -441,57 +437,51 @@ function PassportOfficeDashboard({ onLogout }) {
                           position: "relative", background: "#fff",
                           border: `1px solid ${COLORS.border}`,
                           borderTop: `4px solid ${meta.color}`,
-                          borderRadius: 12, padding: 22,
+                          borderRadius: 8, padding: 16,
                           display: "flex", flexDirection: "column",
-                          boxShadow: "0 2px 8px rgba(0,32,159,0.05)",
-                          transition: "transform 0.15s, box-shadow 0.15s"
-                        }}
-                          onMouseEnter={e => {
-                            e.currentTarget.style.transform = "translateY(-3px)";
-                            e.currentTarget.style.boxShadow = "0 12px 28px rgba(0,32,159,0.12)";
-                          }}
-                          onMouseLeave={e => {
-                            e.currentTarget.style.transform = "translateY(0)";
-                            e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,32,159,0.05)";
-                          }}
-                        >
-                          {appType === "first_time" && <span className={`passport-tier-badge passport-tier-${tierKey}`} style={{
-                            position: "absolute", top: -12, left: 18,
-                            background: meta.bg, color: meta.color,
-                            fontSize: 10, fontWeight: 800,
-                            padding: "4px 10px", borderRadius: 20,
-                            letterSpacing: 0.6, textTransform: "uppercase",
-                            border: `1px solid ${meta.color}22`
-                          }}>{meta.label}</span>}
+                          boxShadow: "0 1px 4px rgba(0,32,159,0.06)"
+                        }}>
+                          {appType === "first_time" && (
+                            <span className={`passport-tier-badge passport-tier-${tierKey}`} style={{
+                              position: "absolute", top: -10, left: 14,
+                              background: meta.bg, color: meta.color,
+                              fontSize: 9, fontWeight: 800,
+                              padding: "3px 8px", borderRadius: 20,
+                              letterSpacing: 0.6, textTransform: "uppercase",
+                              border: `1px solid ${meta.color}22`
+                            }}>
+                              {meta.label}
+                            </span>
+                          )}
 
-                          <h4 style={{ margin: "10px 0 4px", fontSize: 15, color: COLORS.blue, fontWeight: 700 }}>
+                          <h4 style={{ margin: "6px 0 4px", fontSize: 14, color: COLORS.blue, fontWeight: 700, lineHeight: 1.35 }}>
                             {svc.service_name}
                           </h4>
 
                           {appType === "first_time" && meta.note && (
-                            <p style={{ margin: "0 0 12px", fontSize: 11, color: meta.color, fontWeight: 600 }}>
+                            <p style={{ margin: "0 0 8px", fontSize: 11, color: meta.color, fontWeight: 600 }}>
                               {meta.note}
                             </p>
                           )}
 
-                          <p style={{ margin: "0 0 16px", fontSize: 13, color: COLORS.textMuted, lineHeight: 1.5, flexGrow: 1 }}>
+                          <p style={{ margin: "0 0 10px", fontSize: 12, color: COLORS.textMuted, lineHeight: 1.45, flexGrow: 1 }}>
                             {svc.description}
                           </p>
 
-                          <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginBottom: 14 }}>
-                            <span style={{ fontSize: 24, fontWeight: 800, color: COLORS.blue }}>
+                          <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 10 }}>
+                            <span style={{ fontSize: 20, fontWeight: 800, color: COLORS.blue }}>
                               M {Number(svc.fee_amount).toFixed(2)}
                             </span>
-                            <span style={{ fontSize: 12, color: COLORS.textMuted, fontWeight: 600 }}>
+                            <span style={{ fontSize: 11, color: COLORS.textMuted, fontWeight: 600 }}>
                               · {svc.processing_days} working days
                             </span>
                           </div>
 
                           <div style={{
                             display: "flex", flexWrap: "wrap", gap: 8,
-                            fontSize: 11, color: COLORS.textMid,
-                            paddingTop: 12, borderTop: `1px solid ${COLORS.borderLight}`,
-                            marginBottom: 16
+                            fontSize: 10, color: COLORS.textMid,
+                            paddingTop: 10, borderTop: `1px solid ${COLORS.borderLight}`,
+                            marginBottom: 12
                           }}>
                             {svc.requires_appointment ? <Chip>Appointment required</Chip> : null}
                             {svc.requires_biometrics ? <Chip>Biometrics</Chip> : null}
@@ -1314,19 +1304,19 @@ function PassportView({ data, onClose }) {
     <div>
       <div style={{
         background: "#f8fafc",
-        border: `2px solid ${COLORS.blue}`,
-        borderRadius: 10, padding: 28,
-        maxWidth: 640, margin: "0 auto"
+        border: `1px solid ${COLORS.blue}`,
+        borderRadius: 8, padding: 20,
+        maxWidth: 540, margin: "0 auto"
       }}>
         <div style={{
           textAlign: "center", borderBottom: `2px solid ${COLORS.blue}`,
-          paddingBottom: 14, marginBottom: 18
+          paddingBottom: 10, marginBottom: 12
         }}>
           <p style={{
             margin: 0, fontSize: 11, letterSpacing: 2,
             textTransform: "uppercase", color: COLORS.blue
           }}>Kingdom of Lesotho</p>
-          <h2 style={{ margin: "6px 0 0", fontSize: 22, color: COLORS.blue, fontWeight: 700 }}>
+          <h2 style={{ margin: "4px 0 0", fontSize: 20, color: COLORS.blue, fontWeight: 700 }}>
             Passport
           </h2>
           <p style={{ margin: "4px 0 0", fontSize: 11, color: COLORS.textMuted }}>
@@ -1336,7 +1326,7 @@ function PassportView({ data, onClose }) {
 
         {photoSrc && (
           <div style={{
-            width: 110, height: 140, margin: "0 auto 20px",
+            width: 88, height: 112, margin: "0 auto 14px",
             border: `1px solid ${COLORS.border}`, overflow: "hidden"
           }}>
             <img src={photoSrc} alt="Holder"
@@ -1345,13 +1335,13 @@ function PassportView({ data, onClose }) {
           </div>
         )}
 
-        <div style={{ textAlign: "center", marginBottom: 20 }}>
-          <p style={{ margin: 0, fontSize: 11, letterSpacing: 2, color: COLORS.textMuted }}>
+        <div style={{ textAlign: "center", marginBottom: 14 }}>
+          <p style={{ margin: 0, fontSize: 10, letterSpacing: 1, color: COLORS.textMuted }}>
             PASSPORT NUMBER
           </p>
           <p style={{
-            margin: "6px 0 0", fontSize: 24, fontWeight: 700,
-            letterSpacing: 2, fontFamily: "Consolas, monospace",
+            margin: "4px 0 0", fontSize: 20, fontWeight: 700,
+            letterSpacing: 1, fontFamily: "Consolas, monospace",
             color: COLORS.blue
           }}>
             {passport?.passport_number || "PENDING"}
@@ -1360,7 +1350,7 @@ function PassportView({ data, onClose }) {
 
         <div style={{
           display: "grid", gridTemplateColumns: "1fr 1fr",
-          gap: 16, marginBottom: 20
+          gap: 12, marginBottom: 14
         }}>
           <InfoBlock label="Surname" value={fields.surname || "—"} />
           <InfoBlock label="Given names" value={fields.given_names || "—"} />
@@ -1373,9 +1363,9 @@ function PassportView({ data, onClose }) {
         </div>
 
         <div style={{
-          textAlign: "center", paddingTop: 16,
+          textAlign: "center", paddingTop: 12,
           borderTop: `1px solid ${COLORS.borderLight}`,
-          fontSize: 11, color: COLORS.textMuted
+          fontSize: 10, color: COLORS.textMuted
         }}>
           This passport is the property of the Kingdom of Lesotho.<br />
           Reference: {application.reference_number}
@@ -1394,10 +1384,10 @@ function InfoBlock({ label, value }) {
   return (
     <div>
       <p style={{
-        margin: 0, fontSize: 10, color: COLORS.textMuted,
+        margin: 0, fontSize: 9, color: COLORS.textMuted,
         textTransform: "uppercase", letterSpacing: 0.6
       }}>{label}</p>
-      <p style={{ margin: "4px 0 0", fontSize: 13, color: COLORS.textDark, fontWeight: 600 }}>
+      <p style={{ margin: "3px 0 0", fontSize: 12, color: COLORS.textDark, fontWeight: 600, lineHeight: 1.35 }}>
         {value}
       </p>
     </div>
