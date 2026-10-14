@@ -292,6 +292,26 @@ const PASSPORT_TIER_META = {
   diplomatic: { label: "Diplomatic", color: "#334155", note: "Foreign Affairs only" }
 };
 
+function normalizePassportService(service) {
+  if (service.service_code !== "PP_EMERGENCY") return service;
+  return {
+    ...service,
+    service_name: "First-time passport — Emergency",
+    description: "Emergency first-time passport application. Submit an OBR from Police and wait for the Passport Office response.",
+    application_type: "first_time",
+    svc_application_type: "first_time",
+    fee_amount: 600,
+    requires_approval: 1
+  };
+}
+
+function isSelectablePassportService(service) {
+  if (["PP_FIRST_STD", "PP_EMERGENCY"].includes(service.service_code)) return true;
+  if (service.application_type === "renewal") return service.service_code === "PP_REN_STD";
+  if (service.application_type === "replacement") return service.service_code === "PP_REP_STD";
+  return false;
+}
+
 // ============================================================
 // HEALTH
 // ============================================================
@@ -994,12 +1014,15 @@ app.get("/api/passport/services", async (req, res) => {
           fee_amount ASC`
     );
 
-    const services = rows.map(r => ({
-      ...r,
-      tier_label: PASSPORT_TIER_META[r.processing_tier]?.label || r.processing_tier,
-      tier_color: PASSPORT_TIER_META[r.processing_tier]?.color || "#175cd3",
-      tier_note:  PASSPORT_TIER_META[r.processing_tier]?.note  || ""
-    }));
+    const services = rows.filter(isSelectablePassportService).map(row => {
+      const service = normalizePassportService(row);
+      return {
+        ...service,
+        tier_label: PASSPORT_TIER_META[service.processing_tier]?.label || service.processing_tier,
+        tier_color: PASSPORT_TIER_META[service.processing_tier]?.color || "#175cd3",
+        tier_note: PASSPORT_TIER_META[service.processing_tier]?.note || ""
+      };
+    });
 
     const grouped = {};
     for (const s of services) {
@@ -1022,7 +1045,10 @@ app.get("/api/passport/services/:id", async (req, res) => {
       "SELECT * FROM passport_services WHERE service_id = ?",
       [req.params.id]
     );
-    if (!s.length) return res.status(404).json({ error: "Service not found" });
+    if (!s.length || !s[0].active || !isSelectablePassportService(s[0])) {
+      return res.status(404).json({ error: "Service not found" });
+    }
+    const service = normalizePassportService(s[0]);
 
     const [f] = await db.query(
       `SELECT field_key, label, field_type, options_json, required,
@@ -1032,7 +1058,7 @@ app.get("/api/passport/services/:id", async (req, res) => {
     );
 
     res.json({
-      service: s[0],
+      service,
       fields: f.map(row => ({
         ...row,
         options: row.options_json
@@ -1067,12 +1093,6 @@ app.post(
       return res.status(400).json({ error: "Invalid fields payload" });
     }
 
-    if (!req.dbUser.photo_path) {
-      return res.status(400).json({
-        error: "Please upload your ID photo on your Profile page before applying for a passport."
-      });
-    }
-
     const conn = await db.getConnection();
     try {
       await conn.beginTransaction();
@@ -1082,7 +1102,42 @@ app.post(
         [serviceId]
       );
       if (!svcRows.length) throw new Error("Passport service not available");
-      const service = svcRows[0];
+      const service = normalizePassportService(svcRows[0]);
+      const documents = req.files || [];
+      const passportSizePhoto = documents.find(file =>
+        file.originalname.startsWith("passport_size_photo__") && file.mimetype.startsWith("image/")
+      );
+      const hasImageDocument = prefix => documents.some(file =>
+        file.originalname.startsWith(prefix) && file.mimetype.startsWith("image/")
+      );
+      const hasObrDocument = documents.some(file =>
+        file.originalname.startsWith("emergency_obr__") &&
+        (file.mimetype.startsWith("image/") || file.mimetype === "application/pdf")
+      );
+
+      if (!isSelectablePassportService(service)) {
+        throw new Error("This passport service is not available");
+      }
+      if (!passportSizePhoto) {
+        throw new Error("Upload a passport-size photo for this application");
+      }
+      if (service.service_code === "PP_EMERGENCY" && !hasObrDocument) {
+        throw new Error("Upload the OBR from Police before submitting an emergency passport application");
+      }
+      if (service.application_type === "renewal" && !hasImageDocument("passport_renewal_expired__")) {
+        throw new Error("Upload a clear image of the expired passport information page before applying for renewal");
+      }
+      if (service.application_type === "replacement") {
+        if (!["Lost", "Damaged"].includes(fields.replacement_condition)) {
+          throw new Error("Choose whether the passport is lost or damaged");
+        }
+        if (fields.replacement_condition === "Damaged" && !hasImageDocument("passport_damaged__")) {
+          throw new Error("Upload a clear image of the damaged passport information page");
+        }
+        if (fields.replacement_condition === "Lost" && !String(fields.passport_number || "").trim()) {
+          throw new Error("Enter the lost passport number before submitting");
+        }
+      }
 
       if (["emergency", "official", "diplomatic"].includes(service.processing_tier)) {
         if (!fields.reason || String(fields.reason).trim().length < 10) {
@@ -1103,7 +1158,7 @@ app.post(
       }
 
       const ref = await generatePassportReference(conn);
-      const photoRelativePath = req.dbUser.photo_path;
+      const photoRelativePath = `/uploads/documents/${passportSizePhoto.filename}`;
 
       const [appResult] = await conn.query(
         `INSERT INTO passport_applications
@@ -1262,7 +1317,8 @@ app.get("/api/passport/applications/my", verifyToken, async (req, res) => {
       `SELECT pa.application_id, pa.reference_number, pa.application_type,
               pa.passport_type, pa.status, pa.submitted_at, pa.decision_at,
               pa.admin_notes, pa.rejection_reason, pa.passport_photo_path,
-              ps.service_name, ps.fee_amount, ps.processing_tier, ps.processing_days
+              ps.service_code, ps.service_name, ps.fee_amount,
+              ps.processing_tier, ps.processing_days
        FROM passport_applications pa
        JOIN passport_services ps ON ps.service_id = pa.service_id
        WHERE pa.user_id = ?
@@ -1271,7 +1327,7 @@ app.get("/api/passport/applications/my", verifyToken, async (req, res) => {
     );
     res.json({
       applications: rows.map(r => ({
-        ...r,
+        ...normalizePassportService(r),
         passport_photo_url: publicUrl(r.passport_photo_path)
       }))
     });
@@ -1289,7 +1345,8 @@ app.get("/api/passport/applications/:id", verifyToken, async (req, res) => {
     const [apps] = await db.query(
       `SELECT pa.*, u.full_name, u.email, u.phone, u.national_id, u.photo_path,
               ps.service_name, ps.fee_amount, ps.processing_days,
-              ps.processing_tier, ps.application_type AS svc_application_type
+              ps.service_code, ps.processing_tier,
+              ps.application_type AS svc_application_type
        FROM passport_applications pa
        JOIN users u ON u.user_id = pa.user_id
        JOIN passport_services ps ON ps.service_id = pa.service_id
@@ -1298,7 +1355,7 @@ app.get("/api/passport/applications/:id", verifyToken, async (req, res) => {
     );
     if (!apps.length) return res.status(404).json({ error: "Not found" });
 
-    const app = apps[0];
+    const app = normalizePassportService(apps[0]);
     const isOwner = app.user_id === req.dbUser?.user_id;
     if (!isOwner && !req.isAdmin) {
       return res.status(403).json({ error: "Not authorized" });
@@ -1487,7 +1544,7 @@ app.get("/api/passport/admin/applications", verifyToken, requireAdmin, async (re
       SELECT pa.application_id, pa.reference_number, pa.status,
              pa.application_type, pa.passport_type, pa.submitted_at,
              pa.decision_at, pa.admin_notes, pa.passport_photo_path,
-             ps.service_name, ps.processing_tier, ps.fee_amount,
+             ps.service_code, ps.service_name, ps.processing_tier, ps.fee_amount,
              u.full_name, u.email, u.phone, u.national_id, u.photo_path
       FROM passport_applications pa
       JOIN users u ON u.user_id = pa.user_id
@@ -1496,16 +1553,20 @@ app.get("/api/passport/admin/applications", verifyToken, requireAdmin, async (re
     `;
     const params = [];
     if (status) { sql += " AND pa.status = ?"; params.push(status); }
-    if (application_type) { sql += " AND pa.application_type = ?"; params.push(application_type); }
+    if (application_type) {
+      sql += " AND (pa.application_type = ? OR (ps.service_code = 'PP_EMERGENCY' AND ? = 'first_time'))";
+      params.push(application_type, application_type);
+    }
     if (processing_tier) { sql += " AND ps.processing_tier = ?"; params.push(processing_tier); }
     sql += " ORDER BY pa.submitted_at ASC";
 
     const [rows] = await db.query(sql, params);
     res.json({
       applications: rows.map(r => {
+        const normalized = normalizePassportService(r);
         const passportPhotoPath = r.passport_photo_path || r.photo_path || null;
         return {
-          ...r,
+          ...normalized,
           module: "PASSPORT",
           photo_url: publicUrl(r.photo_path),
           passport_photo_url: publicUrl(passportPhotoPath)
@@ -1932,7 +1993,8 @@ app.get("/api/passport/certificates/:applicationId", verifyToken, async (req, re
   try {
     const [apps] = await db.query(
       `SELECT pa.*, u.full_name, u.national_id, u.email, u.phone, u.photo_path,
-              ps.service_name, ps.fee_amount, ps.processing_tier, ps.processing_days
+              ps.service_code, ps.service_name, ps.fee_amount,
+              ps.processing_tier, ps.processing_days
        FROM passport_applications pa
        JOIN users u ON u.user_id = pa.user_id
        JOIN passport_services ps ON ps.service_id = pa.service_id
@@ -1940,7 +2002,7 @@ app.get("/api/passport/certificates/:applicationId", verifyToken, async (req, re
       [req.params.applicationId]
     );
     if (!apps.length) return res.status(404).json({ error: "Not found" });
-    const app = apps[0];
+    const app = normalizePassportService(apps[0]);
 
     if (app.user_id !== req.dbUser?.user_id && !req.isAdmin) {
       return res.status(403).json({ error: "Not authorized" });

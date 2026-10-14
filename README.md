@@ -1428,15 +1428,9 @@ INSERT INTO passport_services
    requires_payment, requires_approval, eligibility_note)
 VALUES
 ('PP_FIRST_STD','First-time passport — Standard','Standard processing (30 working days). Best value.','first_time','standard',130.00,30,1,1,1,0,'Available to all first-time applicants'),
-('PP_FIRST_URG','First-time passport — Urgent','Urgent processing (10 working days).','first_time','urgent',300.00,10,1,1,1,0,'Extra fee for faster processing'),
-('PP_FIRST_EXP','First-time passport — Express','Express processing (5 working days). Fastest tier.','first_time','express',500.00,5,1,1,1,0,'Highest priority fee tier'),
-('PP_REN_STD','Passport renewal — Standard','Standard renewal (30 working days).','renewal','standard',130.00,30,1,1,1,0,'Requires previous passport'),
-('PP_REN_URG','Passport renewal — Urgent','Urgent renewal (10 working days).','renewal','urgent',300.00,10,1,1,1,0,'Extra fee for faster processing'),
-('PP_REN_EXP','Passport renewal — Express','Express renewal (5 working days).','renewal','express',500.00,5,1,1,1,0,'Highest priority fee tier'),
-('PP_REP_STD','Passport replacement — Standard','Replace lost/stolen/damaged passport (30 working days).','replacement','standard',130.00,30,1,1,1,0,'Police report required for lost/stolen'),
-('PP_REP_URG','Passport replacement — Urgent','Urgent replacement (10 working days).','replacement','urgent',300.00,10,1,1,1,0,'Police report required'),
-('PP_REP_EXP','Passport replacement — Express','Express replacement (5 working days).','replacement','express',500.00,5,1,1,1,0,'Police report required'),
-('PP_EMERGENCY','Emergency passport','Emergency travel within 48 hours (death, medical, urgent work).','replacement','emergency',500.00,2,1,0,1,1,'Requires proof of emergency — subject to approval'),
+('PP_EMERGENCY','First-time passport — Emergency','Emergency first-time passport application. Upload the OBR from Police and wait for the Passport Office response.','first_time','emergency',600.00,2,1,0,1,1,'Requires OBR from Police and Passport Office approval'),
+('PP_REN_STD','Passport renewal','Renewal at a fixed fee of M130. A clear image of the expired passport front page is required.','renewal','standard',130.00,30,1,1,1,0,'Requires expired passport front-page image'),
+('PP_REP_STD','Passport replacement','Replacement at a fixed fee of M130. Submit the completed application before attending the appointment.','replacement','standard',130.00,30,1,1,1,0,'Complete application required before appointment'),
 ('PP_OFFICIAL','Official passport','For government officials on official business.','first_time','official',250.00,21,1,1,1,1,'Requires government authorization letter'),
 ('PP_DIPLOMATIC','Diplomatic passport','For diplomats and their dependents.','first_time','diplomatic',500.00,21,1,1,1,1,'Requires Ministry of Foreign Affairs authorization');
 

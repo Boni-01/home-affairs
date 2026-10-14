@@ -27,7 +27,7 @@ const TIER_META = {
   standard:   { label: "Standard",   color: "#175cd3", bg: "#eff8ff", note: "Best value" },
   urgent:     { label: "Urgent",     color: "#b45309", bg: "#fff4df", note: "Faster processing" },
   express:    { label: "Express",    color: "#b3261e", bg: "#fdecea", note: "Fastest tier" },
-  emergency:  { label: "Emergency",  color: "#7a1fa2", bg: "#f5e9fb", note: "48 hours — proof required" },
+  emergency:  { label: "Emergency",  color: "#7a1fa2", bg: "#f5e9fb", note: "OBR from Police required — await response" },
   official:   { label: "Official",   color: "#0f766e", bg: "#e6f4f1", note: "Government business" },
   diplomatic: { label: "Diplomatic", color: "#334155", bg: "#eef1f5", note: "Foreign Affairs only" }
 };
@@ -37,6 +37,40 @@ const APP_TYPE_LABEL = {
   renewal:     "Passport renewal",
   replacement: "Passport replacement"
 };
+
+const normalizePassportService = service => {
+  if (service.service_code === "PP_EMERGENCY") {
+    return {
+      ...service,
+      application_type: "first_time",
+      service_name: "First-time passport — Emergency",
+      description: "Emergency first-time passport application. Submit an OBR from Police and wait for the Passport Office response.",
+      fee_amount: 600,
+      requires_approval: 1
+    };
+  }
+  if (service.service_code === "PP_REN_STD") {
+    return {
+      ...service,
+      service_name: "Passport renewal",
+      description: "Passport renewal — M130. Upload a clear image of the previous passport's first page showing its expiry date.",
+      fee_amount: 130
+    };
+  }
+  if (service.service_code === "PP_REP_STD") {
+    return {
+      ...service,
+      service_name: "Passport replacement",
+      description: "Passport replacement — M130. Complete and submit the required details before attending your appointment.",
+      fee_amount: 130
+    };
+  }
+  return service;
+};
+
+const isPassportNumberField = field => /passport.*(number|no\b)/i.test(
+  `${field.field_key || ""} ${field.label || ""}`
+);
 
 // Statuses in which the citizen is still allowed to delete their own application
 const DELETABLE_STATUSES = ["submitted", "more_information_required"];
@@ -54,6 +88,9 @@ function PassportOfficeDashboard({ onLogout }) {
   const [fields, setFields] = useState([]);
   const [values, setValues] = useState({});
   const [extraDocs, setExtraDocs] = useState([]);
+  const [passportSizePhoto, setPassportSizePhoto] = useState(null);
+  const [passportProof, setPassportProof] = useState(null);
+  const [emergencyObr, setEmergencyObr] = useState(null);
   const [submitError, setSubmitError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -83,7 +120,7 @@ function PassportOfficeDashboard({ onLogout }) {
         api("/passport/complaints/my")
       ]);
       setMe(meRes.user);
-      setServices(svcRes.services || []);
+      setServices((svcRes.services || []).map(normalizePassportService));
       setApplications(appsRes.applications || []);
       setNotifications(notifRes.notifications || []);
       setComplaints(compRes.complaints || []);
@@ -98,6 +135,9 @@ function PassportOfficeDashboard({ onLogout }) {
     const out = {};
     for (const s of services) {
       const t = s.application_type || "first_time";
+      if (t === "first_time" && !["PP_FIRST_STD", "PP_EMERGENCY"].includes(s.service_code)) continue;
+      if (t === "renewal" && s.service_code !== "PP_REN_STD") continue;
+      if (t === "replacement" && s.service_code !== "PP_REP_STD") continue;
       out[t] = out[t] || {};
       const tier = s.processing_tier || "standard";
       out[t][tier] = out[t][tier] || [];
@@ -106,13 +146,38 @@ function PassportOfficeDashboard({ onLogout }) {
     return out;
   }, [services]);
 
+  const isEmergencyFirstTime = activeService?.service_code === "PP_EMERGENCY";
+  const isRenewal = activeService?.application_type === "renewal";
+  const isReplacement = activeService?.application_type === "replacement";
+  const isDamagedReplacement = isReplacement && values.replacement_condition === "Damaged";
+  const isLostReplacement = isReplacement && values.replacement_condition === "Lost";
+  const lostPassportNumberField = fields.find(isPassportNumberField) || {
+    field_key: "passport_number",
+    label: "Lost passport number",
+    field_type: "text",
+    required: true,
+    placeholder: "Enter the number printed on the passport"
+  };
+  const canContinueForm = Boolean(activeService && passportSizePhoto) &&
+    (!isEmergencyFirstTime || Boolean(emergencyObr)) &&
+    (!isRenewal || Boolean(passportProof)) &&
+    (!isDamagedReplacement || Boolean(passportProof)) &&
+    (!isReplacement || Boolean(values.replacement_condition)) &&
+    (!isLostReplacement || Boolean(values.passport_number?.trim()));
+  const additionalPassportFields = fields.filter(field =>
+    !(isLostReplacement && isPassportNumberField(field))
+  );
+
   function openService(serviceId) {
     setSubmitError("");
     setValues({});
     setExtraDocs([]);
+    setPassportSizePhoto(null);
+    setPassportProof(null);
+    setEmergencyObr(null);
     api(`/passport/services/${serviceId}`)
       .then(data => {
-        setActiveService(data.service);
+        setActiveService(normalizePassportService(data.service));
         setFields(data.fields);
       })
       .catch(err => alert(err.message));
@@ -122,16 +187,38 @@ function PassportOfficeDashboard({ onLogout }) {
     setActiveService(null);
     setFields([]);
     setExtraDocs([]);
+    setPassportSizePhoto(null);
+    setPassportProof(null);
+    setEmergencyObr(null);
   }
 
   async function submit(e) {
     e.preventDefault();
     setSubmitError("");
 
-    if (!me?.photo_url) {
-      setSubmitError(
-        "You need an ID photo on your Profile before applying for a passport. Please upload one on the Profile tab."
-      );
+    if (!passportSizePhoto) {
+      setSubmitError("Upload a passport-size photo for this application before continuing.");
+      return;
+    }
+
+    if (isEmergencyFirstTime && !emergencyObr) {
+      setSubmitError("Upload the OBR from Police before submitting an emergency application.");
+      return;
+    }
+    if (isRenewal && !passportProof) {
+      setSubmitError("Upload a clear image of the expired passport's information page before continuing.");
+      return;
+    }
+    if (isReplacement && !values.replacement_condition) {
+      setSubmitError("Choose whether the passport is lost or damaged.");
+      return;
+    }
+    if (isDamagedReplacement && !passportProof) {
+      setSubmitError("Upload a clear image of the damaged passport's information page before continuing.");
+      return;
+    }
+    if (isLostReplacement && !values.passport_number?.trim()) {
+      setSubmitError("Enter the passport number before continuing.");
       return;
     }
 
@@ -140,6 +227,14 @@ function PassportOfficeDashboard({ onLogout }) {
       const fd = new FormData();
       fd.append("serviceId", activeService.service_id);
       fd.append("fields", JSON.stringify(values));
+      fd.append("documents", passportSizePhoto, `passport_size_photo__${passportSizePhoto.name}`);
+      if (passportProof) {
+        const prefix = isRenewal ? "passport_renewal_expired__" : "passport_damaged__";
+        fd.append("documents", passportProof, `${prefix}${passportProof.name}`);
+      }
+      if (emergencyObr) {
+        fd.append("documents", emergencyObr, `emergency_obr__${emergencyObr.name}`);
+      }
       for (const f of extraDocs) {
         if (f instanceof File) fd.append("documents", f, `doc__${f.name}`);
       }
@@ -299,24 +394,16 @@ function PassportOfficeDashboard({ onLogout }) {
           <section style={section.wrapper}>
             <h2 style={section.title}>Choose your passport</h2>
             <p style={section.subtitle}>
-              Prices and processing times differ per tier. Pick the one that suits you.
+              First-time applications are M130 Standard or M600 Emergency. Renewal and replacement are M130.
             </p>
 
-            {!me?.photo_url && (
-              <div style={{
-                marginBottom: 20, padding: 14, background: "#fff8e1",
-                border: "1px solid #b4530955", borderRadius: 8,
-                fontSize: 13, color: "#7a3f00"
-              }}>
-                <strong>ID photo required.</strong> Please upload your ID photo on the{" "}
-                <button type="button" onClick={() => setTab("profile")} style={{
-                  border: 0, background: "transparent", padding: 0,
-                  color: COLORS.blue, fontWeight: 700, cursor: "pointer",
-                  textDecoration: "underline", fontFamily: "inherit", fontSize: 13
-                }}>Profile tab</button>{" "}
-                before applying for a passport — we will use that photo on your passport.
-              </div>
-            )}
+            <div style={{
+              marginBottom: 20, padding: 14, background: "#eff8ff",
+              border: "1px solid #175cd344", borderRadius: 8,
+              fontSize: 13, color: COLORS.blue
+            }}>
+              A passport-size photo must be uploaded for every application before the details form can be completed.
+            </div>
 
             {Object.keys(groupedServices).length === 0 && (
               <div style={{
@@ -335,7 +422,11 @@ function PassportOfficeDashboard({ onLogout }) {
                     {APP_TYPE_LABEL[appType] || appType}
                   </h3>
                   <p style={{ margin: "0 0 16px", fontSize: 13, color: COLORS.textMuted }}>
-                    Standard is cheapest — Express is fastest.
+                    {appType === "first_time"
+                      ? "Choose Standard (M130) or Emergency (M600). Emergency applications require an OBR from Police and a Passport Office response."
+                      : appType === "renewal"
+                        ? "One renewal service is available at M130. Upload the expired passport's front page before completing the form."
+                        : "One replacement service is available at M130. Submit completed details before attending your appointment."}
                   </p>
 
                   <div style={{
@@ -365,20 +456,20 @@ function PassportOfficeDashboard({ onLogout }) {
                             e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,32,159,0.05)";
                           }}
                         >
-                          <span className={`passport-tier-badge passport-tier-${tierKey}`} style={{
+                          {appType === "first_time" && <span className={`passport-tier-badge passport-tier-${tierKey}`} style={{
                             position: "absolute", top: -12, left: 18,
                             background: meta.bg, color: meta.color,
                             fontSize: 10, fontWeight: 800,
                             padding: "4px 10px", borderRadius: 20,
                             letterSpacing: 0.6, textTransform: "uppercase",
                             border: `1px solid ${meta.color}22`
-                          }}>{meta.label}</span>
+                          }}>{meta.label}</span>}
 
                           <h4 style={{ margin: "10px 0 4px", fontSize: 15, color: COLORS.blue, fontWeight: 700 }}>
                             {svc.service_name}
                           </h4>
 
-                          {meta.note && (
+                          {appType === "first_time" && meta.note && (
                             <p style={{ margin: "0 0 12px", fontSize: 11, color: meta.color, fontWeight: 600 }}>
                               {meta.note}
                             </p>
@@ -782,72 +873,98 @@ function PassportOfficeDashboard({ onLogout }) {
             borderRadius: 8, marginBottom: 18, fontSize: 12,
             color: COLORS.textMid, fontWeight: 600
           }}>
-            <span>
+            {activeService.application_type === "first_time" && <span>
               Tier:{" "}
               <strong style={{ color: TIER_META[activeService.processing_tier]?.color }}>
                 {TIER_META[activeService.processing_tier]?.label || activeService.processing_tier}
               </strong>
-            </span>
+            </span>}
             <span>Fee: <strong>M {Number(activeService.fee_amount).toFixed(2)}</strong></span>
             <span>Processing: <strong>{activeService.processing_days} working days</strong></span>
           </div>
 
           <form onSubmit={submit}>
-            {/* Passport photo — read-only, taken from profile */}
-            <div style={{
-              padding: 14,
-              background: me?.photo_url ? "#ecfdf3" : "#fff8e1",
-              border: `1px solid ${me?.photo_url ? "#06764755" : "#b4530955"}`,
-              borderRadius: 8, marginBottom: 20
-            }}>
-              <label style={{ display: "block", fontSize: 13, fontWeight: 700, color: COLORS.textDark, marginBottom: 4 }}>
-                Passport photo
-              </label>
-              <p style={{ margin: "0 0 12px", fontSize: 12, color: COLORS.textMuted }}>
-                We will use the photo from your National ID / Profile. You don't need to upload it again.
-              </p>
-              <div style={{ display: "flex", gap: 16, alignItems: "center", flexWrap: "wrap" }}>
-                <div style={{
-                  width: 100, height: 128, borderRadius: 6,
-                  border: `1px dashed ${COLORS.border}`,
-                  background: "#fff",
-                  display: "grid", placeItems: "center", overflow: "hidden"
-                }}>
-                  {me?.photo_url ? (
-                    <img src={me.photo_url} alt="ID photo"
-                      crossOrigin="anonymous"
-                      style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                  ) : (
-                    <span style={{ fontSize: 11, color: COLORS.textMuted, padding: 8, textAlign: "center" }}>
-                      No ID photo on file
-                    </span>
-                  )}
-                </div>
-                <div style={{ flex: 1, minWidth: 200 }}>
-                  {!me?.photo_url && (
-                    <button
-                      type="button"
-                      onClick={() => { closeService(); setTab("profile"); }}
-                      style={{
-                        display: "inline-block", padding: "10px 18px",
-                        background: COLORS.blue, color: "#fff",
-                        borderRadius: 6, fontSize: 13, fontWeight: 700,
-                        cursor: "pointer", border: 0, fontFamily: "inherit"
-                      }}
-                    >
-                      Upload ID photo on Profile
-                    </button>
-                  )}
-                  {me?.photo_url && (
-                    <p style={{ margin: 0, fontSize: 12, color: "#067647", fontWeight: 600 }}>
-                      ✓ Photo ready — taken from your profile
-                    </p>
-                  )}
-                </div>
-              </div>
-            </div>
+            <PassportDocumentUpload
+              label="Passport-size photo"
+              instructions="Upload a clear passport-size photo for this application. This photo is required before any application details can be completed."
+              accept="image/*"
+              file={passportSizePhoto}
+              onChange={setPassportSizePhoto}
+            />
 
-            {fields.map(f => (
+            {passportSizePhoto && isReplacement && (
+              <Field
+                field={{
+                  field_key: "replacement_condition",
+                  label: "What happened to your passport?",
+                  field_type: "select",
+                  options: ["Lost", "Damaged"],
+                  required: true
+                }}
+                value={values.replacement_condition || ""}
+                onChange={value => {
+                  setValues(previous => ({
+                    ...previous,
+                    replacement_condition: value,
+                    passport_number: value === "Lost" ? previous.passport_number || "" : ""
+                  }));
+                  setPassportProof(null);
+                }}
+              />
+            )}
+
+            {passportSizePhoto && isLostReplacement && (
+              <>
+                <div style={{
+                  padding: 12, marginBottom: 14, borderRadius: 6,
+                  background: "#fff4df", border: "1px solid #f0c36d",
+                  color: "#7a3f00", fontSize: 13, lineHeight: 1.5
+                }}>
+                  Enter the passport number before continuing. An incorrect passport number will result in a five-year passport suspension.
+                </div>
+                <Field
+                  field={{ ...lostPassportNumberField, label: "Lost passport number", required: true }}
+                  value={values[lostPassportNumberField.field_key] || ""}
+                  onChange={value => setValues(previous => ({
+                    ...previous,
+                    [lostPassportNumberField.field_key]: value,
+                    passport_number: value
+                  }))}
+                />
+              </>
+            )}
+
+            {passportSizePhoto && isDamagedReplacement && (
+              <PassportDocumentUpload
+                label="Damaged passport information page"
+                instructions="Upload a clear photo of the passport's first page, showing your name and personal information. You must upload it before continuing to the details form."
+                accept="image/*"
+                file={passportProof}
+                onChange={setPassportProof}
+              />
+            )}
+
+            {passportSizePhoto && isRenewal && (
+              <PassportDocumentUpload
+                label="Expired passport information page"
+                instructions="Upload a clear photo of the expired passport's first page, showing your name and personal information. You must upload it before continuing to the renewal form."
+                accept="image/*"
+                file={passportProof}
+                onChange={setPassportProof}
+              />
+            )}
+
+            {passportSizePhoto && isEmergencyFirstTime && (
+              <PassportDocumentUpload
+                label="OBR from Police"
+                instructions="Upload the OBR issued by Police with your emergency application. After submitting, wait for the Passport Office response before taking further action."
+                accept=".pdf,image/*"
+                file={emergencyObr}
+                onChange={setEmergencyObr}
+              />
+            )}
+
+            {canContinueForm && additionalPassportFields.map(f => (
               <Field
                 key={f.field_key}
                 field={f}
@@ -856,26 +973,41 @@ function PassportOfficeDashboard({ onLogout }) {
               />
             ))}
 
-            <div style={{ marginTop: 16, marginBottom: 16 }}>
-              <label style={{ display: "block", fontSize: 13, fontWeight: 600, marginBottom: 6 }}>
-                Supporting documents (optional but recommended)
-              </label>
-              <p style={{ margin: "0 0 8px", fontSize: 12, color: COLORS.textMuted }}>
-                National ID copy, birth certificate, previous passport, police report (for lost/stolen).
-              </p>
-              <input
-                type="file"
-                multiple
-                onChange={e => setExtraDocs(Array.from(e.target.files || []))}
+            {isEmergencyFirstTime && !additionalPassportFields.some(f => f.field_key === "reason") && (
+              <Field
+                field={{
+                  field_key: "reason",
+                  label: "Reason for emergency application",
+                  field_type: "textarea",
+                  required: true
+                }}
+                value={values.reason || ""}
+                onChange={value => setValues(previous => ({ ...previous, reason: value }))}
               />
-              {extraDocs.length > 0 && (
-                <ul style={{ margin: "8px 0 0", paddingLeft: 18, fontSize: 12, color: COLORS.textMid }}>
-                  {extraDocs.map((f, i) => (
-                    <li key={i}>{f.name} · {Math.round(f.size / 1024)} KB</li>
-                  ))}
-                </ul>
-              )}
-            </div>
+            )}
+
+            {canContinueForm && (
+              <div style={{ marginTop: 16, marginBottom: 16 }}>
+                <label style={{ display: "block", fontSize: 13, fontWeight: 600, marginBottom: 6 }}>
+                  Supporting documents (optional but recommended)
+                </label>
+                <p style={{ margin: "0 0 8px", fontSize: 12, color: COLORS.textMuted }}>
+                  National ID copy, birth certificate, previous passport, police report (for lost/stolen).
+                </p>
+                <input
+                  type="file"
+                  multiple
+                  onChange={e => setExtraDocs(Array.from(e.target.files || []))}
+                />
+                {extraDocs.length > 0 && (
+                  <ul style={{ margin: "8px 0 0", paddingLeft: 18, fontSize: 12, color: COLORS.textMid }}>
+                    {extraDocs.map((f, i) => (
+                      <li key={i}>{f.name} · {Math.round(f.size / 1024)} KB</li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
 
             {submitError && (
               <p style={{
@@ -888,11 +1020,11 @@ function PassportOfficeDashboard({ onLogout }) {
               <button type="button" onClick={closeService} style={btnOutline}>Cancel</button>
               <button
                 type="submit"
-                disabled={submitting || !me?.photo_url}
+                disabled={submitting || !canContinueForm}
                 style={{
                   ...btnPrimary,
-                  opacity: (submitting || !me?.photo_url) ? 0.55 : 1,
-                  cursor: (submitting || !me?.photo_url) ? "not-allowed" : "pointer"
+                  opacity: (submitting || !canContinueForm) ? 0.55 : 1,
+                  cursor: (submitting || !canContinueForm) ? "not-allowed" : "pointer"
                 }}
               >
                 {submitting ? "Submitting…" : "Submit application"}
@@ -1096,6 +1228,34 @@ function Field({ field, value, onChange }) {
         {field.label}{field.required ? " *" : ""}
       </label>
       {input}
+    </div>
+  );
+}
+
+function PassportDocumentUpload({ label, instructions, accept, file, onChange }) {
+  return (
+    <div style={{
+      padding: 14, marginBottom: 16, borderRadius: 8,
+      background: "#fff8e1", border: "1px solid #b4530955"
+    }}>
+      <label style={{
+        display: "block", fontSize: 13, fontWeight: 700,
+        marginBottom: 6, color: COLORS.textDark
+      }}>{label} *</label>
+      <p style={{ margin: "0 0 10px", fontSize: 12, color: COLORS.textMuted }}>
+        {instructions}
+      </p>
+      <input
+        type="file"
+        accept={accept}
+        required
+        onChange={e => onChange(e.target.files?.[0] || null)}
+      />
+      {file && (
+        <p style={{ margin: "8px 0 0", fontSize: 12, color: COLORS.textMid }}>
+          Selected: {file.name}
+        </p>
+      )}
     </div>
   );
 }
