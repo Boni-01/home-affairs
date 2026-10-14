@@ -620,10 +620,7 @@ function FinanceDashboard({ onLogout }) {
               <ul style={{ paddingLeft: 18, fontSize: 13 }}>
                 {detail.documents.map(d => (
                   <li key={d.document_id}>
-                    <a href={`${API_BASE.replace("/api", "")}${d.storage_path}`}
-                       target="_blank" rel="noreferrer" style={{ color: COLORS.blue }}>
-                      {d.original_filename}
-                    </a>{" "}
+                    <span>{d.original_filename}</span>{" "}
                     <small style={{ color: COLORS.textMuted }}>({d.validation_status})</small>
                   </li>
                 ))}

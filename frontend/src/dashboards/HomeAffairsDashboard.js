@@ -4,8 +4,7 @@ import { COLORS, layout, header, section } from "../styles/dashboardStyles";
 import DashboardSearch from "../components/DashboardSearch";
 import Navbar from "../components/Navbar";
 import { auth, API_BASE } from "../Database/firebase";
-import jsPDF from "jspdf";
-import html2canvas from "html2canvas";
+import CollectionCentreReferral from "../components/CollectionCentreReferral";
 
 // ============================================================
 // API helper
@@ -272,7 +271,7 @@ const TRANSLATIONS = {
     officerNote: "Officer note",
 
     approvedDocuments: "Approved documents",
-    approvedDocumentsDesc: "Download your approved certificates and permits.",
+    approvedDocumentsDesc: "Collect approved certificates and permits in person at a nearby collection centre.",
     noApprovedDocuments: "You have no approved documents yet.",
     download: "Download",
     searchDocuments: "Search documents…",
@@ -378,7 +377,7 @@ const TRANSLATIONS = {
     officerNote: "Tlhokomeliso ea ofisiri",
 
     approvedDocuments: "Litokomane tse amohetsoeng",
-    approvedDocumentsDesc: "Khoasolla litifikeiti le litumello tse amohetsoeng.",
+    approvedDocumentsDesc: "Bokella litifikeiti le litumello tse amohetsoeng ka seqo setsing se haufi sa pokello.",
     noApprovedDocuments: "Ha u na litokomane tse amohetsoeng.",
     download: "Khoasolla",
     searchDocuments: "Batla litokomane…",
@@ -1034,10 +1033,7 @@ function HomeAffairsDashboard({ onLogout }) {
               <ul style={{ paddingLeft: 18, fontSize: 13 }}>
                 {detail.documents.map(d => (
                   <li key={d.document_id}>
-                    <a href={`${API_BASE.replace("/api", "")}${d.storage_path}`}
-                       target="_blank" rel="noreferrer" style={{ color: COLORS.blue }}>
-                      {d.original_filename}
-                    </a>
+                    <span>{d.original_filename}</span>
                   </li>
                 ))}
               </ul>
@@ -1415,12 +1411,7 @@ function SettingsModal({
                         ? new Date(a.decision_at).toLocaleDateString()
                         : new Date(a.submitted_at).toLocaleDateString()}
                     </p>
-                    <button
-                      onClick={() => viewCertificate(a.application_id)}
-                      style={btnPrimary}
-                    >
-                      {t.download}
-                    </button>
+                    <CollectionCentreReferral department="Home Affairs" />
                   </article>
                 ))}
               </div>
@@ -2020,44 +2011,10 @@ function CertificateView({ data, onClose }) {
   return <GenericCertificate application={application} fields={fields} onClose={onClose} />;
 }
 
-function usePdfDownload() {
-  const ref = useRef(null);
-  const [downloading, setDownloading] = useState(false);
-
-  async function download(filename) {
-    if (!ref.current) return;
-    setDownloading(true);
-    try {
-      const canvas = await html2canvas(ref.current, {
-        scale: 2,
-        backgroundColor: "#ffffff",
-        useCORS: true,
-        allowTaint: true
-      });
-      const imgData = canvas.toDataURL("image/png");
-      const pdf = new jsPDF({
-        orientation: canvas.width > canvas.height ? "landscape" : "portrait",
-        unit: "px",
-        format: [canvas.width, canvas.height]
-      });
-      pdf.addImage(imgData, "PNG", 0, 0, canvas.width, canvas.height);
-      pdf.save(filename);
-    } catch (err) {
-      console.error("PDF error:", err);
-      alert("Could not generate PDF. Please try again.");
-    } finally {
-      setDownloading(false);
-    }
-  }
-
-  return { ref, download, downloading };
-}
-
 function NationalIDCard({ application, fields, onClose }) {
-  const { ref, download, downloading } = usePdfDownload();
   return (
     <div>
-      <div ref={ref} style={{
+      <div style={{
         background: `linear-gradient(135deg, ${COLORS.blue}, #001a80)`,
         color: "#fff", borderRadius: 10, padding: 24,
         aspectRatio: "85/54", maxWidth: 520, margin: "0 auto"
@@ -2118,20 +2075,13 @@ function NationalIDCard({ application, fields, onClose }) {
 
       <div style={{ textAlign: "center", marginTop: 20 }}>
         <button onClick={onClose} style={btnOutline}>Close</button>
-        <button
-          onClick={() => download(`National-ID-${application.reference_number}.pdf`)}
-          disabled={downloading}
-          style={{ ...btnPrimary, marginLeft: 10 }}
-        >
-          {downloading ? "Preparing…" : "Download PDF"}
-        </button>
       </div>
+      <CollectionCentreReferral department="Home Affairs" />
     </div>
   );
 }
 
 function CivilCertificate({ application, fields, onClose }) {
-  const { ref, download, downloading } = usePdfDownload();
   const t = (application.service_type || "").toLowerCase();
   const isDeath = t.includes("death");
   const isMarriage = t.includes("marriage");
@@ -2147,7 +2097,7 @@ function CivilCertificate({ application, fields, onClose }) {
 
   return (
     <div>
-      <div ref={ref} style={{
+      <div style={{
         background: "#fdf8ec", border: `2px solid ${COLORS.blue}`,
         borderRadius: 10, padding: 32, maxWidth: 620, margin: "0 auto"
       }}>
@@ -2220,23 +2170,16 @@ function CivilCertificate({ application, fields, onClose }) {
 
       <div style={{ textAlign: "center", marginTop: 20 }}>
         <button onClick={onClose} style={btnOutline}>Close</button>
-        <button
-          onClick={() => download(`Certificate-${application.reference_number}.pdf`)}
-          disabled={downloading}
-          style={{ ...btnPrimary, marginLeft: 10 }}
-        >
-          {downloading ? "Preparing…" : "Download PDF"}
-        </button>
       </div>
+      <CollectionCentreReferral department="Home Affairs" />
     </div>
   );
 }
 
 function ImmigrationPermit({ application, fields, onClose }) {
-  const { ref, download, downloading } = usePdfDownload();
   return (
     <div>
-      <div ref={ref} style={{
+      <div style={{
         border: `2px solid ${COLORS.green}`, borderRadius: 10, padding: 32,
         maxWidth: 620, margin: "0 auto", background: "#f8fdf9"
       }}>
@@ -2281,23 +2224,16 @@ function ImmigrationPermit({ application, fields, onClose }) {
 
       <div style={{ textAlign: "center", marginTop: 20 }}>
         <button onClick={onClose} style={btnOutline}>Close</button>
-        <button
-          onClick={() => download(`Permit-${application.reference_number}.pdf`)}
-          disabled={downloading}
-          style={{ ...btnPrimary, marginLeft: 10 }}
-        >
-          {downloading ? "Preparing…" : "Download PDF"}
-        </button>
       </div>
+      <CollectionCentreReferral department="Immigration" />
     </div>
   );
 }
 
 function LivestockCertificate({ application, fields, onClose }) {
-  const { ref, download, downloading } = usePdfDownload();
   return (
     <div>
-      <div ref={ref} style={{
+      <div style={{
         border: `2px solid ${COLORS.blue}`, borderRadius: 10, padding: 32,
         maxWidth: 620, margin: "0 auto"
       }}>
@@ -2331,23 +2267,16 @@ function LivestockCertificate({ application, fields, onClose }) {
 
       <div style={{ textAlign: "center", marginTop: 20 }}>
         <button onClick={onClose} style={btnOutline}>Close</button>
-        <button
-          onClick={() => download(`Livestock-${application.reference_number}.pdf`)}
-          disabled={downloading}
-          style={{ ...btnPrimary, marginLeft: 10 }}
-        >
-          {downloading ? "Preparing…" : "Download PDF"}
-        </button>
       </div>
+      <CollectionCentreReferral department="Home Affairs" />
     </div>
   );
 }
 
 function GenericCertificate({ application, fields, onClose }) {
-  const { ref, download, downloading } = usePdfDownload();
   return (
     <div>
-      <div ref={ref}>
+      <div>
         <h2 style={{ margin: 0, color: COLORS.blue }}>{application.service_type}</h2>
         <p style={{ margin: "4px 0 20px", fontSize: 13, color: COLORS.textMuted }}>
           Reference: {application.reference_number}
@@ -2367,14 +2296,8 @@ function GenericCertificate({ application, fields, onClose }) {
       </div>
       <div style={{ textAlign: "right", marginTop: 20 }}>
         <button onClick={onClose} style={btnOutline}>Close</button>
-        <button
-          onClick={() => download(`Document-${application.reference_number}.pdf`)}
-          disabled={downloading}
-          style={{ ...btnPrimary, marginLeft: 10 }}
-        >
-          {downloading ? "Preparing…" : "Download PDF"}
-        </button>
       </div>
+      <CollectionCentreReferral department="Home Affairs" />
     </div>
   );
 }

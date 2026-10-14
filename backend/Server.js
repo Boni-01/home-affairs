@@ -3223,10 +3223,7 @@ app.get("/api/police/certified-documents/my", verifyToken, async (req, res) => {
     res.json({
       documents: rows.map(r => ({
         ...r,
-        certified_available: !!r.certified_filename,
-        download_url: r.certified_filename
-          ? `/api/police/certified-documents/${r.certified_doc_id}/download`
-          : null
+        certified_available: !!r.certified_filename
       }))
     });
   } catch (err) {
@@ -3263,13 +3260,17 @@ app.get("/api/police/certified-documents/:id", verifyToken, async (req, res) => 
     );
 
     res.json({
-      document: {
-        ...doc,
-        original_url: `/uploads/police_certified/${path.basename(doc.original_storage_path)}`,
-        certified_url: doc.certified_storage_path
-          ? `/uploads/police_certified/${path.basename(doc.certified_storage_path)}`
-          : null
-      },
+      document: (() => {
+        const { original_storage_path, certified_storage_path, ...document } = doc;
+        if (!req.isAdmin) return document;
+        return {
+          ...document,
+          original_url: `/uploads/police_certified/${path.basename(original_storage_path)}`,
+          certified_url: certified_storage_path
+            ? `/uploads/police_certified/${path.basename(certified_storage_path)}`
+            : null
+        };
+      })(),
       payments
     });
   } catch (err) {
@@ -3285,6 +3286,9 @@ app.get(
   "/api/police/certified-documents/:id/download",
   verifyToken,
   async (req, res) => {
+    if (!req.isAdmin) {
+      return res.status(403).json({ error: "Certified copies must be collected in person" });
+    }
     try {
       const [rows] = await db.query(
         "SELECT * FROM police_certified_documents WHERE certified_doc_id = ?",
@@ -3293,9 +3297,6 @@ app.get(
       if (!rows.length) return res.status(404).json({ error: "Not found" });
       const doc = rows[0];
 
-      if (doc.user_id !== req.dbUser?.user_id && !req.isAdmin) {
-        return res.status(403).json({ error: "Not authorized" });
-      }
       if (!doc.certified_storage_path) {
         return res.status(400).json({ error: "Certified copy not yet available" });
       }
@@ -3640,7 +3641,7 @@ app.post(
           doc.user_id,
           doc.certified_doc_id,
           "Certified document ready",
-          `Your document ${doc.reference_number} has been certified. You can download it from the portal.`
+          `Your document ${doc.reference_number} has been certified. Please collect it in person and use the portal to find a nearby collection centre.`
         ]
       );
 

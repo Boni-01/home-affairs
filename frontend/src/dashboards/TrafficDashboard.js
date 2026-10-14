@@ -3,8 +3,7 @@ import { COLORS, layout, header, section } from "../styles/dashboardStyles";
 import Navbar from "../components/Navbar";
 import DashboardSearch, { matchesDashboardSearch } from "../components/DashboardSearch";
 import { auth, API_BASE } from "../Database/firebase";
-import jsPDF from "jspdf";
-import html2canvas from "html2canvas";
+import CollectionCentreReferral from "../components/CollectionCentreReferral";
 
 // ============================================================
 // SVG ICONS
@@ -1038,7 +1037,7 @@ function TrafficDashboard({ onLogout }) {
                       background: COLORS.blue, color: "#fff",
                       borderRadius: 6, fontWeight: 700, fontSize: 13,
                       cursor: "pointer", fontFamily: "inherit"
-                    }}>View & Download Licence</button>
+                    }}>View Licence</button>
                   </article>
                 ))}
               </div>
@@ -1568,9 +1567,7 @@ function TrafficDashboard({ onLogout }) {
               <ul style={{ paddingLeft: 18, fontSize: 13 }}>
                 {detail.documents.map(d => (
                   <li key={d.document_id}>
-                    <a href={`${API_BASE.replace("/api", "")}${d.storage_path}`} target="_blank" rel="noreferrer" style={{ color: COLORS.blue }}>
-                      {d.original_filename}
-                    </a>
+                    <span>{d.original_filename}</span>
                   </li>
                 ))}
               </ul>
@@ -1735,8 +1732,6 @@ function TrafficDashboard({ onLogout }) {
 // LICENCE VIEW COMPONENT WITH PDF DOWNLOAD
 // ============================================================
 function LicenceView({ licence, me, onClose }) {
-  const { ref, download, downloading } = usePdfDownload();
-
   const licenceNumber = licence.licence_number || "PENDING";
   const category = licence.licence_category || "B";
   const issueDate = licence.issue_date ? new Date(licence.issue_date).toLocaleDateString("en-LS") : "—";
@@ -1744,7 +1739,7 @@ function LicenceView({ licence, me, onClose }) {
 
   return (
     <div>
-      <div ref={ref} style={{
+      <div style={{
         background: "linear-gradient(135deg, #1a5276 0%, #0d3d56 100%)",
         color: "#fff", borderRadius: 12, padding: 24,
         maxWidth: 520, margin: "0 auto",
@@ -1861,14 +1856,8 @@ function LicenceView({ licence, me, onClose }) {
 
       <div style={{ textAlign: "center", marginTop: 20 }}>
         <button onClick={onClose} style={btnOutline}>Close</button>
-        <button
-          onClick={() => download(`Drivers-Licence-${licenceNumber}.pdf`)}
-          disabled={downloading}
-          style={{ ...btnPrimary, marginLeft: 10 }}
-        >
-          {downloading ? "Preparing…" : "Download PDF"}
-        </button>
       </div>
+      <CollectionCentreReferral department="Traffic Services" />
     </div>
   );
 }
@@ -1876,39 +1865,6 @@ function LicenceView({ licence, me, onClose }) {
 // ============================================================
 // PDF DOWNLOAD HOOK
 // ============================================================
-function usePdfDownload() {
-  const ref = useRef(null);
-  const [downloading, setDownloading] = useState(false);
-
-  async function download(filename) {
-    if (!ref.current) return;
-    setDownloading(true);
-    try {
-      const canvas = await html2canvas(ref.current, {
-        scale: 2,
-        backgroundColor: "#ffffff",
-        useCORS: true,
-        allowTaint: true
-      });
-      const imgData = canvas.toDataURL("image/png");
-      const pdf = new jsPDF({
-        orientation: canvas.width > canvas.height ? "landscape" : "portrait",
-        unit: "px",
-        format: [canvas.width, canvas.height]
-      });
-      pdf.addImage(imgData, "PNG", 0, 0, canvas.width, canvas.height);
-      pdf.save(filename);
-    } catch (err) {
-      console.error("PDF error:", err);
-      alert("Could not generate PDF. Please try again.");
-    } finally {
-      setDownloading(false);
-    }
-  }
-
-  return { ref, download, downloading };
-}
-
 // ============================================================
 // SUB-COMPONENTS
 // ============================================================

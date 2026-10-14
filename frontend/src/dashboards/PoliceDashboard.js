@@ -3,7 +3,7 @@ import { COLORS, layout, header, section } from "../styles/dashboardStyles";
 import Navbar from "../components/Navbar";
 import DashboardSearch, { matchesDashboardSearch } from "../components/DashboardSearch";
 import { auth, API_BASE } from "../Database/firebase";
-import jsPDF from "jspdf";
+import CollectionCentreReferral from "../components/CollectionCentreReferral";
 
 async function api(path, opts = {}) {
   const user = auth.currentUser;
@@ -401,40 +401,6 @@ function PoliceDashboard({ onLogout }) {
     } catch (err) { alert(err.message); }
   }
 
-  function downloadLetterPdf(letter) {
-    try {
-      const doc = new jsPDF({ unit: "pt", format: "a4" });
-      const margin = 56;
-      const width = 595 - margin * 2;
-      const lines = doc.splitTextToSize(letter.body || "", width);
-      let y = margin;
-
-      doc.setFont("times", "bold").setFontSize(12);
-      doc.text("KINGDOM OF LESOTHO", margin, y); y += 16;
-      doc.setFontSize(11);
-      doc.text("LESOTHO MOUNTED POLICE SERVICE", margin, y); y += 24;
-
-      doc.setFont("times", "normal").setFontSize(11);
-      for (const line of lines) {
-        if (y > 780) { doc.addPage(); y = margin; }
-        doc.text(line, margin, y);
-        y += 14;
-      }
-
-      doc.setFontSize(9).setTextColor(120);
-      doc.text(
-        `Generated on ${new Date().toLocaleString("en-LS")} · ${letter.reference_number || ""}`,
-        margin,
-        800
-      );
-
-      doc.save(`${letter.reference_number || "letter"}.pdf`);
-    } catch (err) {
-      console.error(err);
-      alert("Could not generate PDF.");
-    }
-  }
-
   // ---------------- CERTIFIED DOCUMENTS ----------------
   async function submitCertifiedDoc(e) {
     e.preventDefault();
@@ -469,32 +435,6 @@ function PoliceDashboard({ onLogout }) {
       const data = await api(`/police/certified-documents/${id}`);
       setCertDetail(data);
     } catch (err) { alert(err.message); }
-  }
-
-  async function downloadCertified(certifiedDocId) {
-    try {
-      const user = auth.currentUser;
-      const token = user ? await user.getIdToken() : null;
-      const url = `${API_BASE}/police/certified-documents/${certifiedDocId}/download`;
-      const res = await fetch(url, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {}
-      });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.error || "Download failed");
-      }
-      const blob = await res.blob();
-      const cd = res.headers.get("Content-Disposition") || "";
-      const match = /filename="?([^"]+)"?/.exec(cd);
-      const filename = match ? match[1] : "certified_document";
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(blob);
-      a.download = filename;
-      a.click();
-      URL.revokeObjectURL(a.href);
-    } catch (err) {
-      alert("Could not download: " + err.message);
-    }
   }
 
   async function markCertNotifRead(id) {
@@ -778,9 +718,6 @@ function PoliceDashboard({ onLogout }) {
                     Letter preview
                   </h3>
                   <div style={{ display: "flex", gap: 8 }}>
-                    <button onClick={() => downloadLetterPdf(letterPreview)} style={btnPrimary}>
-                      Download PDF
-                    </button>
                     <button onClick={() => setLetterPreview(null)} style={btnOutline}>
                       Close
                     </button>
@@ -798,6 +735,7 @@ function PoliceDashboard({ onLogout }) {
                   maxHeight: 500,
                   overflowY: "auto"
                 }}>{letterPreview.body}</pre>
+                <CollectionCentreReferral department="Police Services" />
               </div>
             )}
 
@@ -932,13 +870,9 @@ function PoliceDashboard({ onLogout }) {
                     <button onClick={() => openCertDoc(d.certified_doc_id)} style={btnOutline}>
                       View
                     </button>
-                    {d.certified_available && (
-                      <button onClick={() => downloadCertified(d.certified_doc_id)} style={btnPrimary}>
-                        Download certified
-                      </button>
-                    )}
                   </div>
                 </div>
+                {d.certified_available && <CollectionCentreReferral department="Police Services" />}
               </article>
             ))}
           </section>
@@ -1152,10 +1086,7 @@ function PoliceDashboard({ onLogout }) {
               <ul style={{ paddingLeft: 18, fontSize: 13 }}>
                 {detail.evidence.map(e => (
                   <li key={e.evidence_id}>
-                    <a href={`${API_BASE.replace("/api", "")}${e.storage_path}`}
-                       target="_blank" rel="noreferrer" style={{ color: COLORS.blue }}>
-                      {e.original_filename}
-                    </a>{" "}
+                    <span>{e.original_filename}</span>{" "}
                     <small style={{ color: COLORS.textMuted }}>({e.verification_status})</small>
                   </li>
                 ))}
@@ -1223,23 +1154,13 @@ function PoliceDashboard({ onLogout }) {
           <div style={{ fontSize: 13 }}>
             <p style={{ margin: "6px 0" }}>
               <strong>Original:</strong>{" "}
-              <a
-                href={`${API_BASE.replace("/api", "")}${certDetail.document.original_url}`}
-                target="_blank" rel="noreferrer" style={{ color: COLORS.blue }}
-              >
                 {certDetail.document.original_filename}
-              </a>
             </p>
-            {certDetail.document.certified_url && (
-              <p style={{ margin: "6px 0" }}>
-                <strong>Certified:</strong>{" "}
-                <button onClick={() => downloadCertified(certDetail.document.certified_doc_id)} style={{
-                  border: 0, background: "transparent", color: COLORS.blue,
-                  fontWeight: 700, cursor: "pointer", fontFamily: "inherit", fontSize: 13, padding: 0
-                }}>Download certified copy</button>
-              </p>
+            {certDetail.document.certified_at && (
+              <p style={{ margin: "6px 0" }}><strong>Certified:</strong> available for in-person collection</p>
             )}
           </div>
+          <CollectionCentreReferral department="Police Services" />
 
           {certDetail.payments?.length > 0 && (
             <>

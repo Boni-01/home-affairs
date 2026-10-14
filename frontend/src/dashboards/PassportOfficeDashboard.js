@@ -3,8 +3,7 @@ import { COLORS, layout, header, section } from "../styles/dashboardStyles";
 import Navbar from "../components/Navbar";
 import DashboardSearch, { matchesDashboardSearch } from "../components/DashboardSearch";
 import { auth, API_BASE } from "../Database/firebase";
-import jsPDF from "jspdf";
-import html2canvas from "html2canvas";
+import CollectionCentreReferral from "../components/CollectionCentreReferral";
 
 async function api(path, opts = {}) {
   const user = auth.currentUser;
@@ -1118,10 +1117,7 @@ function PassportOfficeDashboard({ onLogout }) {
               <ul style={{ paddingLeft: 18, fontSize: 13 }}>
                 {detail.documents.map(d => (
                   <li key={d.document_id}>
-                    <a href={`${API_BASE.replace("/api", "")}${d.storage_path}`}
-                       target="_blank" rel="noreferrer" style={{ color: COLORS.blue }}>
-                      {d.original_filename}
-                    </a>
+                    <span>{d.original_filename}</span>
                   </li>
                 ))}
               </ul>
@@ -1308,33 +1304,7 @@ function StatusBadge({ status }) {
 // ============================================================
 // PASSPORT VIEW WITH PDF
 // ============================================================
-function usePdfDownload() {
-  const ref = useRef(null);
-  const [downloading, setDownloading] = useState(false);
-  async function download(filename) {
-    if (!ref.current) return;
-    setDownloading(true);
-    try {
-      const canvas = await html2canvas(ref.current, {
-        scale: 2, backgroundColor: "#ffffff", useCORS: true, allowTaint: true
-      });
-      const imgData = canvas.toDataURL("image/png");
-      const pdf = new jsPDF({
-        orientation: canvas.width > canvas.height ? "landscape" : "portrait",
-        unit: "px", format: [canvas.width, canvas.height]
-      });
-      pdf.addImage(imgData, "PNG", 0, 0, canvas.width, canvas.height);
-      pdf.save(filename);
-    } catch (err) {
-      console.error("PDF error:", err);
-      alert("Could not generate PDF.");
-    } finally { setDownloading(false); }
-  }
-  return { ref, download, downloading };
-}
-
 function PassportView({ data, onClose }) {
-  const { ref, download, downloading } = usePdfDownload();
   const { application, data: fields, passport } = data;
 
   const photoSrc =
@@ -1342,7 +1312,7 @@ function PassportView({ data, onClose }) {
 
   return (
     <div>
-      <div ref={ref} style={{
+      <div style={{
         background: "#f8fafc",
         border: `2px solid ${COLORS.blue}`,
         borderRadius: 10, padding: 28,
@@ -1414,14 +1384,8 @@ function PassportView({ data, onClose }) {
 
       <div style={{ textAlign: "center", marginTop: 20 }}>
         <button onClick={onClose} style={btnOutline}>Close</button>
-        <button
-          onClick={() => download(`Passport-${application.reference_number}.pdf`)}
-          disabled={downloading}
-          style={{ ...btnPrimary, marginLeft: 10 }}
-        >
-          {downloading ? "Preparing…" : "Download PDF"}
-        </button>
       </div>
+      <CollectionCentreReferral department="Passport Services" />
     </div>
   );
 }
