@@ -102,6 +102,87 @@ const SERVICE_ICONS = {
   "verify":                       "/verify.png"
 };
 
+const REMOVED_NICR_SERVICE_CODES = new Set([
+  "NICR_BIRTH_REG",
+  "NICR_DEATH_REG",
+  "NICR_LATE_BIRTH",
+  "NICR_MARRIAGE_REG",
+  "NICR_CIVIL_AMEND",
+  "NICR_VERIFY"
+]);
+
+const NATIONAL_ID_SERVICE_CODES = new Set([
+  "NICR_ID_NEW",
+  "NICR_ID_RENEW",
+  "NICR_ID_LOST",
+  "NICR_ID_CORRECT",
+  "NICR_NAME_CHANGE"
+]);
+
+const BIRTH_CERTIFICATE_EXTRA_FIELDS = {
+  Lost: [
+    { field_key: "lost_date", label: "Date the certificate was lost", field_type: "date", required: true },
+    { field_key: "loss_details", label: "Details of how it was lost", field_type: "textarea", required: true },
+    { field_key: "police_case_number", label: "Police case number (if reported)", field_type: "text", required: false }
+  ],
+  Damaged: [
+    { field_key: "damage_date", label: "Date the certificate was damaged", field_type: "date", required: true },
+    { field_key: "damage_description", label: "Describe the damage", field_type: "textarea", required: true }
+  ]
+};
+
+const NATIONAL_ID_UPLOADS = {
+  NICR_ID_NEW: {
+    key: "__birth_certificate_image",
+    label: "Birth certificate photo",
+    instructions: "Upload a clear image showing the applicant's name. You must upload it before completing the ID form."
+  },
+  NICR_ID_RENEW: {
+    key: "__old_id_image",
+    label: "Photo of current National ID",
+    instructions: "Upload a clear image of the old ID with its expiration date visible."
+  }
+};
+
+const DAMAGED_ID_UPLOAD = {
+  key: "__damaged_id_image",
+  label: "Photo of damaged National ID",
+  instructions: "Upload a clear image of the damaged ID showing the holder's name."
+};
+
+const DAMAGED_BIRTH_CERTIFICATE_UPLOAD = {
+  key: "__damaged_birth_certificate_image",
+  label: "Photo of damaged birth certificate",
+  instructions: "Upload a clear image of the damaged certificate showing the holder's name."
+};
+
+function isNationalIdService(service) {
+  return NATIONAL_ID_SERVICE_CODES.has(service.service_code);
+}
+
+function getNationalIdOptionLabel(service) {
+  if (service.service_code === "NICR_ID_LOST") {
+    return service.national_id_variant === "Damaged" ? "Damaged ID" : "Lost ID";
+  }
+  return service.service_code === "NICR_NAME_CHANGE"
+    ? "Name or Surname Change"
+    : service.service_name.replace(/^National ID\s*[—-]\s*/i, "");
+}
+
+function isRemovedNicrService(service) {
+  if (REMOVED_NICR_SERVICE_CODES.has(service.service_code)) return true;
+  const name = (service.service_name || "").toLowerCase().trim();
+  return [
+    "birth registration",
+    "death registration",
+    "late birth registration",
+    "marriage registration",
+    "civil record amendment",
+    "verify a record",
+    "verify record"
+  ].includes(name);
+}
+
 function getServiceIcon(serviceName) {
   if (!serviceName) return "/verify.png";
   const key = serviceName
@@ -358,6 +439,7 @@ function HomeAffairsDashboard({ onLogout }) {
   const [searchQuery, setSearchQuery] = useState("");
 
   const [activeService, setActiveService] = useState(null);
+  const [selectedService, setSelectedService] = useState(null);
   const [fields, setFields] = useState([]);
   const [values, setValues] = useState({});
   const [files, setFiles] = useState({});
@@ -396,30 +478,69 @@ function HomeAffairsDashboard({ onLogout }) {
 
   useEffect(() => { load(); }, [load]);
 
-  async function openService(serviceId) {
+  async function openService(serviceId, service = null) {
     setSubmitError("");
     setValues({});
     setFiles({});
     setActiveDashboardTab("apply");
+    if (service?.isNationalIdGroup) {
+      setActiveService(service);
+      setSelectedService(null);
+      setFields([]);
+      return;
+    }
     try {
       const data = await api(`/services/${serviceId}`);
       setActiveService(data.service);
+      setSelectedService(data.service);
       setFields(data.fields);
+    } catch (err) { alert(err.message); }
+  }
+
+  async function selectServiceType(serviceId, nationalIdVariant = null) {
+    setSubmitError("");
+    setValues({});
+    setFiles({});
+    try {
+      const data = await api(`/services/${serviceId}`);
+      setSelectedService({ ...data.service, national_id_variant: nationalIdVariant });
+      setValues(nationalIdVariant ? { incident_type: nationalIdVariant } : {});
+      setFields(nationalIdVariant
+        ? data.fields.filter(field => field.field_key !== "incident_type")
+        : data.fields);
     } catch (err) { alert(err.message); }
   }
 
   function closeService() {
     setActiveService(null);
+    setSelectedService(null);
     setFields([]);
   }
 
   async function submit(e) {
     e.preventDefault();
     setSubmitError("");
+    const requiredUploads = [];
+    const nationalIdUpload = NATIONAL_ID_UPLOADS[selectedService?.service_code];
+    if (nationalIdUpload) requiredUploads.push(nationalIdUpload);
+    if (selectedService?.service_code === "NICR_ID_LOST" &&
+      selectedService.national_id_variant === "Damaged") {
+      requiredUploads.push(DAMAGED_ID_UPLOAD);
+    }
+    if (selectedService?.service_code === "NICR_BIRTH_CERT" && values.certificate_condition === "Damaged") {
+      requiredUploads.push(DAMAGED_BIRTH_CERTIFICATE_UPLOAD);
+    }
+    const missingUpload = requiredUploads.find(upload =>
+      !files[upload.key] || !files[upload.key].type.startsWith("image/")
+    );
+    if (missingUpload) {
+      setSubmitError(`Upload a valid image: ${missingUpload.label}.`);
+      return;
+    }
     setSubmitting(true);
     try {
       const fd = new FormData();
-      fd.append("serviceId", activeService.service_id);
+      fd.append("serviceId", selectedService.service_id);
       fd.append("fields", JSON.stringify(values));
       for (const [k, f] of Object.entries(files)) {
         if (f && f instanceof File) fd.append("documents", f, `${k}__${f.name}`);
@@ -487,7 +608,32 @@ function HomeAffairsDashboard({ onLogout }) {
   }
 
   const allModuleServices = useMemo(
-    () => services.filter(s => s.module === activeModule),
+    () => {
+      const moduleServices = services.filter(s =>
+        s.module === activeModule && !isRemovedNicrService(s)
+      );
+      if (activeModule !== "NICR") return moduleServices;
+
+      const nationalIdOptions = moduleServices.filter(isNationalIdService).flatMap(service =>
+        service.service_code === "NICR_ID_LOST"
+          ? [
+            { ...service, national_id_variant: "Lost" },
+            { ...service, national_id_variant: "Damaged" }
+          ]
+          : [service]
+      );
+      const otherServices = moduleServices.filter(s => !isNationalIdService(s));
+      if (nationalIdOptions.length === 0) return otherServices;
+
+      const firstIdService = nationalIdOptions.find(s => s.service_code === "NICR_ID_NEW") || nationalIdOptions[0];
+      return [...otherServices, {
+        ...firstIdService,
+        service_name: "National ID",
+        description: "Apply for or update your National ID.",
+        isNationalIdGroup: true,
+        nationalIdOptions
+      }];
+    },
     [services, activeModule]
   );
 
@@ -496,7 +642,10 @@ function HomeAffairsDashboard({ onLogout }) {
     const q = query.toLowerCase();
     return (
       (svc.service_name || "").toLowerCase().includes(q) ||
-      (svc.description || "").toLowerCase().includes(q)
+      (svc.description || "").toLowerCase().includes(q) ||
+      (svc.nationalIdOptions || []).some(option =>
+        getNationalIdOptionLabel(option).toLowerCase().includes(q)
+      )
     );
   };
 
@@ -514,12 +663,6 @@ function HomeAffairsDashboard({ onLogout }) {
   }, [applications, docSearch]);
 
   const unread = notifications.filter(n => !n.read_at).length;
-  const activeApps = applications.filter(a =>
-    ["submitted", "under_review", "more_information_required", "awaiting_payment"].includes(a.status)
-  ).length;
-  const readyApps = applications.filter(a =>
-    ["approved", "ready_for_collection", "completed"].includes(a.status)
-  ).length;
 
   function handleDashboardTabChange(tab) {
     setActiveDashboardTab(tab);
@@ -569,16 +712,6 @@ function HomeAffairsDashboard({ onLogout }) {
             <div style={{ flex: 1, background: COLORS.green }} />
           </div>
         </header>
-
-        <section style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
-          gap: 16, marginBottom: 28
-        }}>
-          <StatCard label={t.activeApplications} value={activeApps} accent={COLORS.blue} />
-          <StatCard label={t.readyForCollection} value={readyApps} accent={COLORS.green} />
-          <StatCard label={t.notifications} value={unread} accent={COLORS.blue} />
-        </section>
 
         <Navbar
           items={[
@@ -640,7 +773,7 @@ function HomeAffairsDashboard({ onLogout }) {
               return (
                 <article
                   key={svc.service_id}
-                  onClick={() => openService(svc.service_id)}
+                  onClick={() => openService(svc.service_id, svc)}
                   style={{
                     ...cardStyle,
                     ...(highlighted ? cardHighlighted : {})
@@ -720,37 +853,151 @@ function HomeAffairsDashboard({ onLogout }) {
       {activeService && (
         <Overlay onClose={closeService}>
           <h2 style={{ margin: "0 0 4px", color: COLORS.blue }}>
-            {activeService.service_name}
+            {activeService.isNationalIdGroup ? "National ID" : activeService.service_name}
           </h2>
           <p style={{ margin: "0 0 20px", fontSize: 13, color: COLORS.textMuted }}>
             {activeService.description}
           </p>
           <form onSubmit={submit}>
-            {fields.map(f => (
+            {activeService.isNationalIdGroup && (
+              <Field
+                field={{
+                  field_key: "__national_id_service",
+                  label: "National ID service",
+                  field_type: "select",
+                  options: activeService.nationalIdOptions.map(getNationalIdOptionLabel),
+                  required: true
+                }}
+                value={selectedService ? getNationalIdOptionLabel(selectedService) : ""}
+                onChange={value => {
+                  const option = activeService.nationalIdOptions.find(
+                    item => getNationalIdOptionLabel(item) === value
+                  );
+                  if (option) selectServiceType(option.service_id, option.national_id_variant);
+                }}
+                onFile={() => {}}
+              />
+            )}
+            {activeService.service_code === "NICR_BIRTH_CERT" && (
+              <Field
+                field={{
+                  field_key: "certificate_condition",
+                  label: "Birth certificate request",
+                  field_type: "select",
+                  options: ["Standard copy", "Lost", "Damaged"],
+                  required: true
+                }}
+                value={values.certificate_condition || ""}
+                onChange={value => {
+                  setValues(previous => {
+                    const next = { ...previous, certificate_condition: value };
+                    for (const extraField of Object.values(BIRTH_CERTIFICATE_EXTRA_FIELDS).flat()) {
+                      delete next[extraField.field_key];
+                    }
+                    return next;
+                  });
+                  if (value === "Damaged") {
+                    setFiles(previous => {
+                      const next = { ...previous };
+                      delete next.__extra;
+                      return next;
+                    });
+                  }
+                  if (value !== "Damaged") {
+                    setFiles(previous => {
+                      const next = { ...previous };
+                      delete next[DAMAGED_BIRTH_CERTIFICATE_UPLOAD.key];
+                      return next;
+                    });
+                  }
+                }}
+                onFile={() => {}}
+              />
+            )}
+            {selectedService && NATIONAL_ID_UPLOADS[selectedService.service_code] && (
+              <RequiredImageUpload
+                key={selectedService.service_code}
+                upload={NATIONAL_ID_UPLOADS[selectedService.service_code]}
+                file={files[NATIONAL_ID_UPLOADS[selectedService.service_code].key]}
+                onChange={file => setFiles(previous => ({
+                  ...previous,
+                  [NATIONAL_ID_UPLOADS[selectedService.service_code].key]: file
+                }))}
+              />
+            )}
+            {!(selectedService?.service_code === "NICR_ID_NEW" &&
+              !files[NATIONAL_ID_UPLOADS.NICR_ID_NEW.key]) &&
+              !(selectedService?.service_code === "NICR_ID_LOST" &&
+                selectedService.national_id_variant === "Damaged" && !files[DAMAGED_ID_UPLOAD.key]) &&
+              fields.map(f => (
               <Field
                 key={f.field_key}
                 field={f}
                 value={values[f.field_key] || ""}
-                onChange={v => setValues(p => ({ ...p, [f.field_key]: v }))}
+                onChange={v => {
+                  setValues(previous => ({ ...previous, [f.field_key]: v }));
+                  if (f.field_key === "incident_type" && v !== "Damaged") {
+                    setFiles(previous => {
+                      const next = { ...previous };
+                      delete next[DAMAGED_ID_UPLOAD.key];
+                      return next;
+                    });
+                  }
+                }}
                 onFile={file => setFiles(p => ({ ...p, [f.field_key]: file }))}
               />
             ))}
-            <div style={{ marginTop: 16, marginBottom: 16 }}>
-              <label style={{
-                display: "block", fontSize: 13, fontWeight: 600, marginBottom: 6
-              }}>Additional documents</label>
-              <input type="file" multiple onChange={e => {
-                const arr = Array.from(e.target.files || []);
-                setFiles(p => ({ ...p, __extra: arr }));
-              }} />
-            </div>
+            {(BIRTH_CERTIFICATE_EXTRA_FIELDS[values.certificate_condition] || []).map(f => (
+              <Field
+                key={f.field_key}
+                field={f}
+                value={values[f.field_key] || ""}
+                onChange={value => setValues(previous => ({ ...previous, [f.field_key]: value }))}
+                onFile={file => setFiles(previous => ({ ...previous, [f.field_key]: file }))}
+              />
+            ))}
+            {selectedService?.service_code === "NICR_ID_LOST" &&
+              selectedService.national_id_variant === "Damaged" && (
+              <RequiredImageUpload
+                upload={DAMAGED_ID_UPLOAD}
+                file={files[DAMAGED_ID_UPLOAD.key]}
+                onChange={file => setFiles(previous => ({
+                  ...previous,
+                  [DAMAGED_ID_UPLOAD.key]: file
+                }))}
+              />
+            )}
+            {activeService.service_code === "NICR_BIRTH_CERT" && values.certificate_condition === "Damaged" && (
+              <RequiredImageUpload
+                upload={DAMAGED_BIRTH_CERTIFICATE_UPLOAD}
+                file={files[DAMAGED_BIRTH_CERTIFICATE_UPLOAD.key]}
+                onChange={file => setFiles(previous => ({
+                  ...previous,
+                  [DAMAGED_BIRTH_CERTIFICATE_UPLOAD.key]: file
+                }))}
+              />
+            )}
+            {!(selectedService?.service_code === "NICR_ID_LOST" &&
+              selectedService.national_id_variant === "Damaged") &&
+              !(activeService.service_code === "NICR_BIRTH_CERT" &&
+                values.certificate_condition === "Damaged") && (
+                <div style={{ marginTop: 16, marginBottom: 16 }}>
+                  <label style={{
+                    display: "block", fontSize: 13, fontWeight: 600, marginBottom: 6
+                  }}>Additional documents</label>
+                  <input type="file" multiple onChange={e => {
+                    const arr = Array.from(e.target.files || []);
+                    setFiles(p => ({ ...p, __extra: arr }));
+                  }} />
+                </div>
+              )}
             {submitError && <p style={{ color: COLORS.error, fontSize: 13 }}>{submitError}</p>}
             <div style={{
               display: "flex", justifyContent: "flex-end",
               gap: 10, marginTop: 16
             }}>
               <button type="button" onClick={closeService} style={btnOutline}>Cancel</button>
-              <button type="submit" disabled={submitting} style={btnPrimary}>
+              <button type="submit" disabled={submitting || !selectedService} style={btnPrimary}>
                 {submitting ? "Submitting…" : "Submit application"}
               </button>
             </div>
@@ -1628,22 +1875,6 @@ const comingSoonNote = {
 // ============================================================
 // SHARED SUB-COMPONENTS
 // ============================================================
-function StatCard({ label, value, accent }) {
-  return (
-    <article style={{
-      background: "#fff", border: `1px solid ${COLORS.border}`,
-      borderLeft: `4px solid ${accent}`, borderRadius: 10,
-      padding: "18px 22px"
-    }}>
-      <p style={{
-        margin: "0 0 6px", fontSize: 11, textTransform: "uppercase",
-        letterSpacing: 0.6, color: COLORS.textMuted, fontWeight: 700
-      }}>{label}</p>
-      <p style={{ margin: 0, fontSize: 28, fontWeight: 700, color: accent }}>{value}</p>
-    </article>
-  );
-}
-
 function ProfileRow({ label, value }) {
   return (
     <div style={{
@@ -1693,6 +1924,33 @@ function Field({ field, value, onChange, onFile }) {
         {field.label}{field.required ? " *" : ""}
       </label>
       {input}
+    </div>
+  );
+}
+
+function RequiredImageUpload({ upload, file, onChange }) {
+  return (
+    <div style={{ marginBottom: 16 }}>
+      <label style={{
+        display: "block", fontSize: 13, fontWeight: 600,
+        marginBottom: 6, color: COLORS.textMid
+      }}>
+        {upload.label} *
+      </label>
+      <p style={{ margin: "0 0 8px", fontSize: 12, color: COLORS.textMuted }}>
+        {upload.instructions}
+      </p>
+      <input
+        type="file"
+        accept="image/*"
+        required
+        onChange={e => onChange(e.target.files?.[0] || null)}
+      />
+      {file && (
+        <p style={{ margin: "6px 0 0", fontSize: 12, color: COLORS.textMuted }}>
+          Selected: {file.name}
+        </p>
+      )}
     </div>
   );
 }

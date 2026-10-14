@@ -346,7 +346,6 @@ function PensionsDashboard({ onLogout }) {
           <StatCard label="My applications" value={applications.length} accent={COLORS.blue} />
           <StatCard label="Payments" value={payments.length} accent={COLORS.green} />
           <StatCard label="Contributions" value={contributions.length} accent={COLORS.blue} />
-          <StatCard label="Notifications" value={unread} accent={COLORS.blue} />
         </section>
 
         <Navbar

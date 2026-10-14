@@ -258,11 +258,6 @@ function PassportOfficeDashboard({ onLogout }) {
   }
 
   const unread = notifications.filter(n => !n.read_at).length;
-  const activeApps = applications.filter(a =>
-    ["submitted", "under_review", "more_information_required",
-     "awaiting_payment", "awaiting_appointment", "awaiting_biometrics"].includes(a.status)
-  ).length;
-  const readyApps = applications.filter(a => a.status === "ready_for_collection").length;
 
   return (
     <main className="dashboard-page" style={layout.page}>
@@ -285,16 +280,6 @@ function PassportOfficeDashboard({ onLogout }) {
             <div style={{ flex: 1, background: COLORS.green }} />
           </div>
         </header>
-
-        <section style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
-          gap: 16, marginBottom: 28
-        }}>
-          <StatCard label="Active applications" value={activeApps} accent={COLORS.blue} />
-          <StatCard label="Ready for collection" value={readyApps} accent={COLORS.green} />
-          <StatCard label="Notifications" value={unread} accent={COLORS.blue} />
-        </section>
 
         <Navbar
           items={[
@@ -1044,24 +1029,6 @@ function PassportOfficeDashboard({ onLogout }) {
         </Overlay>
       )}
     </main>
-  );
-}
-
-// ============================================================
-// SUB-COMPONENTS
-// ============================================================
-function StatCard({ label, value, accent }) {
-  return (
-    <article style={{
-      background: "#fff", border: `1px solid ${COLORS.border}`,
-      borderLeft: `4px solid ${accent}`, borderRadius: 10, padding: "18px 22px"
-    }}>
-      <p style={{
-        margin: "0 0 6px", fontSize: 11, textTransform: "uppercase",
-        letterSpacing: 0.6, color: COLORS.textMuted, fontWeight: 700
-      }}>{label}</p>
-      <p style={{ margin: 0, fontSize: 28, fontWeight: 700, color: accent }}>{value}</p>
-    </article>
   );
 }
 

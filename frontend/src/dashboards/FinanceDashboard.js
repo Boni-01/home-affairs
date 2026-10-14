@@ -321,7 +321,6 @@ function FinanceDashboard({ onLogout }) {
           <StatCard label="Open enquiries" value={
             tickets.filter(t => ["OPEN","UNDER_REVIEW","WAITING_FOR_USER"].includes(t.status)).length
           } accent={COLORS.blue} />
-          <StatCard label="Notifications" value={unread} accent={COLORS.blue} />
         </section>
 
         <Navbar

@@ -569,7 +569,6 @@ function PoliceDashboard({ onLogout }) {
           <StatCard label="My reports" value={applications.length} accent={COLORS.blue} />
           <StatCard label="Letters issued" value={letters.length} accent={COLORS.blue} />
           <StatCard label="Certifications" value={certDocs.length} accent={COLORS.green} />
-          <StatCard label="Notifications" value={unread + unreadCertNotifs} accent={COLORS.blue} />
         </section>
 
         <Navbar
