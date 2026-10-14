@@ -712,13 +712,7 @@ function TrafficDashboard({ onLogout }) {
   };
 
   // Computed values
-  const unread = notifications.filter(n => !n.read_at).length;
-  const pendingApps = applications.filter(a =>
-    ["SUBMITTED", "UNDER_REVIEW", "DOCUMENTS_REQUIRED", "APPOINTMENT_REQUIRED", "PAYMENT_PENDING"].includes(a.status)
-  ).length;
   const unpaidFines = fines.filter(f => f.fine_status === "UNPAID");
-  const totalDue = unpaidFines.reduce((s, f) => s + Number(f.amount || 0), 0);
-  const validLicences = licences.filter(l => l.licence_status === "VALID");
 
   if (loading && !me) {
     return (
@@ -771,33 +765,11 @@ function TrafficDashboard({ onLogout }) {
           }}>{success}</div>
         )}
 
-        {/* METRICS */}
-        <section style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
-          gap: 16, marginBottom: 28
-        }}>
-          <StatCard label="Applications" value={applications.length} accent={COLORS.blue} />
-          <StatCard label="Pending" value={pendingApps} accent={COLORS.amber} />
-          <StatCard label="Valid Licences" value={validLicences.length} accent={COLORS.green} />
-          <StatCard label="Vehicles" value={vehicles.length} accent={COLORS.teal} />
-          <StatCard label="Unpaid Fines" value={unpaidFines.length} accent={COLORS.red} />
-          <StatCard label="Amount Due" value={`M ${totalDue.toLocaleString()}`} accent={COLORS.red} />
-        </section>
-
         {/* TABS */}
         <Navbar
           items={[
             ["overview", "Overview"],
-            ["apply", "Apply"],
-            ["applications", `Applications (${applications.length})`],
-            ["licences", `Licences (${licences.length})`],
-            ["vehicles", `Vehicles (${vehicles.length})`],
-            ["fines", `Fines (${fines.length})`],
-            ["payments", `Payments (${payments.length})`],
-            ["complaints", `Complaints (${complaints.length})`],
-            ["notifications", `Notifications${unread ? ` (${unread})` : ""}`],
-            ["profile", "Profile"]
+            ["apply", "Apply"]
           ]}
           activeTab={tab}
           onTabChange={setTab}
@@ -816,14 +788,11 @@ function TrafficDashboard({ onLogout }) {
                 gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
                 gap: 12
               }}>
-                <ShortcutButton icon={TrafficIcons.Document} label="Apply for Learner's Licence" onClick={() => openServiceModal("LEARNER_LICENCE")} />
-                <ShortcutButton icon={TrafficIcons.Car} label="Apply for Driver's Licence" onClick={() => openServiceModal("DRIVER_LICENCE")} />
                 <ShortcutButton icon={TrafficIcons.Refresh} label="Renew Licence" onClick={() => openServiceModal("LICENCE_RENEWAL")} />
                 <ShortcutButton icon={TrafficIcons.Clipboard} label="Replace Lost Licence" onClick={() => openServiceModal("LICENCE_REPLACEMENT")} />
                 <ShortcutButton icon={TrafficIcons.Vehicle} label="Register a Vehicle" onClick={() => openServiceModal("VEHICLE_REGISTRATION")} />
                 <ShortcutButton icon={TrafficIcons.Wrench} label="Book Roadworthiness" onClick={() => openServiceModal("ROADWORTHINESS_INSPECTION")} />
                 <ShortcutButton icon={TrafficIcons.Bus} label="Public Transport Permit" onClick={() => openServiceModal("PUBLIC_MOTOR_VEHICLE_PERMIT")} />
-                <ShortcutButton icon={TrafficIcons.Chat} label="Submit a Complaint" onClick={() => setShowComplaintModal(true)} />
               </div>
             </section>
 
@@ -1943,22 +1912,6 @@ function usePdfDownload() {
 // ============================================================
 // SUB-COMPONENTS
 // ============================================================
-function StatCard({ label, value, accent }) {
-  return (
-    <article style={{
-      background: "#fff", border: `1px solid ${COLORS.border}`,
-      borderLeft: `4px solid ${accent}`, borderRadius: 10,
-      padding: "18px 22px"
-    }}>
-      <p style={{
-        margin: "0 0 6px", fontSize: 11, textTransform: "uppercase",
-        letterSpacing: 0.6, color: COLORS.textMuted, fontWeight: 700
-      }}>{label}</p>
-      <p style={{ margin: 0, fontSize: 28, fontWeight: 700, color: accent }}>{value}</p>
-    </article>
-  );
-}
-
 function ShortcutButton({ icon, label, onClick }) {
   const Icon = icon;
   return (
