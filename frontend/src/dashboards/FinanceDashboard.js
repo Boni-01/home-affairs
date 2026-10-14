@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useCallback, useRef } from "react";
 import { COLORS, layout, header, section } from "../styles/dashboardStyles";
 import Navbar from "../components/Navbar";
-import DashboardSearch, { matchesDashboardSearch } from "../components/DashboardSearch";
 import { auth, API_BASE } from "../Database/firebase";
 
 async function api(path, opts = {}) {
@@ -19,122 +18,29 @@ async function api(path, opts = {}) {
   return data;
 }
 
-const REQUEST_ICONS = {
-  TAX_REQUEST: () => (
-    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M7 3h8l4 4v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z" />
-      <path d="M14 3v5h5" />
-      <path d="M8 13h8M8 17h6" />
-    </svg>
-  ),
-  TAX_CLEARANCE: () => (
-    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M5 12.5 9 16l10-10" />
-      <path d="M20 6.5V4h-2.5" />
-      <path d="M3 19.5h18" />
-    </svg>
-  ),
-  TAX_DECLARATION: () => (
-    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M7 3h8l4 4v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z" />
-      <path d="M14 3v5h5" />
-      <path d="M8 12h8M8 16h8" />
-    </svg>
-  ),
-  SUPPLIER_REGISTRATION: () => (
-    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M3 21V7l9-4 9 4v14" />
-      <path d="M8 10h8M8 14h8M8 18h8" />
-    </svg>
-  ),
-  INVOICE_CLAIM: () => (
-    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M7 3h8l4 4v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z" />
-      <path d="M14 3v5h5" />
-      <path d="M8 12h8M8 16h6" />
-      <path d="M8 8h3" />
-    </svg>
-  ),
-  TAX_REFUND: () => (
-    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M12 3v18" />
-      <path d="M17 7.5A3.5 3.5 0 0 0 12 5h-1a3.5 3.5 0 0 0 0 7h2a3.5 3.5 0 0 1 0 7h-1a3.5 3.5 0 0 1-5-2.5" />
-    </svg>
-  ),
-  GENERAL_ENQUIRY: () => (
-    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M5 6.5A2.5 2.5 0 0 1 7.5 4h9A2.5 2.5 0 0 1 19 6.5v7A2.5 2.5 0 0 1 16.5 16H10l-5 4v-4.5A2.5 2.5 0 0 1 5 13.5v-7z" />
-      <path d="M8 9h8M8 12h6" />
-    </svg>
-  )
-};
-
 const REQUEST_TYPES = [
-  { key: "TAX_REQUEST",           label: "Tax-related request",       icon: REQUEST_ICONS.TAX_REQUEST, serviceCode: "TAX-REQUEST" },
-  { key: "TAX_CLEARANCE",         label: "Tax clearance request",     icon: REQUEST_ICONS.TAX_CLEARANCE, serviceCode: "TAX-CLEARANCE" },
-  { key: "TAX_DECLARATION",       label: "Tax declaration",           icon: REQUEST_ICONS.TAX_DECLARATION, serviceCode: "TAX-DECLARATION" },
-  { key: "SUPPLIER_REGISTRATION", label: "Supplier registration",     icon: REQUEST_ICONS.SUPPLIER_REGISTRATION, serviceCode: "SUPPLIER-REG" },
-  { key: "INVOICE_CLAIM",         label: "Invoice / payment claim",   icon: REQUEST_ICONS.INVOICE_CLAIM, serviceCode: "INVOICE-CLAIM" },
-  { key: "TAX_REFUND",            label: "Tax refund request",        icon: REQUEST_ICONS.TAX_REFUND, serviceCode: "TAX-REFUND" },
-  { key: "GOV_PAYMENT",           label: "Government payment",        icon: REQUEST_ICONS.INVOICE_CLAIM, serviceCode: "GOV-PAYMENT" },
-  { key: "GENERAL_ENQUIRY",       label: "Finance enquiry",           icon: REQUEST_ICONS.GENERAL_ENQUIRY, serviceCode: "FINANCE-ENQUIRY" }
+  { key: "PENSION_ELIGIBILITY", label: "Check if I am Eligible for pensions", serviceCode: "FINANCE-ENQUIRY" }
 ];
 
 const FIELD_GROUPS = {
-  TAX_REQUEST: [
-    { key: "taxpayer_type", label: "Taxpayer type", type: "select", options: ["INDIVIDUAL","BUSINESS","OTHER"] },
-    { key: "tax_id", label: "Tax ID / TIN", type: "text" },
-    { key: "tax_period", label: "Tax period", type: "text" }
-  ],
-  TAX_CLEARANCE: [
-    { key: "taxpayer_type", label: "Taxpayer type", type: "select", options: ["INDIVIDUAL","BUSINESS","OTHER"] },
-    { key: "tax_id", label: "Tax ID / TIN", type: "text" },
-    { key: "tax_period", label: "Period covered", type: "text" }
-  ],
-  TAX_DECLARATION: [
-    { key: "taxpayer_type", label: "Taxpayer type", type: "select", options: ["INDIVIDUAL","BUSINESS","OTHER"] },
-    { key: "tax_id", label: "Tax ID / TIN", type: "text" },
-    { key: "tax_period", label: "Tax period", type: "text" }
-  ],
-  SUPPLIER_REGISTRATION: [
-    { key: "legal_business_name", label: "Legal business name", type: "text" },
-    { key: "trading_name", label: "Trading name", type: "text" },
-    { key: "company_registration_no", label: "Company registration no.", type: "text" },
-    { key: "tax_identification_no", label: "Tax ID / TIN", type: "text" },
-    { key: "contact_person", label: "Contact person", type: "text" },
-    { key: "business_email", label: "Business email", type: "email" },
-    { key: "business_phone", label: "Business phone", type: "tel" },
-    { key: "address", label: "Address", type: "textarea" },
-    { key: "bank_name", label: "Bank name", type: "text" },
-    { key: "bank_account_name", label: "Account holder name", type: "text" },
-    { key: "bank_account_number", label: "Account number", type: "text" }
-  ],
-  INVOICE_CLAIM: [
-    { key: "invoice_number", label: "Invoice number", type: "text" },
-    { key: "purchase_order_no", label: "Purchase order no.", type: "text" },
-    { key: "contract_reference", label: "Contract reference", type: "text" },
-    { key: "delivery_note_reference", label: "Delivery note reference", type: "text" },
-    { key: "issuing_ministry", label: "Issuing ministry", type: "text" },
-    { key: "invoice_date", label: "Invoice date", type: "date" },
-    { key: "due_date", label: "Due date", type: "date" }
-  ],
-  TAX_REFUND: [
-    { key: "tax_id", label: "Tax ID / TIN", type: "text" },
-    { key: "tax_period", label: "Tax period", type: "text" },
-    { key: "amount_claimed", label: "Amount claimed (LSL)", type: "number" }
-  ],
-  GOV_PAYMENT: [
-    { key: "payment_reference", label: "Government reference number", type: "text", required: true },
-    { key: "payer_name", label: "Payer name", type: "text", required: true }
-  ],
-  GENERAL_ENQUIRY: [
-    { key: "related_reference", label: "Related reference (optional)", type: "text" }
+  PENSION_ELIGIBILITY: [
+    {
+      key: "benefit_type",
+      label: "Pension benefit",
+      type: "select",
+      required: true,
+      options: [
+        { value: "OLD_AGE", label: "Old age pension" },
+        { value: "RETIREMENT", label: "Retirement benefit" },
+        { value: "DEATH_SURVIVOR", label: "Death / survivor benefit" },
+        { value: "ORPHAN", label: "Orphan pension" }
+      ]
+    }
   ]
 };
 
 function FinanceDashboard({ onLogout }) {
-  const [tab, setTab] = useState("services");
-  const [searchQuery, setSearchQuery] = useState("");
+  const [tab, setTab] = useState("new");
   const [me, setMe] = useState(null);
   const [services, setServices] = useState([]);
   const [requests, setRequests] = useState([]);
@@ -144,7 +50,7 @@ function FinanceDashboard({ onLogout }) {
   const [suppliers, setSuppliers] = useState([]);
 
   const [activeType, setActiveType] = useState(null);
-  const [form, setForm] = useState({ subject: "", description: "", amount: "" });
+  const [form, setForm] = useState({ description: "" });
   const [fields, setFields] = useState({});
   const [docs, setDocs] = useState([]);
   const [submitting, setSubmitting] = useState(false);
@@ -191,22 +97,42 @@ function FinanceDashboard({ onLogout }) {
 
   function openType(t) {
     setActiveType(t);
-    setForm({ subject: "", description: "", amount: "" });
+    setForm({ description: "" });
     setFields({});
     setDocs([]);
     setSubmitError("");
+    if (fileRef.current) fileRef.current.value = "";
   }
 
   function closeType() {
     setActiveType(null);
     setFields({});
     setDocs([]);
+    if (fileRef.current) fileRef.current.value = "";
   }
 
   async function submit(e) {
     e.preventDefault();
     setSubmitError("");
     if (!activeType) return;
+
+    const benefitType = fields.benefit_type;
+    const benefit = FIELD_GROUPS.PENSION_ELIGIBILITY[0].options.find(option => option.value === benefitType);
+    const needsAge = ["OLD_AGE", "RETIREMENT"].includes(benefitType);
+    const needsCertificate = ["DEATH_SURVIVOR", "ORPHAN"].includes(benefitType);
+    if (!benefitType) {
+      setSubmitError("Select a pension benefit.");
+      return;
+    }
+    if (needsAge && (!fields.age || Number(fields.age) < 0 || Number(fields.age) > 120)) {
+      setSubmitError("Enter an age between 0 and 120.");
+      return;
+    }
+    if (needsCertificate && (!docs[0] || !docs[0].type.startsWith("image/"))) {
+      setSubmitError("Upload a photo of the required certificate.");
+      return;
+    }
+
     setSubmitting(true);
     try {
       const service = services.find(s => s.service_code === activeType.serviceCode);
@@ -215,9 +141,8 @@ function FinanceDashboard({ onLogout }) {
       const fd = new FormData();
       fd.append("serviceId", service.service_id);
       fd.append("requestType", activeType.key);
-      fd.append("subject", form.subject);
-      fd.append("description", form.description);
-      if (form.amount) fd.append("amount", form.amount);
+      fd.append("subject", `Pension eligibility: ${benefit.label}`);
+      fd.append("description", form.description || `Eligibility check for ${benefit.label}.`);
       fd.append("fields", JSON.stringify(fields));
       for (const f of docs) {
         if (f instanceof File) fd.append("documents", f, f.name);
@@ -288,6 +213,11 @@ function FinanceDashboard({ onLogout }) {
 
   const unread = notifications.filter(n => !n.read_at).length;
   const deletableStatuses = ["DRAFT", "SUBMITTED", "ACTION_REQUIRED"];
+  const benefitType = fields.benefit_type;
+  const needsAge = ["OLD_AGE", "RETIREMENT"].includes(benefitType);
+  const certificateLabel = benefitType === "DEATH_SURVIVOR"
+    ? "Photo of death certificate"
+    : benefitType === "ORPHAN" ? "Photo of birth certificate" : "";
 
   return (
     <main className="dashboard-page" style={layout.page}>
@@ -302,7 +232,6 @@ function FinanceDashboard({ onLogout }) {
               <p style={header.eyebrow}>Ministry of Finance</p>
               <h1 style={header.title}>Finance Services</h1>
             </div>
-            <DashboardSearch onSearch={setSearchQuery} />
           </div>
           <div style={header.flagStripe}>
             <div style={{ flex: 1, background: COLORS.blue }} />
@@ -311,124 +240,36 @@ function FinanceDashboard({ onLogout }) {
           </div>
         </header>
 
-        <section style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
-          gap: 16, marginBottom: 28
-        }}>
-          <StatCard label="My requests" value={requests.length} accent={COLORS.blue} />
-          <StatCard label="My payments" value={payments.length} accent={COLORS.green} />
-          <StatCard label="Open enquiries" value={
-            tickets.filter(t => ["OPEN","UNDER_REVIEW","WAITING_FOR_USER"].includes(t.status)).length
-          } accent={COLORS.blue} />
-        </section>
-
         <Navbar
-          items={[
-            ["services", "Browse services"],
-            ["new", "Submit request"],
-            ["mine", `My requests (${requests.length})`],
-            ["suppliers", `My suppliers (${suppliers.length})`],
-            ["payments", `Payments (${payments.length})`],
-            ["tickets", `Enquiries (${tickets.length})`],
-            ["notifications", `Notifications${unread ? ` (${unread})` : ""}`]
-          ]}
+          items={[["new", "Submit request"]]}
           activeTab={tab}
           onTabChange={setTab}
           onLogout={onLogout}
           user={me}
         />
 
-        {tab === "services" && (
-          <section>
-            <h2 style={section.title}>Finance services</h2>
-            <p style={section.subtitle}>
-              Browse services, eligibility rules, required documents and fees.
-            </p>
-            <div style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-              gap: 16
-            }}>
-              {services.filter(s => matchesDashboardSearch(s, searchQuery)).map(s => (
-                <article key={s.service_id} style={{
-                  background: "#fff", border: `1px solid ${COLORS.border}`,
-                  borderRadius: 12, padding: 20,
-                  display: "flex", flexDirection: "column", gap: 10
-                }}>
-                  <h3 style={{ margin: 0, fontSize: 15, color: COLORS.blue }}>{s.service_name}</h3>
-                  <p style={{ margin: 0, fontSize: 13, color: COLORS.textMid, lineHeight: 1.55 }}>
-                    {s.description}
-                  </p>
-                  {s.eligibility_rules && (
-                    <p style={{ margin: 0, fontSize: 12, color: COLORS.textMuted }}>
-                      <strong>Eligibility:</strong> {s.eligibility_rules}
-                    </p>
-                  )}
-                  {s.required_documents && (
-                    <p style={{ margin: 0, fontSize: 12, color: COLORS.textMuted }}>
-                      <strong>Documents:</strong> {s.required_documents}
-                    </p>
-                  )}
-                  {s.fee_amount != null && (
-                    <p style={{ margin: 0, fontSize: 12, color: COLORS.textMuted }}>
-                      <strong>Fee:</strong> M {Number(s.fee_amount).toFixed(2)}
-                    </p>
-                  )}
-                  {REQUEST_TYPES.find(t => t.serviceCode === s.service_code) && (
-                    <button type="button" onClick={() => {
-                      const requestType = REQUEST_TYPES.find(t => t.serviceCode === s.service_code);
-                      setTab("new");
-                      openType(requestType);
-                    }} style={{
-                      alignSelf: "flex-start", marginTop: "auto", padding: "8px 12px",
-                      border: 0, background: COLORS.blue, color: "#fff", borderRadius: 6,
-                      fontWeight: 700, fontSize: 12, cursor: "pointer", fontFamily: "inherit"
-                    }}>
-                      Open Service
-                    </button>
-                  )}
-                </article>
-              ))}
-            </div>
-          </section>
-        )}
-
         {tab === "new" && (
           <section>
-            <h2 style={section.title}>What would you like to submit?</h2>
-            <p style={section.subtitle}>Choose a service to start a Finance request.</p>
-            <div style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
-              gap: 16
+            <h2 style={section.title}>Submit request</h2>
+            <p style={section.subtitle}>Check which pension benefit may apply to you.</p>
+            <article style={{
+              maxWidth: 620, background: "#fff", border: `1px solid ${COLORS.border}`,
+              borderRadius: 8, padding: 20, display: "flex", flexDirection: "column", gap: 12
             }}>
-              {REQUEST_TYPES.filter(t => matchesDashboardSearch(t, searchQuery)).map(t => {
-                const Icon = t.icon;
-                return (
-                  <article key={t.key} style={{
-                    background: "#fff", border: `1px solid ${COLORS.border}`,
-                    borderRadius: 12, padding: 20,
-                    display: "flex", flexDirection: "column", gap: 8
-                  }}>
-                    <div style={{
-                      width: 40, height: 40, display: "flex", alignItems: "center",
-                      justifyContent: "center", color: COLORS.blue, background: "#edf3ff",
-                      borderRadius: 10
-                    }}>
-                      <Icon />
-                    </div>
-                    <h3 style={{ margin: 0, fontSize: 15, color: COLORS.blue }}>{t.label}</h3>
-                    <button onClick={() => { setTab("new"); openType(t); }} style={{
-                      marginTop: 8, padding: "10px", border: 0,
-                      background: COLORS.blue, color: "#fff",
-                      borderRadius: 6, fontWeight: 700, fontSize: 13,
-                      cursor: "pointer", fontFamily: "inherit"
-                    }}>Start</button>
-                  </article>
-                );
-              })}
-            </div>
+              <h3 style={{ margin: 0, fontSize: 16, color: COLORS.blue }}>
+                Check if I am Eligible for pensions
+              </h3>
+              <p style={{ margin: 0, fontSize: 13, color: COLORS.textMid, lineHeight: 1.55 }}>
+                Choose old age pension, retirement benefit, death / survivor benefit, or orphan pension.
+              </p>
+              <button type="button" onClick={() => openType(REQUEST_TYPES[0])} style={{
+                alignSelf: "flex-start", marginTop: 4, padding: "9px 14px",
+                border: 0, background: COLORS.blue, color: "#fff", borderRadius: 6,
+                fontWeight: 700, fontSize: 13, cursor: "pointer", fontFamily: "inherit"
+              }}>
+                Start eligibility check
+              </button>
+            </article>
           </section>
         )}
 
@@ -444,7 +285,7 @@ function FinanceDashboard({ onLogout }) {
                   color: COLORS.textMuted, fontSize: 13
                 }}>You haven't submitted any Finance requests yet.</div>
               )}
-              {requests.filter(r => matchesDashboardSearch(r, searchQuery)).map(r => {
+              {requests.map(r => {
                 const canDelete = deletableStatuses.includes(r.status);
                 const isDel = deletingId === r.request_id;
                 return (
@@ -506,7 +347,7 @@ function FinanceDashboard({ onLogout }) {
                 No supplier registrations yet. Use "Submit request → Supplier registration".
               </p>
             )}
-            {suppliers.filter(s => matchesDashboardSearch(s, searchQuery)).map(s => (
+            {suppliers.map(s => (
               <article key={s.supplier_id} style={{
                 background: "#fff", border: `1px solid ${COLORS.border}`,
                 borderRadius: 10, padding: 16, marginBottom: 10
@@ -534,7 +375,7 @@ function FinanceDashboard({ onLogout }) {
             {payments.length === 0 && (
               <p style={{ color: COLORS.textMuted, fontSize: 13 }}>No payments yet.</p>
             )}
-            {payments.filter(p => matchesDashboardSearch(p, searchQuery)).map(p => (
+            {payments.map(p => (
               <article key={p.payment_id} style={{
                 background: "#fff", border: `1px solid ${COLORS.border}`,
                 borderRadius: 10, padding: 16, marginBottom: 10
@@ -610,7 +451,7 @@ function FinanceDashboard({ onLogout }) {
             {tickets.length === 0 && (
               <p style={{ color: COLORS.textMuted, fontSize: 13 }}>No enquiries yet.</p>
             )}
-            {tickets.filter(t => matchesDashboardSearch(t, searchQuery)).map(t => (
+            {tickets.map(t => (
               <article key={t.ticket_id} style={{
                 background: "#fff", border: `1px solid ${COLORS.border}`,
                 borderRadius: 10, padding: 16, marginBottom: 10
@@ -651,7 +492,7 @@ function FinanceDashboard({ onLogout }) {
                   color: COLORS.textMuted, fontSize: 13
                 }}>No notifications yet.</div>
               )}
-              {notifications.filter(n => matchesDashboardSearch(n, searchQuery)).map(n => (
+              {notifications.map(n => (
                 <article key={n.notification_id} style={{
                   background: n.read_at ? "#fff" : COLORS.blueLight,
                   border: `1px solid ${n.read_at ? COLORS.border : COLORS.blue}`,
@@ -687,53 +528,48 @@ function FinanceDashboard({ onLogout }) {
             Fill in the details. Fields marked * are required.
           </p>
           <form onSubmit={submit}>
-            <label style={labelStyle}>Subject *</label>
-            <input required value={form.subject}
-              onChange={e => setForm(p => ({ ...p, subject: e.target.value }))}
-              style={{ ...inputStyle, marginBottom: 14 }} />
+            {(FIELD_GROUPS[activeType.key] || []).map(f => (
+              <div key={f.key} style={{ marginBottom: 14 }}>
+                <label style={labelStyle}>{f.label} *</label>
+                <select required value={fields[f.key] || ""}
+                  onChange={e => {
+                    setFields({ [f.key]: e.target.value });
+                    setDocs([]);
+                    if (fileRef.current) fileRef.current.value = "";
+                  }}
+                  style={inputStyle}>
+                  <option value="">Select...</option>
+                  {(f.options || []).map(option => (
+                    <option key={option.value} value={option.value}>{option.label}</option>
+                  ))}
+                </select>
+              </div>
+            ))}
 
-            <label style={labelStyle}>Description *</label>
-            <textarea required rows={4} value={form.description}
-              onChange={e => setForm(p => ({ ...p, description: e.target.value }))}
-              style={{ ...inputStyle, marginBottom: 14 }} />
-
-            {["INVOICE_CLAIM","TAX_REFUND","GOV_PAYMENT"].includes(activeType.key) && (
+            {needsAge && (
               <>
-                <label style={labelStyle}>{activeType.key === "GOV_PAYMENT" ? "Payment amount (LSL) *" : "Amount (LSL)"}</label>
-                <input type="number" min={activeType.key === "GOV_PAYMENT" ? "0.01" : undefined}
-                  step="0.01" required={activeType.key === "GOV_PAYMENT"} value={form.amount}
-                  onChange={e => setForm(p => ({ ...p, amount: e.target.value }))}
+                <label style={labelStyle}>Your age *</label>
+                <input type="number" min="0" max="120" required value={fields.age || ""}
+                  onChange={e => setFields(p => ({ ...p, age: e.target.value }))}
                   style={{ ...inputStyle, marginBottom: 14 }} />
               </>
             )}
 
-            {(FIELD_GROUPS[activeType.key] || []).map(f => (
-              <div key={f.key} style={{ marginBottom: 14 }}>
-                <label style={labelStyle}>{f.label}</label>
-                {f.type === "textarea" ? (
-                  <textarea rows={3} required={f.required} value={fields[f.key] || ""}
-                    onChange={e => setFields(p => ({ ...p, [f.key]: e.target.value }))}
-                    style={inputStyle} />
-                ) : f.type === "select" ? (
-                  <select required={f.required} value={fields[f.key] || ""}
-                    onChange={e => setFields(p => ({ ...p, [f.key]: e.target.value }))}
-                    style={inputStyle}>
-                    <option value="">Select…</option>
-                    {(f.options || []).map(o => <option key={o} value={o}>{o}</option>)}
-                  </select>
-                ) : (
-                  <input type={f.type} required={f.required} value={fields[f.key] || ""}
-                    onChange={e => setFields(p => ({ ...p, [f.key]: e.target.value }))}
-                    style={inputStyle} />
-                )}
-              </div>
-            ))}
+            {certificateLabel && (
+              <>
+                <label style={labelStyle}>{certificateLabel} *</label>
+                <input type="file" accept="image/*" required ref={fileRef}
+                  onChange={e => setDocs(Array.from(e.target.files || []))}
+                  style={{ marginBottom: 14 }} />
+              </>
+            )}
 
-            <label style={labelStyle}>Supporting documents (up to 10)</label>
-            <input type="file" multiple ref={fileRef}
-              onChange={e => setDocs(Array.from(e.target.files || []))} />
+            <label style={labelStyle}>Additional details (optional)</label>
+            <textarea rows={4} value={form.description}
+              onChange={e => setForm(p => ({ ...p, description: e.target.value }))}
+              style={{ ...inputStyle, marginBottom: 14 }} />
             {docs.length > 0 && (
-              <ul style={{ marginTop: 8, paddingLeft: 18, fontSize: 12, color: COLORS.textMid }}>
+              <ul style={{ marginTop: 0, paddingLeft: 18, fontSize: 12, color: COLORS.textMid }}>
                 {docs.map((f, i) => <li key={i}>{f.name} · {Math.round(f.size / 1024)} KB</li>)}
               </ul>
             )}
@@ -833,22 +669,6 @@ function FinanceDashboard({ onLogout }) {
 }
 
 // ============================================================
-function StatCard({ label, value, accent }) {
-  return (
-    <article style={{
-      background: "#fff", border: `1px solid ${COLORS.border}`,
-      borderLeft: `4px solid ${accent}`, borderRadius: 10,
-      padding: "18px 22px"
-    }}>
-      <p style={{
-        margin: "0 0 6px", fontSize: 11, textTransform: "uppercase",
-        letterSpacing: 0.6, color: COLORS.textMuted, fontWeight: 700
-      }}>{label}</p>
-      <p style={{ margin: 0, fontSize: 28, fontWeight: 700, color: accent }}>{value}</p>
-    </article>
-  );
-}
-
 function Row({ label, value }) {
   return (
     <div style={{
