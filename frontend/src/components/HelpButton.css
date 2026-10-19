@@ -202,6 +202,87 @@ body[data-theme="dark"] .passport-approval-chip {
   color: #ffe08a !important;
 }
 
+body[data-theme="dark"] .passport-office-dashboard .passport-service-button {
+  background: transparent !important;
+  color: #fff !important;
+}
+
+body[data-theme="dark"] .passport-office-dashboard .passport-service-button:disabled {
+  background: transparent !important;
+  color: #c4d2df !important;
+}
+
+body[data-theme="dark"] .passport-office-dashboard .passport-service-icon-box {
+  background: transparent !important;
+  color: #93c5fd !important;
+}
+
+body[data-theme="dark"] .passport-office-dashboard .passport-service-icon-box svg {
+  color: #93c5fd !important;
+  stroke: #93c5fd !important;
+}
+
+body[data-theme="dark"] .passport-office-dashboard .passport-service-title {
+  color: #fff !important;
+}
+
+body[data-theme="dark"] .passport-office-dashboard .passport-service-button:hover {
+  background: #102b48 !important;
+}
+
+body[data-theme="dark"] .passport-office-dashboard .passport-service-option {
+  border-color: #49647d !important;
+  background: #173c5e !important;
+  color: #fff !important;
+}
+
+body[data-theme="dark"] .passport-office-dashboard .passport-dashboard-overlay {
+  background: rgb(2 8 23 / 82%) !important;
+}
+
+body[data-theme="dark"] .passport-office-dashboard .passport-application .passport-dashboard-dialog {
+  border: 1px solid #49647d;
+  background: #102b48 !important;
+  color: #f8fafc !important;
+}
+
+body[data-theme="dark"] .passport-office-dashboard .passport-application .passport-dashboard-dialog h2 {
+  color: #fff !important;
+}
+
+body[data-theme="dark"] .passport-office-dashboard .passport-application .passport-dashboard-dialog p {
+  color: #d1dbe7 !important;
+}
+
+body[data-theme="dark"] .passport-office-dashboard .passport-application .passport-service-summary {
+  border: 1px solid #49647d;
+  background: #173c5e !important;
+  color: #f8fafc !important;
+}
+
+body[data-theme="dark"] .passport-office-dashboard .passport-application .passport-document-upload {
+  border-color: #49647d !important;
+  background: #173c5e !important;
+}
+
+body[data-theme="dark"] .passport-office-dashboard .passport-application .passport-form-warning {
+  border-color: #94721e !important;
+  background: #33270b !important;
+  color: #ffe08a !important;
+}
+
+body[data-theme="dark"] .passport-office-dashboard .passport-application .passport-submit-error {
+  border: 1px solid #a33a3a;
+  background: #3b1f26 !important;
+  color: #ffc9c9 !important;
+}
+
+body[data-theme="dark"] .passport-office-dashboard .passport-application .passport-dialog-cancel {
+  border-color: #6b8298 !important;
+  background: #173c5e !important;
+  color: #fff !important;
+}
+
 body[data-theme="dark"] .dashboard-route-container [style*="background: rgb(255, 255, 255)"],
 body[data-theme="dark"] .dashboard-route-container [style*="background-color: rgb(255, 255, 255)"],
 body[data-theme="dark"] .dashboard-route-container [style*="background: rgb(244, 247, 251)"],

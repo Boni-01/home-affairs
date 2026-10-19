@@ -89,7 +89,7 @@ export default function HelpButton() {
             <path d="M20.9 13A9 9 0 0 1 11 3.1 9 9 0 1 0 20.9 13Z" />
           )}
         </svg>
-        <span>Dark Mode</span>
+        <span>{isDarkMode ? "Lightmode" : "Dark Mode"}</span>
       </button>
       {!isAdminDashboard && (
         <button

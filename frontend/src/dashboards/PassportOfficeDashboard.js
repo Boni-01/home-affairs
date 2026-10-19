@@ -77,6 +77,7 @@ const DELETABLE_STATUSES = ["submitted", "more_information_required"];
 function PassportOfficeDashboard({ onLogout }) {
   const [tab, setTab] = useState("apply");
   const [searchQuery, setSearchQuery] = useState("");
+  const [firstTimeOptionsOpen, setFirstTimeOptionsOpen] = useState(false);
   const [me, setMe] = useState(null);
   const [services, setServices] = useState([]);
   const [applications, setApplications] = useState([]);
@@ -144,6 +145,15 @@ function PassportOfficeDashboard({ onLogout }) {
     }
     return out;
   }, [services]);
+
+  const visibleServiceTypes = useMemo(() => {
+    return ["first_time", "renewal", "replacement"].map(appType => ({
+      appType,
+      services: TIER_ORDER
+        .flatMap(tier => groupedServices[appType]?.[tier] || [])
+        .filter(service => matchesDashboardSearch(service, searchQuery))
+    }));
+  }, [groupedServices, searchQuery]);
 
   const isEmergencyFirstTime = activeService?.service_code === "PP_EMERGENCY";
   const isRenewal = activeService?.application_type === "renewal";
@@ -354,7 +364,7 @@ function PassportOfficeDashboard({ onLogout }) {
   const unread = notifications.filter(n => !n.read_at).length;
 
   return (
-    <main className="dashboard-page" style={layout.page}>
+    <main className="dashboard-page passport-office-dashboard" style={layout.page}>
       <div style={layout.container}>
         <header style={header.wrapper}>
           <div style={{
@@ -391,6 +401,7 @@ function PassportOfficeDashboard({ onLogout }) {
 
         {tab === "apply" && (
           <section style={section.wrapper}>
+            <h2 style={section.title}>Available passport services</h2>
 
             <div style={{
               marginBottom: 20, padding: 14, background: "#eff8ff",
@@ -408,99 +419,70 @@ function PassportOfficeDashboard({ onLogout }) {
               }}>No passport services are currently available.</div>
             )}
 
-            {["first_time", "renewal", "replacement"].map(appType => {
-              const tiers = groupedServices[appType];
-              if (!tiers) return null;
-              return (
-                <div key={appType} style={{ marginBottom: 40 }}>
-                  <h3 style={{ margin: "0 0 4px", color: COLORS.blue, fontSize: 18 }}>
-                    {APP_TYPE_LABEL[appType] || appType}
-                  </h3>
-                  <p style={{ margin: "0 0 16px", fontSize: 13, color: COLORS.textMuted }}>
-                    {appType === "first_time"
-                      ? "Choose Standard (M130) or Emergency (M600). Emergency applications require an OBR from Police and a Passport Office response."
-                      : appType === "renewal"
-                        ? "One renewal service is available at M130. Upload the expired passport's front page before completing the form."
-                        : "One replacement service is available at M130. Submit completed details before attending your appointment."}
-                  </p>
+            {Object.keys(groupedServices).length > 0 && (
+              <div style={passportServiceGrid}>
+                {visibleServiceTypes.map(({ appType, services: serviceOptions }) => (
+                  <article key={appType} style={passportServiceCard}>
+                    <button
+                      type="button"
+                      disabled={serviceOptions.length === 0}
+                      onClick={() => appType === "first_time"
+                        ? setFirstTimeOptionsOpen(open => !open)
+                        : serviceOptions[0] && openService(serviceOptions[0].service_id)}
+                      className="passport-service-button"
+                      style={{
+                        ...passportServiceButton,
+                        ...(serviceOptions.length === 0 ? passportServiceButtonDisabled : {})
+                      }}
+                    >
+                      <span className="passport-service-icon-box" style={passportServiceIconBox} aria-hidden="true">
+                        <PassportServiceIcon type={appType} />
+                      </span>
+                      <span className="passport-service-title" style={passportServiceTitle}>
+                        {appType === "first_time"
+                          ? "First-time Passport (Standard & Urgent)"
+                          : APP_TYPE_LABEL[appType]}
+                      </span>
+                    </button>
 
-                  <div style={{
-                    display: "grid",
-                    gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
-                    gap: 12
-                  }}>
-                    {TIER_ORDER.filter(t => tiers[t]).map(tierKey => {
-                      const list = tiers[tierKey];
-                      const meta = TIER_META[tierKey] || TIER_META.standard;
-                      return list.filter(svc => matchesDashboardSearch(svc, searchQuery)).map(svc => (
-                        <article key={svc.service_id} style={{
-                          position: "relative", background: "#fff",
-                          border: `1px solid ${COLORS.border}`,
-                          borderTop: `4px solid ${meta.color}`,
-                          borderRadius: 8, padding: 16,
-                          display: "flex", flexDirection: "column",
-                          boxShadow: "0 1px 4px rgba(0,32,159,0.06)"
-                        }}>
-                          {appType === "first_time" && (
-                            <span className={`passport-tier-badge passport-tier-${tierKey}`} style={{
-                              position: "absolute", top: -10, left: 14,
-                              background: meta.bg, color: meta.color,
-                              fontSize: 9, fontWeight: 800,
-                              padding: "3px 8px", borderRadius: 20,
-                              letterSpacing: 0.6, textTransform: "uppercase",
-                              border: `1px solid ${meta.color}22`
-                            }}>
-                              {meta.label}
-                            </span>
-                          )}
-
-                          <h4 style={{ margin: "6px 0 4px", fontSize: 14, color: COLORS.blue, fontWeight: 700, lineHeight: 1.35 }}>
-                            {svc.service_name}
-                          </h4>
-
-                          {appType === "first_time" && meta.note && (
-                            <p style={{ margin: "0 0 8px", fontSize: 11, color: meta.color, fontWeight: 600 }}>
-                              {meta.note}
-                            </p>
-                          )}
-
-                          <p style={{ margin: "0 0 10px", fontSize: 12, color: COLORS.textMuted, lineHeight: 1.45, flexGrow: 1 }}>
-                            {svc.description}
-                          </p>
-
-                          <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 10 }}>
-                            <span style={{ fontSize: 20, fontWeight: 800, color: COLORS.blue }}>
-                              M {Number(svc.fee_amount).toFixed(2)}
-                            </span>
-                            <span style={{ fontSize: 11, color: COLORS.textMuted, fontWeight: 600 }}>
-                              · {svc.processing_days} working days
-                            </span>
-                          </div>
-
-                          <div style={{
-                            display: "flex", flexWrap: "wrap", gap: 8,
-                            fontSize: 10, color: COLORS.textMid,
-                            paddingTop: 10, borderTop: `1px solid ${COLORS.borderLight}`,
-                            marginBottom: 12
-                          }}>
-                            {svc.requires_appointment ? <Chip>Appointment required</Chip> : null}
-                            {svc.requires_biometrics ? <Chip>Biometrics</Chip> : null}
-                            {svc.requires_approval ? <Chip tone="warn" className="passport-approval-chip">Approval required</Chip> : null}
-                          </div>
-
-                          <button onClick={() => openService(svc.service_id)} style={{
-                            width: "100%", padding: "11px", border: 0,
-                            background: COLORS.blue, color: "#fff",
-                            borderRadius: 6, fontWeight: 700, fontSize: 13,
-                            cursor: "pointer", fontFamily: "inherit"
-                          }}>Start application</button>
-                        </article>
-                      ));
-                    })}
-                  </div>
-                </div>
-              );
-            })}
+                    {appType === "first_time" && firstTimeOptionsOpen && serviceOptions.length > 0 && (
+                      <div style={passportServiceOptions}>
+                        {serviceOptions.map(svc => {
+                          const tierKey = svc.processing_tier || "standard";
+                          const meta = TIER_META[tierKey] || TIER_META.standard;
+                          return (
+                            <button
+                              key={svc.service_id}
+                              type="button"
+                              onClick={() => {
+                                setFirstTimeOptionsOpen(false);
+                                openService(svc.service_id);
+                              }}
+                              className="passport-service-option"
+                              style={{
+                                ...passportServiceOption,
+                                borderLeft: `3px solid ${meta.color}`
+                              }}
+                            >
+                              <span>{meta.label}</span>
+                              <strong style={{ color: COLORS.blue }}>
+                                M {Number(svc.fee_amount).toFixed(2)}
+                              </strong>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </article>
+                ))}
+              </div>
+            )}
+            {Object.keys(groupedServices).length > 0 &&
+              visibleServiceTypes.every(group => group.services.length === 0) && (
+              <p style={{ color: COLORS.textMuted, fontSize: 13 }}>
+                No passport services match your search.
+              </p>
+            )}
           </section>
         )}
 
@@ -850,13 +832,13 @@ function PassportOfficeDashboard({ onLogout }) {
       </div>
 
       {activeService && (
-        <Overlay onClose={closeService}>
+        <Overlay className="passport-application" onClose={closeService}>
           <h2 style={{ margin: "0 0 4px", color: COLORS.blue }}>{activeService.service_name}</h2>
           <p style={{ margin: "0 0 8px", fontSize: 13, color: COLORS.textMuted }}>
             {activeService.description}
           </p>
 
-          <div style={{
+          <div className="passport-service-summary" style={{
             display: "flex", gap: 16, flexWrap: "wrap",
             padding: "10px 14px", background: COLORS.blueLight,
             borderRadius: 8, marginBottom: 18, fontSize: 12,
@@ -904,7 +886,7 @@ function PassportOfficeDashboard({ onLogout }) {
 
             {passportSizePhoto && isLostReplacement && (
               <>
-                <div style={{
+                <div className="passport-form-warning" style={{
                   padding: 12, marginBottom: 14, borderRadius: 6,
                   background: "#fff4df", border: "1px solid #f0c36d",
                   color: "#7a3f00", fontSize: 13, lineHeight: 1.5
@@ -999,14 +981,14 @@ function PassportOfficeDashboard({ onLogout }) {
             )}
 
             {submitError && (
-              <p style={{
+              <p className="passport-submit-error" style={{
                 color: COLORS.error, fontSize: 13,
                 padding: 10, background: "#fdecea", borderRadius: 6
               }}>{submitError}</p>
             )}
 
             <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 16 }}>
-              <button type="button" onClick={closeService} style={btnOutline}>Cancel</button>
+              <button type="button" onClick={closeService} className="passport-dialog-cancel" style={btnOutline}>Cancel</button>
               <button
                 type="submit"
                 disabled={submitting || !canContinueForm}
@@ -1220,7 +1202,7 @@ function Field({ field, value, onChange }) {
 
 function PassportDocumentUpload({ label, instructions, accept, file, onChange }) {
   return (
-    <div style={{
+    <div className="passport-document-upload" style={{
       padding: 14, marginBottom: 16, borderRadius: 8,
       background: "#fff8e1", border: "1px solid #b4530955"
     }}>
@@ -1246,14 +1228,14 @@ function PassportDocumentUpload({ label, instructions, accept, file, onChange })
   );
 }
 
-function Overlay({ children, onClose }) {
+function Overlay({ children, onClose, className = "" }) {
   return (
-    <div onClick={onClose} style={{
+    <div onClick={onClose} className={`passport-dashboard-overlay ${className}`} style={{
       position: "fixed", inset: 0, zIndex: 1300,
       background: "rgba(15,23,42,0.5)",
       display: "flex", alignItems: "center", justifyContent: "center", padding: 24
     }}>
-      <div onClick={e => e.stopPropagation()} style={{
+      <div onClick={e => e.stopPropagation()} className="passport-dashboard-dialog" style={{
         background: "#fff", borderRadius: 12, padding: 28,
         maxWidth: 760, width: "100%", maxHeight: "90vh",
         overflowY: "auto", fontFamily: "Arial, sans-serif",
@@ -1393,6 +1375,121 @@ function InfoBlock({ label, value }) {
     </div>
   );
 }
+
+function PassportServiceIcon({ type }) {
+  return (
+    <svg
+      width="36"
+      height="36"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      {type === "renewal" ? (
+        <>
+          <path d="M20 7v5h-5" />
+          <path d="M4 17v-5h5" />
+          <path d="M5.6 9a7 7 0 0 1 11.6-2L20 12M4 12l2.8 5a7 7 0 0 0 11.6-2" />
+        </>
+      ) : type === "replacement" ? (
+        <>
+          <rect x="4" y="3" width="13" height="18" rx="2" />
+          <path d="M8 8h5M8 12h3" />
+          <path d="m17 14 4 4m0-4-4 4" />
+        </>
+      ) : (
+        <>
+          <rect x="4" y="2.5" width="16" height="19" rx="2" />
+          <circle cx="12" cy="10" r="3" />
+          <path d="M8 17h8M12 7v6M9 10h6" />
+        </>
+      )}
+    </svg>
+  );
+}
+
+const passportServiceGrid = {
+  display: "grid",
+  gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+  gap: 14
+};
+
+const passportServiceCard = {
+  display: "flex",
+  flexDirection: "column",
+  minWidth: 0,
+  gap: 10
+};
+
+const passportServiceIconBox = {
+  width: 48,
+  height: 48,
+  display: "grid",
+  placeItems: "center",
+  flexShrink: 0,
+  color: "#00209F",
+  background: "transparent"
+};
+
+const passportServiceButton = {
+  display: "flex",
+  flexDirection: "row",
+  alignItems: "center",
+  justifyContent: "flex-start",
+  gap: 14,
+  width: "100%",
+  minHeight: 80,
+  padding: "12px 8px",
+  color: COLORS.blue,
+  background: "transparent",
+  border: 0,
+  borderRadius: 8,
+  cursor: "pointer",
+  fontFamily: "inherit",
+  textAlign: "left",
+  transition: "background 0.15s"
+};
+
+const passportServiceButtonDisabled = {
+  color: COLORS.textMuted,
+  background: "transparent",
+  cursor: "not-allowed",
+  opacity: 0.6
+};
+
+const passportServiceTitle = {
+  maxWidth: "100%",
+  color: "#1B3A8C",
+  fontSize: 13,
+  fontWeight: 700,
+  lineHeight: 1.3,
+  textAlign: "left"
+};
+
+const passportServiceOptions = {
+  display: "grid",
+  gap: 10
+};
+
+const passportServiceOption = {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  gap: 8,
+  width: "100%",
+  padding: "10px 12px",
+  color: COLORS.textDark,
+  background: "#F8FAFC",
+  border: `1px solid ${COLORS.borderLight}`,
+  borderRadius: 8,
+  cursor: "pointer",
+  fontFamily: "inherit",
+  fontSize: 13,
+  textAlign: "left"
+};
 
 const labelStyle = {
   display: "block", fontSize: 13, fontWeight: 600,
