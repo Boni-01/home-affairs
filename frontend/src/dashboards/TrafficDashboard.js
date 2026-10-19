@@ -150,31 +150,6 @@ async function api(path, opts = {}) {
 // SERVICE CONFIG — drives the modal form
 // ============================================================
 const SERVICE_CONFIG = {
-  LEARNER_LICENCE: {
-    label: "Learner's Licence Application",
-    fee: 50,
-    icon: TrafficIcons.Document,
-    fields: [
-      { key: "id_number", label: "National ID Number", type: "text", required: true },
-      { key: "date_of_birth", label: "Date of Birth", type: "date", required: true },
-      { key: "licence_category", label: "Licence Category", type: "select", options: ["A - Motorcycle", "B - Light Motor Vehicle", "C - Heavy Motor Vehicle", "EB - Learner Light", "EC - Learner Heavy"], required: true },
-      { key: "test_center", label: "Preferred Test Centre", type: "select", options: ["Maseru", "Leribe", "Berea", "Mafeteng", "Mohale's Hoek", "Quthing", "Qacha's Nek", "Mokhotlong", "Thaba-Tseka", "Butha-Buthe"], required: true },
-      { key: "medical_conditions", label: "Any medical conditions? (optional)", type: "textarea" }
-    ]
-  },
-  DRIVER_LICENCE: {
-    label: "Driver's Licence Application",
-    fee: 100,
-    icon: TrafficIcons.Car,
-    fields: [
-      { key: "id_number", label: "National ID Number", type: "text", required: true },
-      { key: "date_of_birth", label: "Date of Birth", type: "date", required: true },
-      { key: "licence_category", label: "Licence Category", type: "select", options: ["A - Motorcycle", "B - Light Motor Vehicle", "C - Heavy Motor Vehicle", "D - Public Service Vehicle"], required: true },
-      { key: "has_existing_licence", label: "Do you already have a licence?", type: "select", options: ["No", "Yes"], required: true },
-      { key: "existing_licence_number", label: "Existing Licence Number (if any)", type: "text" },
-      { key: "test_center", label: "Preferred Test Centre", type: "select", options: ["Maseru", "Leribe", "Berea", "Mafeteng", "Mohale's Hoek", "Quthing", "Qacha's Nek", "Mokhotlong", "Thaba-Tseka", "Butha-Buthe"], required: true }
-    ]
-  },
   LICENCE_RENEWAL: {
     label: "Driver's Licence Renewal",
     fee: 80,
@@ -712,6 +687,10 @@ function TrafficDashboard({ onLogout }) {
 
   // Computed values
   const unpaidFines = fines.filter(f => f.fine_status === "UNPAID");
+  const licenceServices = Object.entries(SERVICE_CONFIG)
+    .filter(([key, cfg]) => key.startsWith("LICENCE_") && matchesDashboardSearch([key, cfg], searchQuery));
+  const otherServices = Object.entries(SERVICE_CONFIG)
+    .filter(([key, cfg]) => !key.startsWith("LICENCE_") && matchesDashboardSearch([key, cfg], searchQuery));
 
   if (loading && !me) {
     return (
@@ -866,54 +845,74 @@ function TrafficDashboard({ onLogout }) {
             <h2 style={section.title}>Available Services</h2>
             <p style={section.subtitle}>Select a service to start an application.</p>
 
+            {licenceServices.length > 0 && (
+              <details style={{
+                marginBottom: 20, border: `1px solid ${COLORS.border}`,
+                borderRadius: 8, background: "#fff"
+              }}>
+                <summary style={{
+                  padding: "14px 16px", color: COLORS.blue,
+                  fontSize: 14, fontWeight: 700, cursor: "pointer"
+                }}>Licence Services</summary>
+                <div style={{ padding: "0 16px 12px" }}>
+                  {licenceServices.map(([key, cfg]) => (
+                    <button key={key} onClick={() => openServiceModal(key)} style={{
+                      display: "flex", justifyContent: "space-between", alignItems: "center",
+                      width: "100%", padding: "12px 0", color: COLORS.textDark,
+                      background: "transparent", border: 0,
+                      borderTop: `1px solid ${COLORS.borderLight}`,
+                      cursor: "pointer", textAlign: "left", fontFamily: "inherit"
+                    }}>
+                      <span style={{ fontSize: 13, fontWeight: 600 }}>{cfg.label}</span>
+                      <span style={{ color: COLORS.textMuted, fontSize: 12 }}>M {cfg.fee}</span>
+                    </button>
+                  ))}
+                </div>
+              </details>
+            )}
+
             <div style={{
               display: "grid",
               gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
-              gap: 18
+              columnGap: 24
             }}>
-              {Object.entries(SERVICE_CONFIG).filter(([key, cfg]) => matchesDashboardSearch([key, cfg], searchQuery)).map(([key, cfg]) => (
-                <article key={key} style={{
-                  background: "#fff",
-                  border: `1px solid ${COLORS.border}`,
-                  borderRadius: 12, padding: 22,
-                  boxShadow: "0 2px 8px rgba(0,32,159,0.05)",
-                  display: "flex", flexDirection: "column",
-                  transition: "transform 0.15s, box-shadow 0.15s"
-                }}
-                  onMouseEnter={e => {
-                    e.currentTarget.style.transform = "translateY(-3px)";
-                    e.currentTarget.style.boxShadow = "0 12px 28px rgba(0,32,159,0.12)";
-                  }}
-                  onMouseLeave={e => {
-                    e.currentTarget.style.transform = "translateY(0)";
-                    e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,32,159,0.05)";
-                  }}
-                >
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
-                    <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", color: COLORS.blue }}>
-                      {React.createElement(cfg.icon, { size: 28 })}
-                    </span>
-                    <span style={{
-                      fontSize: 12, fontWeight: 700,
-                      padding: "4px 10px", borderRadius: 6,
-                      background: "#eff8ff", color: COLORS.blue
-                    }}>M {cfg.fee}</span>
+              {otherServices.map(([key, cfg]) => (
+                <div key={key} style={{
+                  display: "flex", alignItems: "center", gap: 12,
+                  minWidth: 0, padding: "14px 0",
+                  borderBottom: `1px solid ${COLORS.borderLight}`
+                }}>
+                  <span style={{
+                    display: "inline-flex", flexShrink: 0,
+                    alignItems: "center", justifyContent: "center",
+                    width: 40, height: 40, color: COLORS.blue,
+                    background: "#eff8ff", border: "1px solid #d1e9ff",
+                    borderRadius: 8
+                  }}>
+                    {React.createElement(cfg.icon, { size: 20 })}
+                  </span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <h3 style={{ margin: 0, fontSize: 14, color: COLORS.textDark, fontWeight: 700 }}>
+                      {cfg.label}
+                    </h3>
+                    <p style={{ margin: "4px 0 0", fontSize: 12, color: COLORS.textMuted }}>
+                      {cfg.fields.length} fields · M {cfg.fee}
+                    </p>
                   </div>
-                  <h3 style={{ margin: "0 0 8px", fontSize: 15, color: COLORS.blue, fontWeight: 700 }}>
-                    {cfg.label}
-                  </h3>
-                  <p style={{ margin: "0 0 16px", fontSize: 12, color: COLORS.textMuted, flexGrow: 1 }}>
-                    {cfg.fields.length} fields required
-                  </p>
                   <button onClick={() => openServiceModal(key)} style={{
-                    width: "100%", padding: "11px", border: 0,
+                    flexShrink: 0, padding: "8px 12px", border: 0,
                     background: COLORS.blue, color: "#fff",
-                    borderRadius: 6, fontWeight: 700, fontSize: 13,
+                    borderRadius: 6, fontWeight: 700, fontSize: 12,
                     cursor: "pointer", fontFamily: "inherit"
-                  }}>Start Application</button>
-                </article>
+                  }}>Apply</button>
+                </div>
               ))}
             </div>
+            {licenceServices.length === 0 && otherServices.length === 0 && (
+              <p style={{ padding: 24, color: COLORS.textMuted, textAlign: "center" }}>
+                No services match your search.
+              </p>
+            )}
           </section>
         )}
 
@@ -982,13 +981,12 @@ function TrafficDashboard({ onLogout }) {
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                 <button onClick={() => openServiceModal("LICENCE_RENEWAL")} style={btnOutline}>Renew</button>
                 <button onClick={() => openServiceModal("LICENCE_REPLACEMENT")} style={btnOutline}>Replace</button>
-                <button onClick={() => openServiceModal("DRIVER_LICENCE")} style={btnPrimary}>Apply New</button>
               </div>
             </div>
 
             {licences.length === 0 ? (
               <div style={{ textAlign: "center", padding: 40, color: COLORS.textMuted, fontSize: 13 }}>
-                No licences on record. Click "Apply New" to apply.
+                No licences on record.
               </div>
             ) : (
               <div style={{

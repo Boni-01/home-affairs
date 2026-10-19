@@ -197,6 +197,7 @@ const FIELDS_BY_TYPE = {
 function PoliceDashboard({ onLogout }) {
   const [tab, setTab] = useState("report");
   const [searchQuery, setSearchQuery] = useState("");
+  const [reportOptionsOpen, setReportOptionsOpen] = useState(false);
   const [me, setMe] = useState(null);
   const [categories, setCategories] = useState([]);
   const [applications, setApplications] = useState([]);
@@ -450,6 +451,14 @@ function PoliceDashboard({ onLogout }) {
   const unread = notifications.filter(n => !n.read_at).length;
   const unreadCertNotifs = certNotifications.filter(n => !n.read_at).length;
   const deletableStatuses = ["submitted", "received", "more_information_required"];
+  const visibleReportTypes = APPLICATION_TYPES.filter(t =>
+    t.label.toLowerCase().startsWith("report") &&
+    matchesDashboardSearch(t, searchQuery)
+  );
+  const visibleOtherTypes = APPLICATION_TYPES.filter(t =>
+    !t.label.toLowerCase().startsWith("report") &&
+    matchesDashboardSearch(t, searchQuery)
+  );
 
   return (
     <main className="dashboard-page" style={layout.page}>
@@ -524,41 +533,78 @@ function PoliceDashboard({ onLogout }) {
               Choose a service. You'll be asked for the details we need to process it.
             </p>
 
-            <div style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
-              gap: 16
-            }}>
-              {APPLICATION_TYPES.filter(t => matchesDashboardSearch(t, searchQuery)).map(t => {
+            <div style={policeServiceGrid}>
+              {visibleReportTypes.length > 0 && (
+                <div style={policeServiceGroup}>
+                  <button
+                    type="button"
+                    className="police-service-icon-button"
+                    aria-expanded={reportOptionsOpen}
+                    aria-controls="police-report-service-options"
+                    aria-label={reportOptionsOpen ? "Hide report services" : "Show report services"}
+                    onClick={() => setReportOptionsOpen(open => !open)}
+                    style={policeServiceIconButton}
+                  >
+                    <span className="police-service-icon police-service-icon-tile" style={policeServiceIcon}>
+                      <APPLICATION_ICONS.crime_report />
+                    </span>
+                    <span style={policeServiceLabel}>Report</span>
+                    <span className="police-service-chevron" style={policeServiceChevron} aria-hidden="true">
+                      {reportOptionsOpen ? "−" : "+"}
+                    </span>
+                  </button>
+                  {reportOptionsOpen && (
+                    <div id="police-report-service-options" className="police-report-dropdown" style={policeReportDropdown}>
+                      {visibleReportTypes.map(t => {
+                        const Icon = t.icon;
+                        return (
+                          <button
+                            key={t.key}
+                            type="button"
+                            className="police-service-icon-button"
+                            onClick={() => {
+                              setReportOptionsOpen(false);
+                              openType(t);
+                            }}
+                            style={policeServiceIconButton}
+                          >
+                            <span className="police-service-icon police-service-icon-tile" style={policeServiceIcon}>
+                              <Icon />
+                            </span>
+                            <span style={policeServiceLabel}>{t.label}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+              {visibleOtherTypes.map(t => {
                 const Icon = t.icon;
                 return (
-                  <article key={t.key} style={{
-                    background: "#fff", border: `1px solid ${COLORS.border}`,
-                    borderRadius: 12, padding: 20,
-                    boxShadow: "0 2px 8px rgba(0,32,159,0.05)",
-                    display: "flex", flexDirection: "column", gap: 8
-                  }}>
-                    <div style={{
-                      width: 40, height: 40, display: "flex", alignItems: "center",
-                      justifyContent: "center", color: COLORS.blue, background: "#edf3ff",
-                      borderRadius: 10
-                    }}>
+                  <button
+                    key={t.key}
+                    type="button"
+                    className="police-service-icon-button"
+                    onClick={() => openType(t)}
+                    style={policeServiceIconButton}
+                  >
+                    <span className="police-service-icon police-service-icon-tile" style={policeServiceIcon}>
                       <Icon />
-                    </div>
-                    <h3 style={{ margin: 0, fontSize: 15, color: COLORS.blue }}>{t.label}</h3>
-                    <p style={{ margin: 0, fontSize: 13, color: COLORS.textMuted, lineHeight: 1.5, flexGrow: 1 }}>
-                      {t.description}
-                    </p>
-                    <button onClick={() => openType(t)} style={{
-                      width: "100%", padding: "10px", border: 0,
-                      background: COLORS.blue, color: "#fff",
-                      borderRadius: 6, fontWeight: 700, fontSize: 13,
-                      cursor: "pointer", fontFamily: "inherit"
-                    }}>Start</button>
-                  </article>
+                    </span>
+                    <span style={policeServiceLabel}>{t.label}</span>
+                  </button>
                 );
               })}
             </div>
+
+            <aside className="police-report-guidance" style={policeReportGuidance}>
+              <h3 style={policeReportGuidanceTitle}>After submitting a report</h3>
+              <p style={policeReportGuidanceText}>
+                Keep your reference number, track progress in <strong>My reports</strong>,
+                and check <strong>Notifications</strong> for updates or requests for more information.
+              </p>
+            </aside>
           </section>
         )}
 
@@ -1240,6 +1286,101 @@ function Overlay({ children, onClose }) {
     </div>
   );
 }
+
+const policeServiceGrid = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+  gap: 8
+};
+
+const policeServiceGroup = {
+  display: "flex",
+  flexDirection: "column",
+  gap: 8,
+  minWidth: 0,
+  position: "relative"
+};
+
+const policeReportDropdown = {
+  position: "absolute",
+  top: "100%",
+  left: 0,
+  zIndex: 20,
+  display: "grid",
+  gap: 4,
+  width: "min(360px, calc(100vw - 48px))",
+  maxHeight: 360,
+  overflowY: "auto",
+  padding: 8,
+  border: `1px solid ${COLORS.border}`,
+  borderRadius: 10,
+  background: "#fff",
+  boxShadow: "0 12px 28px rgba(15,23,42,0.18)"
+};
+
+const policeServiceIconButton = {
+  display: "flex",
+  alignItems: "center",
+  gap: 12,
+  width: "100%",
+  minHeight: 64,
+  padding: "8px 10px",
+  border: 0,
+  borderRadius: 8,
+  background: "transparent",
+  color: COLORS.blue,
+  cursor: "pointer",
+  fontFamily: "inherit",
+  textAlign: "left"
+};
+
+const policeServiceChevron = {
+  marginLeft: "auto",
+  fontSize: 20,
+  lineHeight: 1,
+  fontWeight: 500
+};
+
+const policeServiceIcon = {
+  display: "grid",
+  placeItems: "center",
+  flex: "0 0 44px",
+  width: 44,
+  height: 44,
+  color: COLORS.blue,
+  background: "#edf3ff",
+  border: `1px solid ${COLORS.borderLight}`,
+  borderRadius: 10
+};
+
+const policeServiceLabel = {
+  color: COLORS.textDark,
+  fontSize: 14,
+  fontWeight: 700,
+  lineHeight: 1.35
+};
+
+const policeReportGuidance = {
+  marginTop: 48,
+  padding: 18,
+  border: `1px solid ${COLORS.border}`,
+  borderLeft: `4px solid ${COLORS.green}`,
+  borderRadius: 10,
+  background: "#fff"
+};
+
+const policeReportGuidanceTitle = {
+  margin: "0 0 6px",
+  color: COLORS.blue,
+  fontSize: 14
+};
+
+const policeReportGuidanceText = {
+  margin: 0,
+  color: COLORS.textMid,
+  fontSize: 13,
+  lineHeight: 1.55
+};
 
 const labelStyle = {
   display: "block", fontSize: 13, fontWeight: 600,

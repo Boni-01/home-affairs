@@ -186,6 +186,33 @@ body[data-theme="dark"] .police-emergency-icon {
   color: #facc15 !important;
 }
 
+body[data-theme="dark"] .police-service-icon-tile {
+  border-color: #49647d !important;
+  background: #173c5e !important;
+  color: #93c5fd !important;
+}
+
+body[data-theme="dark"] .police-service-icon-tile svg {
+  color: #93c5fd !important;
+  stroke: #93c5fd !important;
+}
+
+body[data-theme="dark"] .police-service-icon-button:hover,
+body[data-theme="dark"] .police-service-icon-button:focus-visible {
+  background: #102b48 !important;
+}
+
+body[data-theme="dark"] .police-report-dropdown {
+  border-color: #49647d !important;
+  background: #102b48 !important;
+}
+
+body[data-theme="dark"] .police-report-guidance {
+  border-color: #49647d !important;
+  border-left-color: #009543 !important;
+  background: #102b48 !important;
+}
+
 body[data-theme="dark"] .passport-tier-badge {
   color: #1e293b !important;
 }

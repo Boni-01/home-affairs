@@ -492,37 +492,33 @@ function PensionsDashboard({ onLogout }) {
               Choose the type of application you want to submit. We'll ask for the
               required details and supporting documents.
             </p>
-            <div style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
-              gap: 16
-            }}>
+            <div style={pensionServiceGrid}>
               {APPLICATION_TYPES.filter(t => matchesDashboardSearch(t, searchQuery)).map(t => {
                 const Icon = t.icon;
                 return (
-                  <article key={t.key} style={{
-                    background: "#fff", border: `1px solid ${COLORS.border}`,
-                    borderRadius: 12, padding: 20,
-                    display: "flex", flexDirection: "column", gap: 8
-                  }}>
-                    <div style={{
-                      width: 40, height: 40, display: "flex", alignItems: "center",
-                      justifyContent: "center", color: COLORS.blue, background: "#edf3ff",
-                      borderRadius: 10
-                    }}>
+                  <button
+                    key={t.key}
+                    type="button"
+                    className="pension-service-button"
+                    onClick={() => openType(t)}
+                    style={pensionServiceButton}
+                  >
+                    <span className="pension-service-icon-tile" style={pensionServiceIconTile}>
                       <Icon />
-                    </div>
-                    <h3 style={{ margin: 0, fontSize: 15, color: COLORS.blue }}>{t.label}</h3>
-                    <button onClick={() => openType(t)} style={{
-                      marginTop: 8, padding: "10px", border: 0,
-                      background: COLORS.blue, color: "#fff",
-                      borderRadius: 6, fontWeight: 700, fontSize: 13,
-                      cursor: "pointer", fontFamily: "inherit"
-                    }}>Start</button>
-                  </article>
+                    </span>
+                    <span style={pensionServiceLabel}>{t.label}</span>
+                  </button>
                 );
               })}
             </div>
+            <aside className="pension-dashboard-guidance" style={pensionDashboardGuidance}>
+              <h3 style={pensionDashboardGuidanceTitle}>Before you apply</h3>
+              <p style={pensionDashboardGuidanceText}>
+                Select the application that matches your circumstances and include the
+                supporting documents requested in the form. Keep your application
+                reference number so you can track its progress under <strong>My applications</strong>.
+              </p>
+            </aside>
           </section>
         )}
 
@@ -1014,6 +1010,69 @@ const subHeading = {
   fontSize: 12, color: COLORS.textMuted,
   textTransform: "uppercase", marginTop: 18,
   marginBottom: 6, letterSpacing: 0.6, fontWeight: 700
+};
+
+const pensionServiceGrid = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+  gap: 8
+};
+
+const pensionServiceButton = {
+  display: "flex",
+  alignItems: "center",
+  gap: 12,
+  width: "100%",
+  minHeight: 68,
+  padding: 8,
+  border: 0,
+  borderRadius: 8,
+  background: "transparent",
+  color: COLORS.textDark,
+  cursor: "pointer",
+  fontFamily: "inherit",
+  textAlign: "left"
+};
+
+const pensionServiceIconTile = {
+  display: "grid",
+  placeItems: "center",
+  flex: "0 0 48px",
+  width: 48,
+  height: 48,
+  border: `1px solid ${COLORS.borderLight}`,
+  borderRadius: 10,
+  background: "#edf3ff",
+  color: COLORS.blue
+};
+
+const pensionServiceLabel = {
+  color: COLORS.textDark,
+  fontSize: 14,
+  fontWeight: 700,
+  lineHeight: 1.35
+};
+
+const pensionDashboardGuidance = {
+  marginTop: 48,
+  padding: 18,
+  border: `1px solid ${COLORS.border}`,
+  borderLeft: `4px solid ${COLORS.green}`,
+  borderRadius: 10,
+  background: "#fff"
+};
+
+const pensionDashboardGuidanceTitle = {
+  margin: "0 0 6px",
+  color: COLORS.blue,
+  fontSize: 14
+};
+
+const pensionDashboardGuidanceText = {
+  margin: 0,
+  color: COLORS.textMid,
+  fontSize: 13,
+  lineHeight: 1.55
 };
 
 export default PensionsDashboard;
