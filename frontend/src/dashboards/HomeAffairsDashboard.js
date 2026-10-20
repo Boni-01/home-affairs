@@ -88,6 +88,7 @@ const SERVICE_ICONS = {
   "national id new":              "/newID.png",
   "national id - renewal":        "/renewalID.png",
   "national id renewal":          "/renewalID.png",
+  "national id":                  "/newID.png",
 
   // Fallbacks
   "new id":                       "/newID.png",
@@ -203,6 +204,170 @@ function getServiceIcon(serviceName) {
   return best ? best.icon : "/verify.png";
 }
 
+const SERVICE_GROUPS_BY_MODULE = {
+  IMMIGRATION: [
+    { label: "Visas", matches: /visa|entry/i },
+    { label: "Residence and work permits", matches: /residen|work|employment|study|permit/i },
+    { label: "Citizenship and status", matches: /citizen|natural|nationality|status/i }
+  ],
+  LRMIS: [
+    { label: "Animal registration", matches: /animal|livestock/i },
+    { label: "Animal brands", matches: /brand|branding|mark/i },
+    { label: "Movement and transport permits", matches: /movement|transport|import|export|permit/i }
+  ]
+};
+
+function ServiceGroupIcon({ module, label }) {
+  const name = label.toLowerCase();
+  let iconType;
+  if (module === "IMMIGRATION") {
+    iconType = /visa|entry/.test(name)
+      ? "visa"
+      : /citizen|natural|nationality|status/.test(name)
+        ? "citizenship"
+        : "permit";
+  } else {
+    iconType = /brand|branding|mark/.test(name)
+      ? "brand"
+      : /movement|transport|import|export|permit/.test(name)
+        ? "movement"
+        : "animal";
+  }
+
+  return (
+    <svg
+      width="22"
+      height="22"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.7"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      {iconType === "visa" ? (
+        <>
+          <rect x="4" y="3" width="16" height="18" rx="2" />
+          <circle cx="12" cy="11" r="4" />
+          <path d="M8 11h8M12 7c1.2 1.2 1.2 6.8 0 8M8 17h8" />
+        </>
+      ) : iconType === "citizenship" ? (
+        <>
+          <circle cx="12" cy="8" r="3" />
+          <path d="M6 20v-2a6 6 0 0 1 12 0v2zM19 5l1 2 2 .3-1.5 1.5.4 2.2-1.9-1-1.9 1 .4-2.2L17 7.3l2-.3z" />
+        </>
+      ) : iconType === "permit" ? (
+        <>
+          <path d="M7 3h8l4 4v14H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z" />
+          <path d="M15 3v5h4M8 13h7M8 17h5" />
+          <path d="m15 16 1.5 1.5L20 14" />
+        </>
+      ) : iconType === "brand" ? (
+        <>
+          <path d="M12 3 20 7.5v9L12 21l-8-4.5v-9z" />
+          <path d="M8 9v6m0-3h4a2 2 0 1 0 0-4H8m8 7V9" />
+        </>
+      ) : iconType === "movement" ? (
+        <>
+          <path d="M3 7h11v11H3zM14 11h4l3 3v4h-7z" />
+          <circle cx="7.5" cy="19" r="1.5" />
+          <circle cx="18" cy="19" r="1.5" />
+          <path d="M6 11h5M8 9l-2 2 2 2" />
+        </>
+      ) : (
+        <>
+          <path d="M6 8 4 5m14 3 2-3M7 9c0-2.2 2.2-4 5-4s5 1.8 5 4v7a5 5 0 0 1-10 0z" />
+          <path d="M9 12h.01M15 12h.01M10 17h4M12 5V3" />
+        </>
+      )}
+    </svg>
+  );
+}
+
+function CivilRegistrationServiceIcon({ serviceName }) {
+  const iconPath = getServiceIcon(serviceName);
+  const iconType = iconPath.includes("birth")
+    ? "birth"
+    : iconPath.includes("death")
+      ? "death"
+      : iconPath.includes("marriage")
+        ? "marriage"
+        : iconPath.includes("namec")
+          ? "name"
+          : iconPath.includes("lostID")
+            ? "lostId"
+            : iconPath.includes("renewalID")
+              ? "renewal"
+              : iconPath.includes("correctionID")
+                ? "correction"
+                : iconPath.includes("newID") || iconPath.includes("civil")
+                  ? "identity"
+                  : "verify";
+
+  return (
+    <svg
+      width="22"
+      height="22"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.7"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      {iconType === "birth" ? (
+        <>
+          <rect x="4" y="3" width="16" height="18" rx="2" />
+          <circle cx="12" cy="10" r="2.5" />
+          <path d="M8 17a4 4 0 0 1 8 0M8 6h2M14 6h2" />
+        </>
+      ) : iconType === "death" ? (
+        <>
+          <rect x="4" y="3" width="16" height="18" rx="2" />
+          <path d="M12 7v6m-3-3h6M8 17h8" />
+        </>
+      ) : iconType === "marriage" ? (
+        <>
+          <circle cx="9" cy="12" r="5" />
+          <circle cx="15" cy="12" r="5" />
+          <path d="M11 8.5 13 15.5" />
+        </>
+      ) : iconType === "name" || iconType === "correction" ? (
+        <>
+          <path d="M13 5H6a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7" />
+          <path d="M8 11h4M8 15h3m5.5-11.5 3 3L13 13l-3 1 1-3z" />
+        </>
+      ) : iconType === "lostId" ? (
+        <>
+          <rect x="3" y="5" width="18" height="14" rx="2" />
+          <circle cx="9" cy="11" r="2" />
+          <path d="M6 16a3 3 0 0 1 6 0m3-5h3m-3 3h3" />
+          <path d="M18 2v2m-1-1h2" />
+        </>
+      ) : iconType === "renewal" ? (
+        <>
+          <rect x="4" y="5" width="16" height="14" rx="2" />
+          <circle cx="9" cy="11" r="2" />
+          <path d="M6 16a3 3 0 0 1 6 0m2-5h3m-3 3h3M17 2l2 2-2 2" />
+        </>
+      ) : iconType === "verify" ? (
+        <>
+          <path d="M7 3h8l4 4v14H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z" />
+          <path d="M15 3v5h4m-11 5 2 2 4-4" />
+        </>
+      ) : (
+        <>
+          <rect x="3" y="5" width="18" height="14" rx="2" />
+          <circle cx="9" cy="11" r="2" />
+          <path d="M6 16a3 3 0 0 1 6 0m3-5h3m-3 3h3" />
+        </>
+      )}
+    </svg>
+  );
+}
+
 // ============================================================
 // TRANSLATIONS
 // ============================================================
@@ -219,10 +384,7 @@ const TRANSLATIONS = {
     activeApplications: "Active applications",
     readyForCollection: "Ready for collection",
     notifications: "Notifications",
-    applyTab: "Apply",
-
     availableServices: "Available services",
-    availableServicesDesc: "Select a service to start an application.",
     announcements: "Announcements",
     announcementsDesc: "Latest news and updates from the Department of Home Affairs.",
     noServices: "No services in this module.",
@@ -325,10 +487,7 @@ const TRANSLATIONS = {
     activeApplications: "Likopo tse sebetsang",
     readyForCollection: "Li loketse ho nkoa",
     notifications: "Tsebiso",
-    applyTab: "Etsa kopo",
-
     availableServices: "Litšebeletso tse fumanehang",
-    availableServicesDesc: "Khetha tšebeletso ho qala kopo.",
     announcements: "Litsebiso",
     announcementsDesc: "Litaba tsa morao-rao le lintlha tse ncha ho tsoa Lefapheng la Litaba tsa Lehae.",
     noServices: "Ha ho litšebeletso tsa mojule ena.",
@@ -458,7 +617,8 @@ function HomeAffairsDashboard({ onLogout }) {
   const [settingsTab, setSettingsTab] = useState("profile");
   const [docSearch, setDocSearch] = useState("");
 
-  const [activeDashboardTab, setActiveDashboardTab] = useState("apply");
+  const [activeDashboardTab, setActiveDashboardTab] = useState("NICR");
+  const [openServiceGroup, setOpenServiceGroup] = useState(null);
 
   const load = useCallback(async () => {
     try {
@@ -481,7 +641,7 @@ function HomeAffairsDashboard({ onLogout }) {
     setSubmitError("");
     setValues({});
     setFiles({});
-    setActiveDashboardTab("apply");
+    setOpenServiceGroup(null);
     if (service?.isNationalIdGroup) {
       setActiveService(service);
       setSelectedService(null);
@@ -664,11 +824,14 @@ function HomeAffairsDashboard({ onLogout }) {
   const unread = notifications.filter(n => !n.read_at).length;
 
   function handleDashboardTabChange(tab) {
-    setActiveDashboardTab(tab);
-    if (tab === "apply") {
+    if (MODULES.some(module => module.key === tab)) {
+      setActiveDashboardTab(tab);
+      setActiveModule(tab);
+      setOpenServiceGroup(null);
       setSettingsOpen(false);
       return;
     }
+    setActiveDashboardTab(tab);
     setSettingsTab(tab);
     setSettingsOpen(true);
   }
@@ -683,6 +846,30 @@ function HomeAffairsDashboard({ onLogout }) {
 
   const anyDashboardMatch =
     searchQuery.trim() && allModuleServices.some(s => isMatchingSearch(s, searchQuery));
+  const groupedModuleServices = useMemo(() => {
+    const groups = SERVICE_GROUPS_BY_MODULE[activeModule];
+    if (!groups) return [];
+
+    const remainingServices = [...allModuleServices];
+    const categorizedServices = groups.map(group => {
+      const matchedServices = remainingServices.filter(service =>
+        group.matches.test(`${service.service_code || ""} ${service.service_name || ""}`)
+      );
+      matchedServices.forEach(service => {
+        remainingServices.splice(remainingServices.indexOf(service), 1);
+      });
+      return { label: group.label, services: matchedServices };
+    }).filter(group => group.services.length > 0);
+
+    if (remainingServices.length > 0) {
+      categorizedServices.push({
+        label: `Other ${activeModule === "IMMIGRATION" ? "immigration" : "livestock"} services`,
+        services: remainingServices
+      });
+    }
+    return categorizedServices;
+  }, [activeModule, allModuleServices]);
+  const groupedServicesModule = activeModule === "IMMIGRATION" || activeModule === "LRMIS";
 
   return (
     <main className="dashboard-page" style={layout.page}>
@@ -714,7 +901,7 @@ function HomeAffairsDashboard({ onLogout }) {
 
         <Navbar
           items={[
-            ["apply", t.applyTab],
+            ...MODULES.map(module => [module.key, module.label]),
             ["applications", t.settingsTabs.applications],
             ["notifications", `${t.settingsTabs.notifications}${unread ? ` (${unread})` : ""}`],
             ["profile", t.settingsTabs.profile]
@@ -724,30 +911,6 @@ function HomeAffairsDashboard({ onLogout }) {
           action={{ label: t.logout, onClick: handleLogout }}
           user={me}
         />
-
-        <div style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(150px, max-content))",
-          gap: 8, marginBottom: 20
-        }}>
-          {MODULES.map(m => (
-            <button
-              key={m.key}
-              className="home-affairs-module-button"
-              data-active={activeModule === m.key}
-              onClick={() => setActiveModule(m.key)}
-              style={{
-              textAlign: "center", padding: "9px 16px",
-              border: `1px solid ${activeModule === m.key ? COLORS.blue : COLORS.borderLight}`,
-              background: activeModule === m.key ? COLORS.blue : "#fff",
-              color: activeModule === m.key ? "#fff" : COLORS.textDark,
-              borderRadius: 999, cursor: "pointer",
-              fontFamily: "inherit", transition: "all 0.15s"
-            }}>
-              <span style={{ fontSize: 13, fontWeight: 700 }}>{m.label}</span>
-            </button>
-          ))}
-        </div>
 
         <section style={section.wrapper}>
           <h2 style={section.title}>{t.availableServices}</h2>
@@ -762,36 +925,54 @@ function HomeAffairsDashboard({ onLogout }) {
           )}
 
           <div style={serviceListGrid}>
-            {allModuleServices.map(svc => {
-              const highlighted = isMatchingSearch(svc, searchQuery);
-              return (
+            {groupedServicesModule && groupedModuleServices.length > 0
+              ? groupedModuleServices.map(group => (
+                <div key={group.label} style={serviceDropdown}>
+                  <button
+                    type="button"
+                    aria-expanded={openServiceGroup === group.label}
+                    onClick={() => setOpenServiceGroup(current =>
+                      current === group.label ? null : group.label
+                    )}
+                    style={serviceDropdownSummary}
+                  >
+                    <span style={serviceDropdownIconBox}>
+                      <ServiceGroupIcon module={activeModule} label={group.label} />
+                    </span>
+                    <span style={{ flex: 1 }}>{group.label}</span>
+                  </button>
+                  {openServiceGroup === group.label && (
+                    <div style={serviceDropdownOptions}>
+                      {group.services.map(svc => (
+                        <button
+                          key={svc.service_id}
+                          type="button"
+                          onClick={() => {
+                            setOpenServiceGroup(null);
+                            openService(svc.service_id, svc);
+                          }}
+                          style={serviceDropdownOption}
+                        >
+                          <span>{svc.service_name}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))
+              : !groupedServicesModule && allModuleServices.map(svc => (
                 <button
                   key={svc.service_id}
                   type="button"
                   onClick={() => openService(svc.service_id, svc)}
-                  style={{
-                    ...serviceButton,
-                    ...(highlighted ? serviceButtonHighlighted : {})
-                  }}
-                  onMouseEnter={e => {
-                    e.currentTarget.style.background = highlighted ? "#eaf2ff" : "#f8fafc";
-                  }}
-                  onMouseLeave={e => {
-                    e.currentTarget.style.background = highlighted ? "#f0f5ff" : "transparent";
-                  }}
+                  style={serviceButton}
                 >
-                  <span className="home-affairs-service-icon-box" style={serviceIconBox} aria-hidden="true">
-                    <img
-                      src={getServiceIcon(svc.service_name)}
-                      alt=""
-                      style={serviceIconImg}
-                      onError={(e) => { e.target.src = "/verify.png"; }}
-                    />
+                  <span className="home-affairs-service-icon-box" style={serviceDropdownIconBox} aria-hidden="true">
+                    <CivilRegistrationServiceIcon serviceName={svc.service_name} />
                   </span>
                   <span style={serviceButtonLabel}>{svc.service_name}</span>
                 </button>
-              );
-            })}
+              ))}
             {allModuleServices.length === 0 && (
               <p style={{ color: COLORS.textMuted, fontSize: 13 }}>
                 {t.noServices}
@@ -1627,35 +1808,13 @@ const serviceButton = {
   minHeight: 54,
   padding: "7px 8px",
   border: 0,
-  borderBottom: `1px solid ${COLORS.borderLight}`,
   borderRadius: 6,
   background: "transparent",
   color: COLORS.textDark,
   cursor: "pointer",
   fontFamily: "inherit",
   textAlign: "left",
-  transition: "background 0.15s"
-};
-
-const serviceButtonHighlighted = {
-  background: "#f0f5ff"
-};
-
-const serviceIconBox = {
-  width: 38,
-  height: 38,
-  borderRadius: 8,
-  background: "#EAF2FB",
-  border: "1px solid #d1e9ff",
-  display: "grid",
-  placeItems: "center",
-  flexShrink: 0
-};
-
-const serviceIconImg = {
-  width: 24,
-  height: 24,
-  objectFit: "contain"
+  transition: "none"
 };
 
 const serviceButtonLabel = {
@@ -1665,6 +1824,60 @@ const serviceButtonLabel = {
   fontWeight: 700,
   color: "#1B3A8C",
   lineHeight: 1.35
+};
+
+const serviceDropdown = {
+  alignSelf: "start"
+};
+
+const serviceDropdownSummary = {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "flex-start",
+  gap: 10,
+  width: "100%",
+  minHeight: 48,
+  padding: "5px 4px",
+  border: 0,
+  background: "transparent",
+  color: COLORS.textDark,
+  fontSize: 14,
+  fontWeight: 700,
+  cursor: "pointer",
+  fontFamily: "inherit",
+  textAlign: "left"
+};
+
+const serviceDropdownOptions = {
+  display: "grid",
+  padding: "0 8px 8px 48px"
+};
+
+const serviceDropdownOption = {
+  display: "flex",
+  alignItems: "center",
+  width: "100%",
+  minHeight: 42,
+  padding: "8px 4px",
+  border: 0,
+  background: "transparent",
+  color: COLORS.textDark,
+  fontFamily: "inherit",
+  fontSize: 13,
+  textAlign: "left",
+  cursor: "pointer"
+};
+
+const serviceDropdownIconBox = {
+  display: "grid",
+  placeItems: "center",
+  width: 36,
+  height: 36,
+  flexShrink: 0,
+  border: "1px solid #d1e9ff",
+  borderRadius: 8,
+  background: "#eff8ff",
+  color: COLORS.blue
 };
 
 const announceCardStyle = {

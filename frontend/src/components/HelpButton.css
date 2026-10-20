@@ -160,17 +160,6 @@ body[data-theme="dark"] .dashboard-status-badge {
   color: #1e293b !important;
 }
 
-body[data-theme="dark"] .home-affairs-module-button:not([data-active="true"]) {
-  border-color: #34516c !important;
-  background: #102b48 !important;
-  color: #fff !important;
-}
-
-body[data-theme="dark"] .home-affairs-service-icon-box {
-  background: #172b4d !important;
-  border-color: #31527a !important;
-}
-
 body[data-theme="dark"] .police-emergency-banner {
   border-color: #94721e !important;
   background: #33270b !important;
