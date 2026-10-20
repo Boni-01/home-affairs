@@ -549,32 +549,23 @@ function PoliceDashboard({ onLogout }) {
                       <APPLICATION_ICONS.crime_report />
                     </span>
                     <span style={policeServiceLabel}>Report</span>
-                    <span className="police-service-chevron" style={policeServiceChevron} aria-hidden="true">
-                      {reportOptionsOpen ? "−" : "+"}
-                    </span>
                   </button>
                   {reportOptionsOpen && (
                     <div id="police-report-service-options" className="police-report-dropdown" style={policeReportDropdown}>
-                      {visibleReportTypes.map(t => {
-                        const Icon = t.icon;
-                        return (
-                          <button
-                            key={t.key}
-                            type="button"
-                            className="police-service-icon-button"
-                            onClick={() => {
-                              setReportOptionsOpen(false);
-                              openType(t);
-                            }}
-                            style={policeServiceIconButton}
-                          >
-                            <span className="police-service-icon police-service-icon-tile" style={policeServiceIcon}>
-                              <Icon />
-                            </span>
-                            <span style={policeServiceLabel}>{t.label}</span>
-                          </button>
-                        );
-                      })}
+                      {visibleReportTypes.map(t => (
+                        <button
+                          key={t.key}
+                          type="button"
+                          className="police-service-icon-button"
+                          onClick={() => {
+                            setReportOptionsOpen(false);
+                            openType(t);
+                          }}
+                          style={{ ...policeServiceIconButton, minHeight: 44, padding: "10px 12px" }}
+                        >
+                          <span style={policeServiceLabel}>{t.label}</span>
+                        </button>
+                      ))}
                     </div>
                   )}
                 </div>
@@ -1332,13 +1323,6 @@ const policeServiceIconButton = {
   cursor: "pointer",
   fontFamily: "inherit",
   textAlign: "left"
-};
-
-const policeServiceChevron = {
-  marginLeft: "auto",
-  fontSize: 20,
-  lineHeight: 1,
-  fontWeight: 500
 };
 
 const policeServiceIcon = {

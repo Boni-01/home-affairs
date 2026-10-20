@@ -25,9 +25,9 @@ async function api(path, opts = {}) {
 }
 
 const MODULES = [
-  { key: "NICR", label: "Civil Registration", desc: "Births, deaths, marriages, IDs" },
-  { key: "IMMIGRATION", label: "Immigration", desc: "Visas, permits, citizenship" },
-  { key: "LRMIS", label: "Livestock", desc: "Owner and animal registration" }
+  { key: "NICR", label: "Civil Registration" },
+  { key: "IMMIGRATION", label: "Immigration" },
+  { key: "LRMIS", label: "Livestock" }
 ];
 
 const ANNOUNCEMENTS = [
@@ -727,8 +727,8 @@ function HomeAffairsDashboard({ onLogout }) {
 
         <div style={{
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-          gap: 12, marginBottom: 24
+          gridTemplateColumns: "repeat(auto-fit, minmax(150px, max-content))",
+          gap: 8, marginBottom: 20
         }}>
           {MODULES.map(m => (
             <button
@@ -737,25 +737,20 @@ function HomeAffairsDashboard({ onLogout }) {
               data-active={activeModule === m.key}
               onClick={() => setActiveModule(m.key)}
               style={{
-              textAlign: "left", padding: "16px 18px",
-              border: `1px solid ${activeModule === m.key ? COLORS.blue : COLORS.border}`,
+              textAlign: "center", padding: "9px 16px",
+              border: `1px solid ${activeModule === m.key ? COLORS.blue : COLORS.borderLight}`,
               background: activeModule === m.key ? COLORS.blue : "#fff",
               color: activeModule === m.key ? "#fff" : COLORS.textDark,
-              borderRadius: 10, cursor: "pointer",
+              borderRadius: 999, cursor: "pointer",
               fontFamily: "inherit", transition: "all 0.15s"
             }}>
-              <div style={{ fontSize: 14, fontWeight: 700 }}>{m.label}</div>
-              <div style={{
-                fontSize: 12, marginTop: 4,
-                opacity: activeModule === m.key ? 0.85 : 0.65
-              }}>{m.desc}</div>
+              <span style={{ fontSize: 13, fontWeight: 700 }}>{m.label}</span>
             </button>
           ))}
         </div>
 
         <section style={section.wrapper}>
           <h2 style={section.title}>{t.availableServices}</h2>
-          <p style={section.subtitle}>{t.availableServicesDesc}</p>
 
           {anyDashboardMatch && (
             <p style={{
@@ -766,55 +761,35 @@ function HomeAffairsDashboard({ onLogout }) {
             </p>
           )}
 
-          <div style={cardsGrid}>
+          <div style={serviceListGrid}>
             {allModuleServices.map(svc => {
               const highlighted = isMatchingSearch(svc, searchQuery);
               return (
-                <article
+                <button
                   key={svc.service_id}
+                  type="button"
                   onClick={() => openService(svc.service_id, svc)}
                   style={{
-                    ...cardStyle,
-                    ...(highlighted ? cardHighlighted : {})
+                    ...serviceButton,
+                    ...(highlighted ? serviceButtonHighlighted : {})
                   }}
                   onMouseEnter={e => {
-                    e.currentTarget.style.transform = "translateY(-3px)";
-                    e.currentTarget.style.boxShadow = highlighted
-                      ? "0 0 0 3px rgba(0,32,159,0.20), 0 12px 28px rgba(0,32,159,0.20)"
-                      : "0 12px 28px rgba(0,32,159,0.12)";
+                    e.currentTarget.style.background = highlighted ? "#eaf2ff" : "#f8fafc";
                   }}
                   onMouseLeave={e => {
-                    e.currentTarget.style.transform = "translateY(0)";
-                    e.currentTarget.style.boxShadow = highlighted
-                      ? "0 0 0 3px rgba(0,32,159,0.15), 0 12px 28px rgba(0,32,159,0.15)"
-                      : "0 2px 8px rgba(0,32,159,0.05)";
+                    e.currentTarget.style.background = highlighted ? "#f0f5ff" : "transparent";
                   }}
                 >
-                  <div className="home-affairs-service-icon-box" style={cardIconBox}>
+                  <span className="home-affairs-service-icon-box" style={serviceIconBox} aria-hidden="true">
                     <img
                       src={getServiceIcon(svc.service_name)}
-                      alt={svc.service_name}
-                      style={cardIconImg}
+                      alt=""
+                      style={serviceIconImg}
                       onError={(e) => { e.target.src = "/verify.png"; }}
                     />
-                  </div>
-
-                  <div style={cardContent}>
-                    <h3 style={cardTitle}>{svc.service_name}</h3>
-                    <span className="home-affairs-service-module-chip" style={cardChip}>
-                      {svc.module}
-                    </span>
-                    <div style={cardMeta}>
-                      <span><strong>{svc.processing_days}</strong> {t.days}</span>
-                      {svc.requires_payment
-                        ? <span>· {t.feeApplies}</span>
-                        : <span>· {t.free}</span>}
-                      {svc.requires_appointment
-                        ? <span>· {t.appointment}</span>
-                        : null}
-                    </div>
-                  </div>
-                </article>
+                  </span>
+                  <span style={serviceButtonLabel}>{svc.service_name}</span>
+                </button>
               );
             })}
             {allModuleServices.length === 0 && (
@@ -1636,76 +1611,60 @@ const cardsGrid = {
   gap: 14
 };
 
-const cardStyle = {
+const serviceListGrid = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+  columnGap: 20,
+  rowGap: 4
+};
+
+const serviceButton = {
   display: "flex",
-  alignItems: "flex-start",
-  gap: 14,
-  background: "#fff",
-  border: `1px solid ${COLORS.border}`,
-  borderRadius: 10,
-  padding: "14px 16px",
+  alignItems: "center",
+  gap: 10,
+  width: "100%",
+  minWidth: 0,
+  minHeight: 54,
+  padding: "7px 8px",
+  border: 0,
+  borderBottom: `1px solid ${COLORS.borderLight}`,
+  borderRadius: 6,
+  background: "transparent",
+  color: COLORS.textDark,
   cursor: "pointer",
-  boxShadow: "0 2px 8px rgba(0,32,159,0.05)",
-  transition: "transform 0.15s, box-shadow 0.15s",
-  minWidth: 0
+  fontFamily: "inherit",
+  textAlign: "left",
+  transition: "background 0.15s"
 };
 
-const cardHighlighted = {
-  border: `2px solid ${COLORS.blue}`,
-  boxShadow: "0 0 0 3px rgba(0,32,159,0.15), 0 12px 28px rgba(0,32,159,0.15)",
-  background: "#F0F5FF"
+const serviceButtonHighlighted = {
+  background: "#f0f5ff"
 };
 
-const cardIconBox = {
-  width: 56,
-  height: 56,
+const serviceIconBox = {
+  width: 38,
+  height: 38,
   borderRadius: 8,
   background: "#EAF2FB",
+  border: "1px solid #d1e9ff",
   display: "grid",
   placeItems: "center",
   flexShrink: 0
 };
 
-const cardIconImg = {
-  width: 32,
-  height: 32,
+const serviceIconImg = {
+  width: 24,
+  height: 24,
   objectFit: "contain"
 };
 
-const cardContent = {
-  display: "flex",
-  flexDirection: "column",
-  gap: 6,
+const serviceButtonLabel = {
+  display: "block",
   minWidth: 0,
-  flex: 1
-};
-
-const cardTitle = {
-  margin: 0,
-  fontSize: 14,
+  fontSize: 13,
   fontWeight: 700,
   color: "#1B3A8C",
-  lineHeight: 1.25
-};
-
-const cardChip = {
-  display: "inline-block",
-  alignSelf: "flex-start",
-  padding: "2px 10px",
-  borderRadius: 999,
-  background: "#EAF2FB",
-  color: "#1B3A8C",
-  fontSize: 11,
-  fontWeight: 600
-};
-
-const cardMeta = {
-  fontSize: 11,
-  color: COLORS.textMuted,
-  display: "flex",
-  flexWrap: "wrap",
-  gap: 4,
-  marginTop: 2
+  lineHeight: 1.35
 };
 
 const announceCardStyle = {

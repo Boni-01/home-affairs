@@ -1379,8 +1379,8 @@ function InfoBlock({ label, value }) {
 function PassportServiceIcon({ type }) {
   return (
     <svg
-      width="36"
-      height="36"
+      width="24"
+      height="24"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
@@ -1425,13 +1425,15 @@ const passportServiceCard = {
 };
 
 const passportServiceIconBox = {
-  width: 48,
-  height: 48,
+  width: 40,
+  height: 40,
   display: "grid",
   placeItems: "center",
   flexShrink: 0,
   color: "#00209F",
-  background: "transparent"
+  background: "#eff8ff",
+  border: "1px solid #d1e9ff",
+  borderRadius: 9
 };
 
 const passportServiceButton = {

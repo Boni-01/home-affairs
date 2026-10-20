@@ -9,6 +9,13 @@ import CollectionCentreReferral from "../components/CollectionCentreReferral";
 // SVG ICONS
 // ============================================================
 const TrafficIcons = {
+  Licence: ({ size = 24, ...props }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <rect x="3" y="4" width="18" height="16" rx="2.5" />
+      <circle cx="8.5" cy="10" r="2.2" />
+      <path d="M5.5 16c.6-1.6 1.6-2.4 3-2.4s2.4.8 3 2.4M14 9h4M14 12h4M14 15h2" />
+    </svg>
+  ),
   Document: ({ size = 24, ...props }) => (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
       <path d="M14 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7z" />
@@ -401,6 +408,39 @@ const SERVICE_CONFIG = {
   }
 };
 
+const SERVICE_GROUPS = [
+  {
+    label: "Driver licences & records",
+    icon: TrafficIcons.Licence,
+    serviceKeys: ["LICENCE_RENEWAL", "LICENCE_REPLACEMENT", "LICENCE_CORRECTION", "RECORD_CORRECTION"]
+  },
+  {
+    label: "Vehicle registration & transfers",
+    icon: TrafficIcons.Vehicle,
+    serviceKeys: ["VEHICLE_REGISTRATION", "IMPORTED_VEHICLE_REGISTRATION", "SECOND_HAND_LOCAL", "SECOND_HAND_FOREIGN", "OWNERSHIP_TRANSFER"]
+  },
+  {
+    label: "Number plates",
+    icon: TrafficIcons.Number,
+    serviceKeys: ["NUMBER_PLATE", "NUMBER_PLATE_REPLACEMENT"]
+  },
+  {
+    label: "Vehicle inspections & permits",
+    icon: TrafficIcons.Wrench,
+    serviceKeys: ["SPECIAL_VEHICLE_PERMIT", "ROADWORTHINESS_INSPECTION", "FITNESS_INSPECTION", "RE_INSPECTION"]
+  },
+  {
+    label: "Public transport permits",
+    icon: TrafficIcons.Bus,
+    serviceKeys: ["PUBLIC_MOTOR_VEHICLE_PERMIT", "PERMIT_RENEWAL"]
+  },
+  {
+    label: "Driving schools & instructors",
+    icon: TrafficIcons.Graduation,
+    serviceKeys: ["DRIVING_SCHOOL_REGISTRATION", "INSTRUCTOR_REGISTRATION"]
+  }
+];
+
 // ============================================================
 // COMPONENT
 // ============================================================
@@ -687,10 +727,12 @@ function TrafficDashboard({ onLogout }) {
 
   // Computed values
   const unpaidFines = fines.filter(f => f.fine_status === "UNPAID");
-  const licenceServices = Object.entries(SERVICE_CONFIG)
-    .filter(([key, cfg]) => key.startsWith("LICENCE_") && matchesDashboardSearch([key, cfg], searchQuery));
-  const otherServices = Object.entries(SERVICE_CONFIG)
-    .filter(([key, cfg]) => !key.startsWith("LICENCE_") && matchesDashboardSearch([key, cfg], searchQuery));
+  const serviceGroups = SERVICE_GROUPS.map(group => ({
+    ...group,
+    services: group.serviceKeys
+      .map(key => [key, SERVICE_CONFIG[key]])
+      .filter(([key, cfg]) => cfg && matchesDashboardSearch([key, cfg], searchQuery))
+  })).filter(group => group.services.length > 0);
 
   if (loading && !me) {
     return (
@@ -843,72 +885,59 @@ function TrafficDashboard({ onLogout }) {
         {tab === "apply" && (
           <section style={section.wrapper}>
             <h2 style={section.title}>Available Services</h2>
-            <p style={section.subtitle}>Select a service to start an application.</p>
-
-            {licenceServices.length > 0 && (
-              <details style={{
-                marginBottom: 20, border: `1px solid ${COLORS.border}`,
-                borderRadius: 8, background: "#fff"
-              }}>
-                <summary style={{
-                  padding: "14px 16px", color: COLORS.blue,
-                  fontSize: 14, fontWeight: 700, cursor: "pointer"
-                }}>Licence Services</summary>
-                <div style={{ padding: "0 16px 12px" }}>
-                  {licenceServices.map(([key, cfg]) => (
-                    <button key={key} onClick={() => openServiceModal(key)} style={{
-                      display: "flex", justifyContent: "space-between", alignItems: "center",
-                      width: "100%", padding: "12px 0", color: COLORS.textDark,
-                      background: "transparent", border: 0,
-                      borderTop: `1px solid ${COLORS.borderLight}`,
-                      cursor: "pointer", textAlign: "left", fontFamily: "inherit"
-                    }}>
-                      <span style={{ fontSize: 13, fontWeight: 600 }}>{cfg.label}</span>
-                      <span style={{ color: COLORS.textMuted, fontSize: 12 }}>M {cfg.fee}</span>
-                    </button>
-                  ))}
-                </div>
-              </details>
-            )}
 
             <div style={{
               display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
-              columnGap: 24
+              gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
+              columnGap: 24,
+              rowGap: 8,
+              marginTop: 12
             }}>
-              {otherServices.map(([key, cfg]) => (
-                <div key={key} style={{
-                  display: "flex", alignItems: "center", gap: 12,
-                  minWidth: 0, padding: "14px 0",
-                  borderBottom: `1px solid ${COLORS.borderLight}`
-                }}>
-                  <span style={{
-                    display: "inline-flex", flexShrink: 0,
-                    alignItems: "center", justifyContent: "center",
-                    width: 40, height: 40, color: COLORS.blue,
-                    background: "#eff8ff", border: "1px solid #d1e9ff",
-                    borderRadius: 8
+              {serviceGroups.map(group => {
+                const Icon = group.icon;
+                return (
+                  <details key={group.label} style={{
+                    alignSelf: "start",
+                    borderBottom: `1px solid ${COLORS.borderLight}`
                   }}>
-                    {React.createElement(cfg.icon, { size: 20 })}
-                  </span>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <h3 style={{ margin: 0, fontSize: 14, color: COLORS.textDark, fontWeight: 700 }}>
-                      {cfg.label}
-                    </h3>
-                    <p style={{ margin: "4px 0 0", fontSize: 12, color: COLORS.textMuted }}>
-                      {cfg.fields.length} fields · M {cfg.fee}
-                    </p>
-                  </div>
-                  <button onClick={() => openServiceModal(key)} style={{
-                    flexShrink: 0, padding: "8px 12px", border: 0,
-                    background: COLORS.blue, color: "#fff",
-                    borderRadius: 6, fontWeight: 700, fontSize: 12,
-                    cursor: "pointer", fontFamily: "inherit"
-                  }}>Apply</button>
-                </div>
-              ))}
+                    <summary style={{
+                      display: "flex", alignItems: "center", gap: 12,
+                      minHeight: 54, padding: "8px 4px",
+                      cursor: "pointer", listStyle: "none"
+                    }}>
+                      <span style={{
+                        display: "inline-flex", flexShrink: 0,
+                        alignItems: "center", justifyContent: "center",
+                        width: 36, height: 36, color: COLORS.blue,
+                        background: "#eff8ff", border: "1px solid #d1e9ff",
+                        borderRadius: 8
+                      }}>
+                        <Icon size={19} aria-hidden="true" />
+                      </span>
+                      <span style={{ flex: 1, minWidth: 0, color: COLORS.textDark, fontSize: 13, fontWeight: 700 }}>
+                        {group.label}
+                      </span>
+                      <span aria-hidden="true" style={{ color: COLORS.textMuted, fontSize: 16, lineHeight: 1 }}>⌄</span>
+                    </summary>
+                    <div style={{ padding: "0 4px 8px 52px" }}>
+                      {group.services.map(([key, cfg]) => (
+                        <button key={key} onClick={() => openServiceModal(key)} style={{
+                          display: "flex", justifyContent: "space-between", alignItems: "center",
+                          width: "100%", gap: 12, padding: "12px 0",
+                          color: COLORS.textDark, background: "transparent", border: 0,
+                          borderTop: `1px solid ${COLORS.borderLight}`,
+                          cursor: "pointer", textAlign: "left", fontFamily: "inherit"
+                        }}>
+                          <span style={{ fontSize: 13, fontWeight: 600 }}>{cfg.label}</span>
+                          <span style={{ flexShrink: 0, color: COLORS.textMuted, fontSize: 12 }}>M {cfg.fee}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </details>
+                );
+              })}
             </div>
-            {licenceServices.length === 0 && otherServices.length === 0 && (
+            {serviceGroups.length === 0 && (
               <p style={{ padding: 24, color: COLORS.textMuted, textAlign: "center" }}>
                 No services match your search.
               </p>
