@@ -3,7 +3,9 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   createUserWithEmailAndPassword,
   signInWithPopup,
-  updateProfile
+  updateProfile,
+  signInWithPhoneNumber,
+  RecaptchaVerifier
 } from "firebase/auth";
 import {
   auth,
@@ -44,6 +46,7 @@ const buttonStyle = (bg) => ({
   cursor: "pointer",
   marginTop: 10
 });
+const RECAPTCHA_CONTAINER_ID = "register-recaptcha-container";
 
 function Register({ onSuccess, getPostAuthRoute }) {
   const location = useLocation();
@@ -56,6 +59,12 @@ function Register({ onSuccess, getPostAuthRoute }) {
     location.state?.prefill?.name?.split(" ").slice(1).join(" ") || ""
   );
   const [email, setEmail] = useState(location.state?.prefill?.email || "");
+  const [phone, setPhone] = useState("+266");
+  const [authMode, setAuthMode] = useState("email");
+  const [otpSent, setOtpSent] = useState(false);
+  const [otp, setOtp] = useState("");
+  const [confirmationResult, setConfirmationResult] = useState(null);
+  const recaptchaRef = React.useRef(null);
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
@@ -80,9 +89,7 @@ function Register({ onSuccess, getPostAuthRoute }) {
       firebaseUser.displayName ||
       "Unknown User";
 
-    const body = {
-      full_name: fullName
-    };
+    const body = { full_name: fullName, phone: firebaseUser.phoneNumber || (authMode === "phone" ? phone : "") };
 
     const res = await fetch(`${API_BASE}/register`, {
       method: "POST",
@@ -138,6 +145,35 @@ function Register({ onSuccess, getPostAuthRoute }) {
     } finally {
       setLoading(false);
     }
+  }
+
+  async function handleSendPhoneCode(e) {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+    try {
+      const verifier = recaptchaRef.current || new RecaptchaVerifier(auth, RECAPTCHA_CONTAINER_ID, { size: "invisible" });
+      recaptchaRef.current = verifier;
+      setConfirmationResult(await signInWithPhoneNumber(auth, phone, verifier));
+      setOtpSent(true);
+    } catch (err) {
+      console.error(err);
+      setError(prettyError(err));
+    } finally { setLoading(false); }
+  }
+
+  async function handlePhoneRegister(e) {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+    try {
+      const credential = await confirmationResult.confirm(otp);
+      await updateProfile(credential.user, { displayName: `${firstName} ${lastName}`.trim() });
+      await saveProfileToBackend(credential.user, { fullName: `${firstName} ${lastName}`.trim() });
+    } catch (err) {
+      console.error(err);
+      setError(prettyError(err));
+    } finally { setLoading(false); }
   }
 
   async function handleGoogleRegister() {
@@ -283,7 +319,16 @@ function Register({ onSuccess, getPostAuthRoute }) {
             </p>
           </header>
 
-          <form onSubmit={handleEmailRegister}>
+          <div id={RECAPTCHA_CONTAINER_ID} />
+          <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
+            {["email", "phone"].map(method => (
+              <button key={method} type="button" onClick={() => { setAuthMode(method); setError(""); }}
+                style={{ ...buttonStyle(authMode === method ? (method === "phone" ? COLORS.green : COLORS.blue) : "#eef2f7"), color: authMode === method ? "#fff" : COLORS.textMuted, marginTop: 0 }}>
+                Register with {method === "email" ? "email" : "phone"}
+              </button>
+            ))}
+          </div>
+          <form onSubmit={authMode === "phone" ? (otpSent ? handlePhoneRegister : handleSendPhoneCode) : handleEmailRegister}>
               <div style={{
                 display: "grid",
                 gridTemplateColumns: "1fr 1fr",
@@ -301,34 +346,44 @@ function Register({ onSuccess, getPostAuthRoute }) {
                     value={lastName} onChange={(e) => setLastName(e.target.value)}
                     style={{ ...fieldStyle, display: "block", marginTop: 6 }} />
                 </label>
-                <label style={{ gridColumn: "1 / -1", color: "#263b35", fontSize: 13, fontWeight: 600 }}>
+                {authMode === "email" && <label style={{ gridColumn: "1 / -1", color: "#263b35", fontSize: 13, fontWeight: 600 }}>
                   Email address
                   <input type="email" autoComplete="email" required
                     value={email} onChange={(e) => setEmail(e.target.value)}
                     style={{ ...fieldStyle, display: "block", marginTop: 6 }} />
-                </label>
-                <label style={{ color: "#263b35", fontSize: 13, fontWeight: 600 }}>
+                </label>}
+                {authMode === "phone" && <label style={{ gridColumn: "1 / -1", color: "#263b35", fontSize: 13, fontWeight: 600 }}>
+                  Phone number
+                  <input type="tel" autoComplete="tel" required disabled={otpSent} value={phone}
+                    onChange={e => setPhone(e.target.value)} style={{ ...fieldStyle, display: "block", marginTop: 6 }} />
+                </label>}
+                {authMode === "email" && <label style={{ color: "#263b35", fontSize: 13, fontWeight: 600 }}>
                   Password
                   <input type="password" autoComplete="new-password" minLength={8} required
                     value={password} onChange={(e) => setPassword(e.target.value)}
                     style={{ ...fieldStyle, display: "block", marginTop: 6 }} />
-                </label>
-                <label style={{ color: "#263b35", fontSize: 13, fontWeight: 600 }}>
+                </label>}
+                {authMode === "email" && <label style={{ color: "#263b35", fontSize: 13, fontWeight: 600 }}>
                   Confirm password
                   <input type="password" autoComplete="new-password" minLength={8} required
                     value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)}
                     style={{ ...fieldStyle, display: "block", marginTop: 6 }} />
-                </label>
+                </label>}
               </div>
 
-              <p style={{ margin: "10px 0 6px", color: COLORS.textMuted, fontSize: 12 }}>
+              {authMode === "phone" && otpSent && <label style={{ display: "block", color: "#263b35", fontSize: 13, fontWeight: 600 }}>
+                SMS verification code
+                <input type="text" inputMode="numeric" autoComplete="one-time-code" required value={otp}
+                  onChange={e => setOtp(e.target.value)} style={{ ...fieldStyle, display: "block", marginTop: 6 }} />
+              </label>}
+              {authMode === "email" && <p style={{ margin: "10px 0 6px", color: COLORS.textMuted, fontSize: 12 }}>
                 Password must be at least 8 characters.
-              </p>
+              </p>}
 
               {error && <p role="alert" style={{ color: COLORS.error, fontSize: 13, margin: "6px 0" }}>{error}</p>}
 
               <button type="submit" disabled={loading} style={buttonStyle(COLORS.blue)}>
-                {loading ? "Creating account..." : "Create account"}
+                {loading ? "Please wait..." : authMode === "phone" ? (otpSent ? "Verify code and create account" : "Send verification code") : "Create account"}
               </button>
           </form>
 
@@ -385,6 +440,10 @@ function prettyError(err) {
   if (code.includes("invalid-email")) return "Invalid email address.";
   if (code.includes("invalid-phone-number"))
     return "Invalid phone number format. Use +266...";
+  if (code.includes("operation-not-allowed"))
+    return "Phone SMS is disabled for this Firebase project or region. Enable Phone sign-in and allow SMS to Lesotho (+266) in Firebase Console > Authentication > Settings > SMS region policy.";
+  if (code.includes("billing-not-enabled"))
+    return "Firebase SMS requires a Cloud Billing account. Link billing to the lesotho-gov-services project in Google Cloud Console, then allow Lesotho (LS) in Firebase Authentication > Settings > SMS region policy. SMS charges may apply.";
   if (code.includes("popup-closed-by-user")) return "Google sign-up cancelled.";
   if (code.includes("invalid-verification-code")) return "Invalid OTP code.";
   return err?.message || "Something went wrong. Please try again.";

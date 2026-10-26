@@ -72,14 +72,13 @@ function Navbar({
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [settingsTab, setSettingsTab] = useState("applications");
   const [storedProfile] = useState(readStoredProfile);
-  const [profileOverride, setProfileOverride] = useState(null);
   const isDashboard = items !== undefined;
   const authenticated = isAuthenticated ??
     (sessionStorage.getItem("home-affairs-authenticated") === "true");
   const isAdmin = location.pathname.startsWith("/admin/");
   const routes = isAdmin ? adminOffices : ministries;
   const dashboardItems = items || [];
-  const profile = profileOverride || user || storedProfile;
+  const profile = user || storedProfile;
   const isAccountItem = ([key]) =>
     isAdmin ? key === "notifications" : accountKeys.has(key);
   const accountItems = dashboardItems.filter(isAccountItem);
@@ -97,16 +96,6 @@ function Navbar({
     setProfileOpen(false);
     setSettingsOpen(false);
   }, [location.pathname]);
-
-  useEffect(() => {
-    const openProfile = () => {
-      setSettingsTab("profile");
-      setSettingsOpen(true);
-      setProfileOpen(false);
-    };
-    window.addEventListener("home-affairs-open-profile", openProfile);
-    return () => window.removeEventListener("home-affairs-open-profile", openProfile);
-  }, []);
 
   useEffect(() => {
     if (!profileOpen) return undefined;
@@ -350,10 +339,6 @@ function Navbar({
           onTabChange={setSettingsTab}
           onClose={() => setSettingsOpen(false)}
           onNavigateToTab={handleTabChange}
-          onProfileUpdated={nextProfile => {
-            setProfileOverride(nextProfile);
-            sessionStorage.setItem("user-profile", JSON.stringify(nextProfile));
-          }}
         />
       )}
     </>

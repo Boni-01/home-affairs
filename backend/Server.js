@@ -82,6 +82,31 @@ async function initializeDatabase() {
       );
       console.log("User profile date of birth column added");
     }
+    const [pendingDobColumn] = await c.query("SHOW COLUMNS FROM users LIKE 'pending_date_of_birth'");
+    if (!pendingDobColumn.length) {
+      await c.query("ALTER TABLE users ADD COLUMN pending_date_of_birth DATE NULL AFTER date_of_birth");
+    }
+    const [dobVerifiedColumn] = await c.query("SHOW COLUMNS FROM users LIKE 'date_of_birth_verified'");
+    if (!dobVerifiedColumn.length) {
+      await c.query("ALTER TABLE users ADD COLUMN date_of_birth_verified TINYINT(1) NOT NULL DEFAULT 0 AFTER pending_date_of_birth");
+    }
+    const [identityHoldColumn] = await c.query("SHOW COLUMNS FROM users LIKE 'identity_hold_status'");
+    if (!identityHoldColumn.length) {
+      await c.query("ALTER TABLE users ADD COLUMN identity_hold_status ENUM('clear','review') NOT NULL DEFAULT 'clear' AFTER account_status");
+    }
+    const [identityHoldReasonColumn] = await c.query("SHOW COLUMNS FROM users LIKE 'identity_hold_reason'");
+    if (!identityHoldReasonColumn.length) {
+      await c.query("ALTER TABLE users ADD COLUMN identity_hold_reason VARCHAR(255) NULL AFTER identity_hold_status");
+    }
+    const [identityHoldReferenceColumn] = await c.query("SHOW COLUMNS FROM users LIKE 'identity_hold_reference'");
+    if (!identityHoldReferenceColumn.length) {
+      await c.query("ALTER TABLE users ADD COLUMN identity_hold_reference VARCHAR(64) NULL AFTER identity_hold_reason");
+    }
+    await c.query(
+      `UPDATE users SET pending_date_of_birth = date_of_birth
+       WHERE date_of_birth IS NOT NULL AND date_of_birth_verified = 0
+         AND pending_date_of_birth IS NULL`
+    );
     const [pensionIdentityHashColumn] = await c.query(
       "SHOW COLUMNS FROM pension_members LIKE 'national_id_hash'"
     );
@@ -271,10 +296,14 @@ async function verifyToken(req, res, next) {
     req.provider = decoded.firebase?.sign_in_provider || "unknown";
 
     const [rows] = await db.query(
-      "SELECT * FROM users WHERE firebase_uid = ?",
+      `SELECT u.*,
+         (SELECT n.national_id_number FROM citizen_national_ids n
+          WHERE n.user_id = u.user_id LIMIT 1) AS national_id_number
+       FROM users u WHERE u.firebase_uid = ?`,
       [req.uid]
     );
     req.dbUser = rows[0] || null;
+    if (req.dbUser?.national_id_number) req.dbUser.national_id = req.dbUser.national_id_number;
     req.isAdmin = ADMIN_EMAILS.includes(req.email);
 
     if (req.isAdmin && req.dbUser &&
@@ -285,6 +314,16 @@ async function verifyToken(req, res, next) {
       );
       req.dbUser.role = "admin";
       req.dbUser.account_type = "admin";
+    }
+
+    if (!req.isAdmin && req.dbUser &&
+        (req.dbUser.identity_hold_status === "review" ||
+         (req.dbUser.account_status && req.dbUser.account_status !== "active"))) {
+      return res.status(423).json({
+        code: "IDENTITY_ON_HOLD",
+        error: "This account is temporarily on hold while its identity record is reviewed by an administrator.",
+        reference: req.dbUser.identity_hold_reference || null
+      });
     }
 
     next();
@@ -479,6 +518,7 @@ app.post("/api/login", verifyToken, async (req, res) => {
     success: true,
     user: await userWithPhoto({
       ...req.dbUser,
+      date_of_birth: req.dbUser.date_of_birth_verified ? req.dbUser.date_of_birth : null,
       national_id_number: nid[0]?.national_id_number || req.dbUser.national_id
     }),
     isAdmin: req.dbUser.role === "admin"
@@ -497,6 +537,7 @@ app.get("/api/me", verifyToken, async (req, res) => {
   res.json({
     user: await userWithPhoto({
       ...req.dbUser,
+      date_of_birth: req.dbUser.date_of_birth_verified ? req.dbUser.date_of_birth : null,
       national_id_number: nid[0]?.national_id_number || req.dbUser.national_id
     }),
     isAdmin: req.dbUser.role === "admin"
@@ -522,7 +563,7 @@ app.post("/api/me/profile", verifyToken, async (req, res) => {
   }
   try {
     await db.query(
-      "UPDATE users SET date_of_birth = ?, phone = ? WHERE user_id = ?",
+      "UPDATE users SET pending_date_of_birth = ?, phone = ? WHERE user_id = ?",
       [dob, phoneValue || null, req.dbUser.user_id]
     );
     const [users] = await db.query(
@@ -535,6 +576,7 @@ app.post("/api/me/profile", verifyToken, async (req, res) => {
     );
     const user = await userWithPhoto({
       ...users[0],
+      date_of_birth: users[0].date_of_birth_verified ? users[0].date_of_birth : null,
       national_id_number: nid[0]?.national_id_number || users[0].national_id
     });
     res.json({ success: true, user });
@@ -657,6 +699,18 @@ app.post(
         "SELECT field_key, required FROM service_form_fields WHERE service_id = ?",
         [serviceId]
       );
+      const isAnotherPersonService = /^NICR_(BIRTH|DEATH|MARRIAGE)_/.test(service.service_code || "");
+      const primaryNationalId = req.dbUser.national_id_number || req.dbUser.national_id;
+      if (primaryNationalId && !isAnotherPersonService) {
+        for (const def of defs) {
+          if (/^(?:applicant_|citizen_|owner_)?(?:national_)?id(?:_number)?$/i.test(def.field_key)) {
+            fields[def.field_key] = primaryNationalId;
+          }
+        }
+        for (const key of ["national_id", "national_id_number", "applicant_national_id", "applicant_national_id_number", "id_number"]) {
+          if (Object.prototype.hasOwnProperty.call(fields, key)) fields[key] = primaryNationalId;
+        }
+      }
       for (const def of defs) {
         if (def.required && !isDateOfBirthField(def) && !fields[def.field_key]) {
           throw new Error(`Missing required field: ${def.field_key}`);
@@ -769,6 +823,15 @@ app.post(
         [req.dbUser.user_id, appId, "Application received",
          `Your application ${ref} for ${service.service_name} has been submitted.`]
       );
+
+      if (service.service_code === "NICR_ID_LOST" &&
+          !/damaged/i.test(String(fields.incident_type || fields.reason || ""))) {
+        await conn.query(
+          `UPDATE users SET identity_hold_status = 'review', identity_hold_reason = ?,
+             identity_hold_reference = ? WHERE user_id = ?`,
+          ["Lost or stolen National ID reported; admin review required", ref, req.dbUser.user_id]
+        );
+      }
 
       await logAudit(req.dbUser.user_id, appId, "APPLICATION_SUBMITTED",
         "applications", appId, { reference: ref }, req.ip);
@@ -969,6 +1032,76 @@ app.get("/api/admin/stats", verifyToken, requireAdmin, async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Failed" });
+  }
+});
+
+app.get("/api/admin/identity-reviews", verifyToken, requireAdmin, async (req, res) => {
+  try {
+    const [holds] = await db.query(
+      `SELECT u.user_id, u.full_name, u.email, u.phone, u.identity_hold_reason,
+              u.identity_hold_reference, n.national_id_number
+       FROM users u LEFT JOIN citizen_national_ids n ON n.user_id = u.user_id
+       WHERE u.identity_hold_status = 'review' ORDER BY u.user_id DESC`
+    );
+    const [birthDates] = await db.query(
+      `SELECT u.user_id, u.full_name, u.email, u.phone, u.pending_date_of_birth,
+              n.national_id_number
+       FROM users u LEFT JOIN citizen_national_ids n ON n.user_id = u.user_id
+       WHERE u.pending_date_of_birth IS NOT NULL ORDER BY u.user_id DESC`
+    );
+    res.json({ holds, birthDates });
+  } catch (err) {
+    console.error("Identity review load error:", err);
+    res.status(500).json({ error: "Could not load identity review queue." });
+  }
+});
+
+app.post("/api/admin/identity-reviews/:userId/hold", verifyToken, requireAdmin, async (req, res) => {
+  try {
+    const [result] = await db.query(
+      `UPDATE users SET identity_hold_status = 'clear', identity_hold_reason = NULL,
+         identity_hold_reference = NULL WHERE user_id = ? AND identity_hold_status = 'review'`,
+      [req.params.userId]
+    );
+    if (!result.affectedRows) return res.status(404).json({ error: "Identity hold not found." });
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Identity hold release error:", err);
+    res.status(500).json({ error: "Could not clear identity hold." });
+  }
+});
+
+app.post("/api/admin/identity-reviews/:userId/date-of-birth", verifyToken, requireAdmin, async (req, res) => {
+  const decision = req.body?.decision;
+  if (!["approve", "reject"].includes(decision)) {
+    return res.status(400).json({ error: "Choose approve or reject." });
+  }
+  try {
+    const [rows] = await db.query(
+      "SELECT pending_date_of_birth FROM users WHERE user_id = ? LIMIT 1",
+      [req.params.userId]
+    );
+    if (!rows.length || !rows[0].pending_date_of_birth) {
+      return res.status(404).json({ error: "Pending birth date not found." });
+    }
+    if (decision === "approve") {
+      await db.query(
+        `UPDATE users SET date_of_birth = pending_date_of_birth,
+           date_of_birth_verified = 1, pending_date_of_birth = NULL WHERE user_id = ?`,
+        [req.params.userId]
+      );
+    } else {
+      await db.query(
+        `UPDATE users SET pending_date_of_birth = NULL,
+           date_of_birth = IF(date_of_birth_verified = 0, NULL, date_of_birth)
+         WHERE user_id = ?`,
+        [req.params.userId]
+      );
+    }
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Birth date review error:", err);
+    res.status(500).json({ error: "Could not update birth date review." });
   }
 });
 
@@ -5118,19 +5251,21 @@ async function getPensionIdentity(conn, userId, authPhone = null) {
   );
   if (!identity) return null;
   const [[profile]] = await conn.query(
-    "SELECT date_of_birth FROM users WHERE user_id = ? LIMIT 1",
+    "SELECT date_of_birth, date_of_birth_verified FROM users WHERE user_id = ? LIMIT 1",
     [userId]
   );
   const idNumber = identity.national_id_number || identity.national_id || null;
   const phone = authPhone || identity.phone || null;
-  const dateOfBirth = identity.verified_date_of_birth || profile?.date_of_birth || null;
+  const dateOfBirth = identity.verified_date_of_birth ||
+    (profile?.date_of_birth_verified ? profile.date_of_birth : null);
   return {
     full_name: identity.full_name,
     national_id_number: idNumber,
     legacy_national_id: identity.national_id || null,
     phone,
     date_of_birth: dateOfBirth,
-    date_of_birth_source: identity.verified_date_of_birth ? "HOME_AFFAIRS" : "PROFILE",
+    date_of_birth_source: identity.verified_date_of_birth ? "HOME_AFFAIRS" :
+      (profile?.date_of_birth_verified ? "PROFILE" : null),
     age: pensionAgeOnDate(dateOfBirth),
     payment_phone: phone ? String(phone).replace(/[^0-9]/g, "") : ""
   };

@@ -24,6 +24,13 @@ async function api(path, opts = {}) {
   return data;
 }
 
+function dateInputValue(value) {
+  if (!value) return "";
+  if (typeof value === "string") return value.slice(0, 10);
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? "" : date.toISOString().slice(0, 10);
+}
+
 const MODULES = [
   { key: "NICR", label: "Civil Registration" },
   { key: "IMMIGRATION", label: "Immigration" },
@@ -411,6 +418,11 @@ const TRANSLATIONS = {
     myProfile: "My profile",
     profileDesc: "Your verified identity on the Lesotho Government Services platform.",
     profileDetails: "Profile details",
+    dateOfBirth: "Date of birth",
+    updateMissingProfileDetails: "Complete your profile",
+    profileDetailsDesc: "Add your birth date and contact phone. An administrator must verify the birth date before it is used for age or eligibility checks.",
+    saveProfile: "Save profile details",
+    profileSaved: "Birth date submitted for administrator verification.",
     fullName: "Full name",
     email: "Email",
     phone: "Phone",
@@ -514,6 +526,11 @@ const TRANSLATIONS = {
     myProfile: "Boitsebiso ba ka",
     profileDesc: "Boitsebiso ba hau bo netefalitsoeng sethaleng sa litšebeletso tsa Lesotho.",
     profileDetails: "Lintlha tsa boitsebiso",
+    dateOfBirth: "Letsatsi la tsoalo",
+    updateMissingProfileDetails: "Tlatsa boitsebiso ba hau",
+    profileDetailsDesc: "Kenya letsatsi la tsoalo le nomoro ea mohala. Motsamaisi o tlameha ho netefatsa letsatsi pele le sebelisoa ho lekola lilemo kapa tokelo.",
+    saveProfile: "Boloka lintlha tsa boitsebiso",
+    profileSaved: "Letsatsi la tsoalo le rometsoe hore le netefatsoe ke motsamaisi.",
     fullName: "Lebitso le feletseng",
     email: "Imeile",
     phone: "Mohala",
@@ -1248,6 +1265,7 @@ function HomeAffairsDashboard({ onLogout }) {
           lang={lang}
           setLang={setLang}
           me={me}
+          onProfileUpdated={setMe}
           applications={applications}
           notifications={notifications}
           approvedApplications={approvedApplications}
@@ -1276,7 +1294,7 @@ function HomeAffairsDashboard({ onLogout }) {
 // SETTINGS MODAL
 // ============================================================
 function SettingsModal({
-  t, lang, setLang, me,
+  t, lang, setLang, me, onProfileUpdated,
   applications, notifications, approvedApplications,
   docSearch, setDocSearch,
   settingsTab, setSettingsTab,
@@ -1284,6 +1302,43 @@ function SettingsModal({
   photoInputRef, photoUploading, photoError, handlePhotoUpload,
   openDetail, viewCertificate, markRead
 }) {
+  const [profileForm, setProfileForm] = useState(() => ({
+    date_of_birth: dateInputValue(me?.date_of_birth || me?.pending_date_of_birth),
+    phone: me?.phone || ""
+  }));
+  const [profileSaving, setProfileSaving] = useState(false);
+  const [profileMessage, setProfileMessage] = useState("");
+
+  useEffect(() => {
+    setProfileForm({
+      date_of_birth: dateInputValue(me?.date_of_birth || me?.pending_date_of_birth),
+      phone: me?.phone || ""
+    });
+  }, [me]);
+
+  async function saveProfile(e) {
+    e.preventDefault();
+    setProfileMessage("");
+    setProfileSaving(true);
+    try {
+      const res = await api("/me/profile", {
+        method: "POST",
+        body: JSON.stringify(profileForm)
+      });
+      onProfileUpdated(res.user);
+      setProfileForm({
+        date_of_birth: dateInputValue(res.user?.date_of_birth),
+        phone: res.user?.phone || ""
+      });
+      sessionStorage.setItem("user-profile", JSON.stringify(res.user));
+      setProfileMessage(t.profileSaved);
+    } catch (err) {
+      setProfileMessage(err.message);
+    } finally {
+      setProfileSaving(false);
+    }
+  }
+
   const tabs = [
     ["profile", t.settingsTabs.profile],
     ["applications", t.settingsTabs.applications],
@@ -1422,10 +1477,36 @@ function SettingsModal({
                     <ProfileRow label={t.email} value={me.email || "—"} />
                     <ProfileRow label={t.phone} value={me.phone || "—"} />
                     <ProfileRow label={t.nationalId} value={me.national_id_number || me.national_id || "—"} />
+                    <ProfileRow label={t.dateOfBirth} value={me.date_of_birth ? dateInputValue(me.date_of_birth) : "Not verified"} />
+                    {me.pending_date_of_birth && <ProfileRow label="Birth date awaiting verification" value={dateInputValue(me.pending_date_of_birth)} />}
                     <ProfileRow label={t.accountType} value={me.account_type} />
                     <ProfileRow label={t.accountStatus} value={me.account_status} />
                     <ProfileRow label={t.memberSince} value={new Date(me.created_at).toLocaleDateString()} />
                   </div>
+
+                  <form onSubmit={saveProfile} className="profile-settings-card" style={{ ...settingsCard, display: "grid", gap: 12 }}>
+                    <h4 style={settingsCardTitle}>{t.updateMissingProfileDetails}</h4>
+                    <p style={{ margin: 0, fontSize: 12, color: COLORS.textMuted, lineHeight: 1.5 }}>{t.profileDetailsDesc}</p>
+                    <label style={{ display: "grid", gap: 6, color: COLORS.textMid, fontSize: 13, fontWeight: 700 }}>
+                      {t.dateOfBirth}
+                      <input type="date" required value={profileForm.date_of_birth}
+                        max={new Date().toISOString().slice(0, 10)}
+                        onChange={e => setProfileForm(previous => ({ ...previous, date_of_birth: e.target.value }))}
+                        style={{ ...settingsInput, minHeight: 44, fontSize: 15 }} />
+                    </label>
+                    <label style={{ display: "grid", gap: 6, color: COLORS.textMid, fontSize: 13, fontWeight: 700 }}>
+                      {t.phone}
+                      <input type="tel" inputMode="tel" autoComplete="tel"
+                        value={profileForm.phone}
+                        onChange={e => setProfileForm(previous => ({ ...previous, phone: e.target.value }))}
+                        placeholder={t.phone}
+                        style={{ ...settingsInput, minHeight: 44, fontSize: 15 }} />
+                    </label>
+                    {profileMessage && <p role="status" style={{ margin: 0, color: profileMessage === t.profileSaved ? COLORS.success : COLORS.error, fontSize: 13 }}>{profileMessage}</p>}
+                    <button type="submit" disabled={profileSaving} style={btnPrimary}>
+                      {profileSaving ? "Saving..." : t.saveProfile}
+                    </button>
+                  </form>
 
                   <div className="profile-settings-card" style={settingsCard}>
                     <h4 style={settingsCardTitle}>{t.identityPhoto}</h4>

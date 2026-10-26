@@ -50,11 +50,19 @@ function HomeAffairsDashboardAdmin({ onLogout }) {
   const [detail, setDetail] = useState(null);
   const [note, setNote] = useState("");
   const [updating, setUpdating] = useState(false);
+  const [identityReviews, setIdentityReviews] = useState({ holds: [], birthDates: [] });
 
   const loadStats = useCallback(async () => {
     try {
       const data = await api("/admin/stats");
       setStats(data);
+    } catch (err) { console.error(err); }
+  }, []);
+
+  const loadIdentityReviews = useCallback(async () => {
+    try {
+      const data = await api("/admin/identity-reviews");
+      setIdentityReviews({ holds: data.holds || [], birthDates: data.birthDates || [] });
     } catch (err) { console.error(err); }
   }, []);
 
@@ -72,6 +80,7 @@ function HomeAffairsDashboardAdmin({ onLogout }) {
   }, [statusFilter, typeFilter]);
 
   useEffect(() => { loadStats(); }, [loadStats]);
+  useEffect(() => { loadIdentityReviews(); }, [loadIdentityReviews]);
   useEffect(() => { loadQueue(); }, [loadQueue]);
 
   async function openApplication(id) {
@@ -96,6 +105,22 @@ function HomeAffairsDashboardAdmin({ onLogout }) {
       await loadStats();
     } catch (err) { alert(err.message); }
     finally { setUpdating(false); }
+  }
+
+  async function reviewDateOfBirth(userId, decision) {
+    try {
+      await api(`/admin/identity-reviews/${userId}/date-of-birth`, {
+        method: "POST", body: JSON.stringify({ decision })
+      });
+      await loadIdentityReviews();
+    } catch (err) { alert(err.message); }
+  }
+
+  async function clearIdentityHold(userId) {
+    try {
+      await api(`/admin/identity-reviews/${userId}/hold`, { method: "POST", body: JSON.stringify({}) });
+      await loadIdentityReviews();
+    } catch (err) { alert(err.message); }
   }
 
   const countFor = (key) =>
@@ -129,6 +154,33 @@ function HomeAffairsDashboardAdmin({ onLogout }) {
             <div style={{ flex: 1, background: COLORS.green }} />
           </div>
         </header>
+
+        {(identityReviews.holds.length > 0 || identityReviews.birthDates.length > 0) && (
+          <section style={{ ...grids.twoCol, marginTop: 22 }}>
+            {identityReviews.holds.length > 0 && <article style={cards.cardPadded}>
+              <h2 style={section.title}>Lost or stolen ID reports</h2>
+              <p style={section.subtitle}>These accounts are paused across all ministries until reviewed.</p>
+              {identityReviews.holds.map(person => <div key={person.user_id} style={{ padding: "12px 0", borderBottom: `1px solid ${COLORS.border}` }}>
+                <strong>{person.full_name}</strong>
+                <p style={{ margin: "4px 0", fontSize: 13, color: COLORS.textMuted }}>National ID: {person.national_id_number || "—"} · Ref: {person.identity_hold_reference || "—"}</p>
+                <p style={{ margin: "4px 0 10px", fontSize: 13 }}>{person.identity_hold_reason}</p>
+                <button type="button" onClick={() => clearIdentityHold(person.user_id)} style={actionButton}>Clear hold after review</button>
+              </div>)}
+            </article>}
+            {identityReviews.birthDates.length > 0 && <article style={cards.cardPadded}>
+              <h2 style={section.title}>Birth dates awaiting verification</h2>
+              <p style={section.subtitle}>Only approved dates are used to calculate service eligibility.</p>
+              {identityReviews.birthDates.map(person => <div key={person.user_id} style={{ padding: "12px 0", borderBottom: `1px solid ${COLORS.border}` }}>
+                <strong>{person.full_name}</strong>
+                <p style={{ margin: "4px 0 10px", fontSize: 13, color: COLORS.textMuted }}>National ID: {person.national_id_number || "—"} · Date submitted: {String(person.pending_date_of_birth).slice(0, 10)}</p>
+                <div style={{ display: "flex", gap: 8 }}>
+                  <button type="button" onClick={() => reviewDateOfBirth(person.user_id, "approve")} style={actionButton}>Verify date</button>
+                  <button type="button" onClick={() => reviewDateOfBirth(person.user_id, "reject")} style={secondaryButton}>Reject</button>
+                </div>
+              </div>)}
+            </article>}
+          </section>
+        )}
 
         <section style={grids.metrics}>
           <Metric label="Total applications" value={stats.totalApplications || 0} />
@@ -425,6 +477,18 @@ const selectStyle = {
   padding: "8px 12px", border: `1px solid ${COLORS.border}`,
   borderRadius: 6, fontSize: 12, fontFamily: "inherit",
   background: "#fff", outline: "none"
+};
+
+const actionButton = {
+  padding: "8px 12px", border: 0, borderRadius: 6,
+  background: COLORS.blue, color: "#fff", cursor: "pointer",
+  fontWeight: 700, fontSize: 12
+};
+
+const secondaryButton = {
+  padding: "8px 12px", border: `1px solid ${COLORS.border}`, borderRadius: 6,
+  background: "#fff", color: COLORS.textDark, cursor: "pointer",
+  fontWeight: 700, fontSize: 12
 };
 
 const inputStyle = {

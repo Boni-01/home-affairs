@@ -97,6 +97,10 @@ function Login({ onSuccess, getPostAuthRoute }) {
     const data = await res.json();
 
     if (!res.ok) {
+      if (data.code === "IDENTITY_ON_HOLD") {
+        await auth.signOut();
+        throw new Error(data.error || "This account is temporarily on hold pending administrator review.");
+      }
       if (data.code === "NOT_REGISTERED") {
         navigate("/register", {
           state: { from: location.state?.from, prefill: data }
@@ -491,6 +495,10 @@ function Login({ onSuccess, getPostAuthRoute }) {
 
 function prettyError(err) {
   const code = err?.code || "";
+  if (code.includes("operation-not-allowed"))
+    return "Phone SMS is disabled for this Firebase project or region. Enable Phone sign-in and allow SMS to Lesotho (+266) in Firebase Console > Authentication > Settings > SMS region policy.";
+  if (code.includes("billing-not-enabled"))
+    return "Firebase SMS requires a Cloud Billing account. Link billing to the lesotho-gov-services project in Google Cloud Console, then allow Lesotho (LS) in Firebase Authentication > Settings > SMS region policy. SMS charges may apply.";
   if (code.includes("invalid-credential") || code.includes("wrong-password"))
     return "Incorrect email or password.";
   if (code.includes("user-not-found")) return "No account found with that email.";

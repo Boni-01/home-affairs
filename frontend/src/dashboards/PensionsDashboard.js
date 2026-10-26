@@ -97,12 +97,6 @@ function PensionsDashboard({ onLogout }) {
   }, []);
 
   useEffect(() => { load(); }, [load]);
-  useEffect(() => {
-    const refreshProfile = () => load();
-    window.addEventListener("home-affairs-profile-updated", refreshProfile);
-    return () => window.removeEventListener("home-affairs-profile-updated", refreshProfile);
-  }, [load]);
-
   async function submitRegistration(e) {
     e.preventDefault();
     setRegMsg("");
@@ -215,7 +209,6 @@ function PensionsDashboard({ onLogout }) {
         <Navbar
           items={[
             ["apply", "Old Age Pension"],
-            ["profile", "Profile"],
             ["mine", "My applications"],
             ["contributions", "Contributions"],
             ["payments", "Payments"],
@@ -288,20 +281,8 @@ function PensionsDashboard({ onLogout }) {
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12 }}>
                 <InfoCard label="Full name" value={profile.identity?.full_name || me?.full_name || "Loading profile"} />
                 <InfoCard label="National ID" value={profile.identity?.national_id_number || me?.national_id_number || me?.national_id || "Not on profile"} />
-                <InfoCard label="Age" value={profile.eligibility?.age == null ? "Add date of birth in Profile" : String(profile.eligibility.age) + " years"} />
+                <InfoCard label="Age" value={profile.eligibility?.age == null ? "Date of birth not on record" : String(profile.eligibility.age) + " years"} />
               </div>
-              {!profile.eligibility?.date_of_birth_available && !profile.member && (
-                <div style={{ ...noticeCard, marginTop: 16 }}>
-                  <PensionIcon kind="calendar" />
-                  <div>
-                    <p style={{ margin: "0 0 10px" }}>Add your date of birth in your profile to check your age. You do not need to wait for a Home Affairs approval.</p>
-                    <button type="button" onClick={() => window.dispatchEvent(new CustomEvent("home-affairs-open-profile"))}
-                      style={{ ...btnPrimary, fontSize: 14, padding: "10px 16px" }}>
-                      Add date of birth to profile
-                    </button>
-                  </div>
-                </div>
-              )}
               {profile.eligibility?.age != null && profile.eligibility.age < 60 && !profile.member && (
                 <div style={{ ...noticeCard, marginTop: 16, background: "#fff4df", color: COLORS.warning }}>
                   <PensionIcon kind="calendar" />
