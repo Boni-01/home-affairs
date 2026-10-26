@@ -19,90 +19,17 @@ async function api(path, opts = {}) {
   return data;
 }
 
-const APPLICATION_ICONS = {
-  REGISTRATION: () => (
-    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M4 20V4h11l5 5v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z" />
-      <path d="M15 4v5h5" />
-      <path d="M8 12h8M8 16h8" />
-    </svg>
-  ),
-  RETIREMENT_BENEFIT: () => (
-    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M4 10h16M6 10V7.5A1.5 1.5 0 0 1 7.5 6h9A1.5 1.5 0 0 1 18 7.5V10" />
-      <path d="M7 10v9h10v-9" />
-      <path d="M10 14h4" />
-    </svg>
-  ),
-  RESIGNATION_BENEFIT: () => (
-    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M8 7h8" />
-      <path d="M9 11h6" />
-      <path d="M8 4h8a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z" />
-      <path d="M12 15h.01" />
-    </svg>
-  ),
-  TERMINATION_BENEFIT: () => (
-    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M5 5h14v14H5z" />
-      <path d="M8 8h8v8H8z" />
-      <path d="M10 12h4" />
-    </svg>
-  ),
-  RETRENCHMENT_BENEFIT: () => (
-    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M4 16l6-8 4 6 6-8" />
-      <path d="M18 6h2v2" />
-      <path d="M4 20h16" />
-    </svg>
-  ),
-  DISABILITY_BENEFIT: () => (
-    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M12 21a7 7 0 1 1 0-14 7 7 0 0 1 0 14z" />
-      <path d="M9 10h6M12 7v6" />
-      <path d="M8 16c1-1 3-1.5 4-1.5s3 .5 4 1.5" />
-    </svg>
-  ),
-  DEATH_BENEFIT: () => (
-    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M12 20s-6-3.5-6-8.5A3.5 3.5 0 0 1 9.5 8c1.1 0 2.2.5 3 1.4A3.8 3.8 0 0 1 15.5 8 3.5 3.5 0 0 1 19 11.5C19 16.5 13 20 12 20z" />
-    </svg>
-  ),
-  OLD_AGE_PENSION: () => (
-    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <circle cx="9" cy="8" r="3" />
-      <path d="M4 18a5 5 0 0 1 10 0" />
-      <path d="M16 8h4M18 6v4" />
-      <path d="M15 18h5" />
-    </svg>
-  ),
-  RECORD_CORRECTION: () => (
-    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M4 20V4h11l5 5v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z" />
-      <path d="M15 4v5h5" />
-      <path d="M8 12l2 2 5-5" />
-    </svg>
-  ),
-  OTHER: () => (
-    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M7 3h8l4 4v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z" />
-      <path d="M14 3v5h5" />
-      <path d="M8 13h8M8 17h8" />
-    </svg>
-  )
-};
-
 const APPLICATION_TYPES = [
-  { key: "REGISTRATION",         label: "Pension registration",        icon: APPLICATION_ICONS.REGISTRATION, needsDocs: true },
-  { key: "RETIREMENT_BENEFIT",   label: "Retirement benefit",          icon: APPLICATION_ICONS.RETIREMENT_BENEFIT, needsDocs: true },
-  { key: "RESIGNATION_BENEFIT",  label: "Resignation benefit",         icon: APPLICATION_ICONS.RESIGNATION_BENEFIT, needsDocs: true },
-  { key: "TERMINATION_BENEFIT",  label: "Termination benefit",         icon: APPLICATION_ICONS.TERMINATION_BENEFIT, needsDocs: true },
-  { key: "RETRENCHMENT_BENEFIT", label: "Retrenchment benefit",        icon: APPLICATION_ICONS.RETRENCHMENT_BENEFIT, needsDocs: true },
-  { key: "DISABILITY_BENEFIT",   label: "Disability benefit",          icon: APPLICATION_ICONS.DISABILITY_BENEFIT, needsDocs: true },
-  { key: "DEATH_BENEFIT",        label: "Death / survivor benefit",    icon: APPLICATION_ICONS.DEATH_BENEFIT, needsDocs: true },
-  { key: "OLD_AGE_PENSION",      label: "Old Age Pension application", icon: APPLICATION_ICONS.OLD_AGE_PENSION, needsDocs: true },
-  { key: "RECORD_CORRECTION",    label: "Record correction",           icon: APPLICATION_ICONS.RECORD_CORRECTION, needsDocs: false },
-  { key: "OTHER",                label: "Other pension request",       icon: APPLICATION_ICONS.OTHER, needsDocs: false }
+  { key: "REGISTRATION", label: "Pension registration" },
+  { key: "RETIREMENT_BENEFIT", label: "Retirement benefit" },
+  { key: "RESIGNATION_BENEFIT", label: "Resignation benefit" },
+  { key: "TERMINATION_BENEFIT", label: "Termination benefit" },
+  { key: "RETRENCHMENT_BENEFIT", label: "Retrenchment benefit" },
+  { key: "DISABILITY_BENEFIT", label: "Disability benefit" },
+  { key: "DEATH_BENEFIT", label: "Death / survivor benefit" },
+  { key: "OLD_AGE_PENSION", label: "Old Age Pension application" },
+  { key: "RECORD_CORRECTION", label: "Record correction" },
+  { key: "OTHER", label: "Other pension request" }
 ];
 
 const ENQUIRY_TYPES = [
@@ -118,7 +45,7 @@ const ENQUIRY_TYPES = [
 ];
 
 function PensionsDashboard({ onLogout }) {
-  const [tab, setTab] = useState("overview");
+  const [tab, setTab] = useState("apply");
   const [searchQuery, setSearchQuery] = useState("");
   const [me, setMe] = useState(null);
   const [programmes, setProgrammes] = useState([]);
@@ -128,7 +55,6 @@ function PensionsDashboard({ onLogout }) {
   const [payments, setPayments] = useState([]);
   const [enquiries, setEnquiries] = useState([]);
   const [notifications, setNotifications] = useState([]);
-  const [estimate, setEstimate] = useState(null);
 
   const [activeType, setActiveType] = useState(null);
   const [details, setDetails] = useState({});
@@ -141,7 +67,6 @@ function PensionsDashboard({ onLogout }) {
 
   const [regForm, setRegForm] = useState({
     programme_code: "PODCPF",
-    date_of_birth: "",
     employment_number: "",
     employer_name: "",
     employment_start_date: "",
@@ -158,14 +83,13 @@ function PensionsDashboard({ onLogout }) {
   const [enquiryMsg, setEnquiryMsg] = useState("");
 
   const [deletingId, setDeletingId] = useState(null);
-
   const fileInputRef = useRef(null);
 
   const load = useCallback(async () => {
     try {
       const [
         meRes, progRes, profileRes, appsRes, contribRes,
-        payRes, enqRes, notifRes, estRes
+        payRes, enqRes, notifRes
       ] = await Promise.all([
         api("/me"),
         api("/pensions/programmes"),
@@ -174,8 +98,7 @@ function PensionsDashboard({ onLogout }) {
         api("/pensions/contributions/my"),
         api("/pensions/payments/my"),
         api("/pensions/enquiries/my"),
-        api("/pensions/notifications"),
-        api("/pensions/estimate/my")
+        api("/pensions/notifications")
       ]);
       setMe(meRes.user);
       setProgrammes(progRes.programmes || []);
@@ -189,7 +112,6 @@ function PensionsDashboard({ onLogout }) {
       setPayments(payRes.payments || []);
       setEnquiries(enqRes.enquiries || []);
       setNotifications(notifRes.notifications || []);
-      setEstimate(estRes.estimate || null);
     } catch (err) {
       console.error(err);
     }
@@ -197,19 +119,19 @@ function PensionsDashboard({ onLogout }) {
 
   useEffect(() => { load(); }, [load]);
 
-  // ---------------- Registration ----------------
   async function submitRegistration(e) {
     e.preventDefault();
     setRegMsg("");
     try {
       const fd = new FormData();
-      Object.entries(regForm).forEach(([k, v]) => fd.append(k, v));
-      for (const f of regDocs) if (f instanceof File) fd.append("documents", f, f.name);
+      Object.entries(regForm).forEach(([key, value]) => fd.append(key, value));
+      for (const file of regDocs) {
+        if (file instanceof File) fd.append("documents", file, file.name);
+      }
       const res = await api("/pensions/register", { method: "POST", body: fd });
       setRegMsg(`Registration submitted. Reference: ${res.referenceNumber}`);
       setRegForm({
         programme_code: "PODCPF",
-        date_of_birth: "",
         employment_number: "",
         employer_name: "",
         employment_start_date: "",
@@ -223,13 +145,13 @@ function PensionsDashboard({ onLogout }) {
     }
   }
 
-  // ---------------- Application submit ----------------
-  function openType(t) {
-    setActiveType(t);
+  function openType(type) {
+    setActiveType(type);
     setDetails({});
     setDocs([]);
     setSubmitError("");
   }
+
   function closeType() {
     setActiveType(null);
     setDetails({});
@@ -248,7 +170,9 @@ function PensionsDashboard({ onLogout }) {
         fd.append("programme_code", profile.programme.programme_code);
       }
       fd.append("details", JSON.stringify(details));
-      for (const f of docs) if (f instanceof File) fd.append("documents", f, f.name);
+      for (const file of docs) {
+        if (file instanceof File) fd.append("documents", file, file.name);
+      }
       const res = await api("/pensions/applications", { method: "POST", body: fd });
       closeType();
       await load();
@@ -313,7 +237,6 @@ function PensionsDashboard({ onLogout }) {
   }
 
   const deletableStatuses = ["DRAFT","SUBMITTED","MORE_INFORMATION_REQUIRED"];
-  const isMember = !!profile.member;
 
   return (
     <main className="dashboard-page" style={layout.page}>
@@ -339,7 +262,6 @@ function PensionsDashboard({ onLogout }) {
 
         <Navbar
           items={[
-            ["overview", "Overview"],
             ["apply", "Submit application"]
           ]}
           activeTab={tab}
@@ -348,55 +270,42 @@ function PensionsDashboard({ onLogout }) {
           user={me}
         />
 
-        {/* ---------------- Overview ---------------- */}
-        {tab === "overview" && (
-          <section>
-            <h2 style={section.title}>Pension overview</h2>
-            <p style={section.subtitle}>Your membership, contributions and benefit estimate.</p>
-
-            {!isMember && (
-              <div style={{
-                background: "#fff", border: `1px solid ${COLORS.border}`,
-                borderRadius: 12, padding: 24, marginBottom: 20
-              }}>
-                <h3 style={{ margin: "0 0 16px", fontSize: 14, color: COLORS.blue }}>
-                  Register as a pension member
-                </h3>
+        {/* ---------------- Recent applications ---------------- */}
+        {tab === "apply" && (
+          <>
+            {!profile.member && (
+              <section style={section.wrapper}>
+                <h2 style={section.title}>Register as a pension member</h2>
                 <form onSubmit={submitRegistration}>
                   <label style={labelStyle}>Programme</label>
                   <select value={regForm.programme_code}
-                    onChange={e => setRegForm(p => ({ ...p, programme_code: e.target.value }))}
+                    onChange={e => setRegForm(previous => ({ ...previous, programme_code: e.target.value }))}
                     style={{ ...inputStyle, marginBottom: 14 }}>
-                    {programmes.filter(p => matchesDashboardSearch(p, searchQuery)).map(p => (
-                      <option key={p.programme_code} value={p.programme_code}>
-                        {p.programme_name}
+                    {programmes.filter(programme => matchesDashboardSearch(programme, searchQuery)).map(programme => (
+                      <option key={programme.programme_code} value={programme.programme_code}>
+                        {programme.programme_name}
                       </option>
                     ))}
                   </select>
 
-                  <label style={labelStyle}>Date of birth</label>
-                  <input type="date" value={regForm.date_of_birth}
-                    onChange={e => setRegForm(p => ({ ...p, date_of_birth: e.target.value }))}
-                    style={{ ...inputStyle, marginBottom: 14 }} />
-
                   <label style={labelStyle}>Employment number</label>
                   <input value={regForm.employment_number}
-                    onChange={e => setRegForm(p => ({ ...p, employment_number: e.target.value }))}
+                    onChange={e => setRegForm(previous => ({ ...previous, employment_number: e.target.value }))}
                     style={{ ...inputStyle, marginBottom: 14 }} />
 
                   <label style={labelStyle}>Employer name</label>
                   <input value={regForm.employer_name}
-                    onChange={e => setRegForm(p => ({ ...p, employer_name: e.target.value }))}
+                    onChange={e => setRegForm(previous => ({ ...previous, employer_name: e.target.value }))}
                     style={{ ...inputStyle, marginBottom: 14 }} />
 
                   <label style={labelStyle}>Employment start date</label>
                   <input type="date" value={regForm.employment_start_date}
-                    onChange={e => setRegForm(p => ({ ...p, employment_start_date: e.target.value }))}
+                    onChange={e => setRegForm(previous => ({ ...previous, employment_start_date: e.target.value }))}
                     style={{ ...inputStyle, marginBottom: 14 }} />
 
                   <label style={labelStyle}>Employment end date</label>
                   <input type="date" value={regForm.employment_end_date}
-                    onChange={e => setRegForm(p => ({ ...p, employment_end_date: e.target.value }))}
+                    onChange={e => setRegForm(previous => ({ ...previous, employment_end_date: e.target.value }))}
                     style={{ ...inputStyle, marginBottom: 14 }} />
 
                   <label style={labelStyle}>Supporting documents (ID, employment record etc.)</label>
@@ -412,114 +321,64 @@ function PensionsDashboard({ onLogout }) {
                   )}
                   <button type="submit" style={btnPrimary}>Register</button>
                 </form>
-              </div>
+              </section>
             )}
 
-            {isMember && (
-              <>
-                <div style={{
-                  background: "#fff", border: `1px solid ${COLORS.border}`,
-                  borderRadius: 12, padding: 20, marginBottom: 16
-                }}>
-                  <h3 style={{ margin: "0 0 10px", fontSize: 14, color: COLORS.blue }}>
-                    My membership
-                  </h3>
-                  <Row label="Member number" value={profile.member.member_number} />
-                  <Row label="Programme" value={profile.programme?.programme_name || "—"} />
-                  <Row label="Membership status" value={
-                    <StatusBadge status={profile.member.membership_status} />
-                  } />
-                  <Row label="Identity verification" value={
-                    <StatusBadge status={profile.member.identity_verification_status} />
-                  } />
-                  {profile.member.employer_name && (
-                    <Row label="Employer" value={profile.member.employer_name} />
-                  )}
-                </div>
-
-                <div style={{
-                  background: "#fff", border: `1px solid ${COLORS.border}`,
-                  borderRadius: 12, padding: 20, marginBottom: 16
-                }}>
-                  <h3 style={{ margin: "0 0 10px", fontSize: 14, color: COLORS.blue }}>
-                    Contributions summary
-                  </h3>
-                  {profile.contributions_summary ? (
-                    <>
-                      <Row label="Months recorded" value={profile.contributions_summary.months_recorded || 0} />
-                      <Row label="Member contributions" value={`M ${Number(profile.contributions_summary.total_member || 0).toFixed(2)}`} />
-                      <Row label="Employer contributions" value={`M ${Number(profile.contributions_summary.total_employer || 0).toFixed(2)}`} />
-                      <Row label="Combined total" value={`M ${Number(profile.contributions_summary.total_combined || 0).toFixed(2)}`} />
-                    </>
-                  ) : (
-                    <p style={{ margin: 0, fontSize: 13, color: COLORS.textMuted }}>
-                      No contribution records yet.
-                    </p>
-                  )}
-                </div>
-
-                {estimate && (
-                  <div style={{
-                    background: "#fff", border: `1px solid ${COLORS.border}`,
-                    borderRadius: 12, padding: 20
-                  }}>
-                    <h3 style={{ margin: "0 0 10px", fontSize: 14, color: COLORS.blue }}>
-                      Illustrative benefit estimate
-                    </h3>
-                    <Row label="Illustrative monthly benefit"
-                      value={`M ${Number(estimate.illustrative_monthly_benefit || 0).toFixed(2)}`} />
-                    <Row label="Illustrative annual benefit"
-                      value={`M ${Number(estimate.illustrative_annual_benefit || 0).toFixed(2)}`} />
-                    <p style={{
-                      margin: "12px 0 0", padding: 10,
-                      background: COLORS.blueLight, borderRadius: 6,
-                      fontSize: 12, color: COLORS.textMid, lineHeight: 1.5
-                    }}>
-                      {estimate.note}
-                    </p>
-                  </div>
-                )}
-              </>
-            )}
-          </section>
-        )}
-
-        {/* ---------------- Apply ---------------- */}
-        {tab === "apply" && (
-          <section>
-            <h2 style={section.title}>Submit a pension application</h2>
-            <p style={section.subtitle}>
-              Choose the type of application you want to submit. We'll ask for the
-              required details and supporting documents.
-            </p>
-            <div style={pensionServiceGrid}>
-              {APPLICATION_TYPES.filter(t => matchesDashboardSearch(t, searchQuery)).map(t => {
-                const Icon = t.icon;
-                return (
-                  <button
-                    key={t.key}
-                    type="button"
-                    className="pension-service-button"
-                    onClick={() => openType(t)}
-                    style={pensionServiceButton}
-                  >
-                    <span className="pension-service-icon-tile" style={pensionServiceIconTile}>
-                      <Icon />
-                    </span>
-                    <span style={pensionServiceLabel}>{t.label}</span>
-                  </button>
-                );
-              })}
-            </div>
-            <aside className="pension-dashboard-guidance" style={pensionDashboardGuidance}>
-              <h3 style={pensionDashboardGuidanceTitle}>Before you apply</h3>
-              <p style={pensionDashboardGuidanceText}>
-                Select the application that matches your circumstances and include the
-                supporting documents requested in the form. Keep your application
-                reference number so you can track its progress under <strong>My applications</strong>.
+            <section style={section.wrapper}>
+              <h2 style={section.title}>Submit a pension application</h2>
+              <p style={section.subtitle}>
+                Choose the type of application you want to submit. We'll ask for the
+                required details and supporting documents.
               </p>
-            </aside>
-          </section>
+              <div style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+                gap: 8
+              }}>
+                {APPLICATION_TYPES.filter(type => matchesDashboardSearch(type, searchQuery)).map(type => (
+                  <button key={type.key} type="button" onClick={() => openType(type)} style={{
+                    padding: 14, border: `1px solid ${COLORS.borderLight}`,
+                    borderRadius: 8, background: "#fff", color: COLORS.textDark,
+                    cursor: "pointer", fontFamily: "inherit", fontWeight: 700,
+                    fontSize: 13, textAlign: "left"
+                  }}>
+                    {type.label}
+                  </button>
+                ))}
+              </div>
+            </section>
+
+            <section style={{ ...section.wrapper, marginTop: 24 }}>
+              <h2 style={section.title}>Recent applications</h2>
+              <p style={section.subtitle}>Your latest pension applications.</p>
+              {applications.length === 0 ? (
+                <p style={{ color: COLORS.textMuted, fontSize: 13 }}>No applications yet.</p>
+              ) : (
+                <div style={{ display: "grid", gap: 10 }}>
+                  {applications.filter(app => matchesDashboardSearch(app, searchQuery)).slice(0, 5).map(app => (
+                    <article key={app.application_id} style={{
+                      display: "flex", justifyContent: "space-between", alignItems: "center",
+                      gap: 12, flexWrap: "wrap", background: "#fff",
+                      border: `1px solid ${COLORS.border}`, borderRadius: 10, padding: 14
+                    }}>
+                      <div>
+                        <strong style={{ fontSize: 13 }}>{app.reference_number}</strong>
+                        <p style={{ margin: "4px 0 0", fontSize: 12, color: COLORS.textMuted }}>
+                          {app.application_type.replace(/_/g, " ")} · {app.programme_name} · Submitted {new Date(app.submitted_at).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                        <StatusBadge status={app.status} />
+                        <button onClick={() => openDetail(app.application_id)} style={btnOutline}>
+                          View details
+                        </button>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              )}
+            </section>
+          </>
         )}
 
         {/* ---------------- My applications ---------------- */}
@@ -772,7 +631,6 @@ function PensionsDashboard({ onLogout }) {
         )}
       </div>
 
-      {/* ---------------- Application form overlay ---------------- */}
       {activeType && (
         <Overlay onClose={closeType}>
           <h2 style={{ margin: "0 0 4px", color: COLORS.blue }}>{activeType.label}</h2>
@@ -783,19 +641,17 @@ function PensionsDashboard({ onLogout }) {
             <label style={labelStyle}>Reason / details</label>
             <textarea rows={4}
               value={details.reason || ""}
-              onChange={e => setDetails(p => ({ ...p, reason: e.target.value }))}
+              onChange={e => setDetails(previous => ({ ...previous, reason: e.target.value }))}
               style={{ ...inputStyle, marginBottom: 14 }} />
 
             <label style={labelStyle}>Bank account (for payments, if applicable)</label>
-            <input
-              value={details.bank_account || ""}
-              onChange={e => setDetails(p => ({ ...p, bank_account: e.target.value }))}
+            <input value={details.bank_account || ""}
+              onChange={e => setDetails(previous => ({ ...previous, bank_account: e.target.value }))}
               style={{ ...inputStyle, marginBottom: 14 }} />
 
             <label style={labelStyle}>Bank name</label>
-            <input
-              value={details.bank_name || ""}
-              onChange={e => setDetails(p => ({ ...p, bank_name: e.target.value }))}
+            <input value={details.bank_name || ""}
+              onChange={e => setDetails(previous => ({ ...previous, bank_name: e.target.value }))}
               style={{ ...inputStyle, marginBottom: 14 }} />
 
             <label style={labelStyle}>Supporting documents</label>
@@ -1010,69 +866,6 @@ const subHeading = {
   fontSize: 12, color: COLORS.textMuted,
   textTransform: "uppercase", marginTop: 18,
   marginBottom: 6, letterSpacing: 0.6, fontWeight: 700
-};
-
-const pensionServiceGrid = {
-  display: "grid",
-  gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-  gap: 8
-};
-
-const pensionServiceButton = {
-  display: "flex",
-  alignItems: "center",
-  gap: 12,
-  width: "100%",
-  minHeight: 68,
-  padding: 8,
-  border: 0,
-  borderRadius: 8,
-  background: "transparent",
-  color: COLORS.textDark,
-  cursor: "pointer",
-  fontFamily: "inherit",
-  textAlign: "left"
-};
-
-const pensionServiceIconTile = {
-  display: "grid",
-  placeItems: "center",
-  flex: "0 0 48px",
-  width: 48,
-  height: 48,
-  border: `1px solid ${COLORS.borderLight}`,
-  borderRadius: 10,
-  background: "#edf3ff",
-  color: COLORS.blue
-};
-
-const pensionServiceLabel = {
-  color: COLORS.textDark,
-  fontSize: 14,
-  fontWeight: 700,
-  lineHeight: 1.35
-};
-
-const pensionDashboardGuidance = {
-  marginTop: 48,
-  padding: 18,
-  border: `1px solid ${COLORS.border}`,
-  borderLeft: `4px solid ${COLORS.green}`,
-  borderRadius: 10,
-  background: "#fff"
-};
-
-const pensionDashboardGuidanceTitle = {
-  margin: "0 0 6px",
-  color: COLORS.blue,
-  fontSize: 14
-};
-
-const pensionDashboardGuidanceText = {
-  margin: 0,
-  color: COLORS.textMid,
-  fontSize: 13,
-  lineHeight: 1.55
 };
 
 export default PensionsDashboard;

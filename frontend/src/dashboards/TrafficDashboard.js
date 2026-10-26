@@ -386,7 +386,6 @@ const SERVICE_CONFIG = {
     fields: [
       { key: "full_name", label: "Instructor Full Name", type: "text", required: true },
       { key: "national_id", label: "National ID", type: "text", required: true },
-      { key: "date_of_birth", label: "Date of Birth", type: "date" },
       { key: "licence_number", label: "Driver's Licence Number", type: "text", required: true },
       { key: "licence_category", label: "Licence Category", type: "text", required: true },
       { key: "years_experience", label: "Years of Driving Experience", type: "number", required: true },
@@ -445,7 +444,7 @@ const SERVICE_GROUPS = [
 // COMPONENT
 // ============================================================
 function TrafficDashboard({ onLogout }) {
-  const [tab, setTab] = useState("overview");
+  const [tab, setTab] = useState("apply");
   const [searchQuery, setSearchQuery] = useState("");
   const [me, setMe] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -497,10 +496,6 @@ function TrafficDashboard({ onLogout }) {
   const [photoUploading, setPhotoUploading] = useState(false);
   const [photoError, setPhotoError] = useState("");
   const photoInputRef = useRef(null);
-
-  const today = new Date().toLocaleDateString("en-LS", {
-    weekday: "long", year: "numeric", month: "long", day: "numeric"
-  });
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -726,7 +721,6 @@ function TrafficDashboard({ onLogout }) {
   };
 
   // Computed values
-  const unpaidFines = fines.filter(f => f.fine_status === "UNPAID");
   const serviceGroups = SERVICE_GROUPS.map(group => ({
     ...group,
     services: group.serviceKeys
@@ -788,7 +782,6 @@ function TrafficDashboard({ onLogout }) {
         {/* TABS */}
         <Navbar
           items={[
-            ["overview", "Overview"],
             ["apply", "Apply"]
           ]}
           activeTab={tab}
@@ -797,23 +790,68 @@ function TrafficDashboard({ onLogout }) {
           user={me}
         />
 
-        {/* OVERVIEW TAB */}
-        {tab === "overview" && (
+        {/* APPLY TAB */}
+        {tab === "apply" && (
           <>
             <section style={section.wrapper}>
-              <h2 style={section.title}>Quick Actions</h2>
-              <p style={section.subtitle}>Start a service instantly.</p>
+              <h2 style={section.title}>Available Services</h2>
+
               <div style={{
                 display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-                gap: 12
+                gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
+                columnGap: 24,
+                rowGap: 8,
+                marginTop: 12
               }}>
-                <ShortcutButton icon={TrafficIcons.Refresh} label="Renew Licence" onClick={() => openServiceModal("LICENCE_RENEWAL")} />
-                <ShortcutButton icon={TrafficIcons.Clipboard} label="Replace Lost Licence" onClick={() => openServiceModal("LICENCE_REPLACEMENT")} />
-                <ShortcutButton icon={TrafficIcons.Vehicle} label="Register a Vehicle" onClick={() => openServiceModal("VEHICLE_REGISTRATION")} />
-                <ShortcutButton icon={TrafficIcons.Wrench} label="Book Roadworthiness" onClick={() => openServiceModal("ROADWORTHINESS_INSPECTION")} />
-                <ShortcutButton icon={TrafficIcons.Bus} label="Public Transport Permit" onClick={() => openServiceModal("PUBLIC_MOTOR_VEHICLE_PERMIT")} />
+                {serviceGroups.map(group => {
+                  const Icon = group.icon;
+                  return (
+                    <details key={group.label} style={{
+                      alignSelf: "start",
+                      borderBottom: `1px solid ${COLORS.borderLight}`
+                    }}>
+                      <summary style={{
+                        display: "flex", alignItems: "center", gap: 12,
+                        minHeight: 54, padding: "8px 4px",
+                        cursor: "pointer", listStyle: "none"
+                      }}>
+                        <span style={{
+                          display: "inline-flex", flexShrink: 0,
+                          alignItems: "center", justifyContent: "center",
+                          width: 36, height: 36, color: COLORS.blue,
+                          background: "#eff8ff", border: "1px solid #d1e9ff",
+                          borderRadius: 8
+                        }}>
+                          <Icon size={19} aria-hidden="true" />
+                        </span>
+                        <span style={{ flex: 1, minWidth: 0, color: COLORS.textDark, fontSize: 13, fontWeight: 700 }}>
+                          {group.label}
+                        </span>
+                        <span aria-hidden="true" style={{ color: COLORS.textMuted, fontSize: 16, lineHeight: 1 }}>⌄</span>
+                      </summary>
+                      <div style={{ padding: "0 4px 8px 52px" }}>
+                        {group.services.map(([key, cfg]) => (
+                          <button key={key} onClick={() => openServiceModal(key)} style={{
+                            display: "flex", justifyContent: "space-between", alignItems: "center",
+                            width: "100%", gap: 12, padding: "12px 0",
+                            color: COLORS.textDark, background: "transparent", border: 0,
+                            borderTop: `1px solid ${COLORS.borderLight}`,
+                            cursor: "pointer", textAlign: "left", fontFamily: "inherit"
+                          }}>
+                            <span style={{ fontSize: 13, fontWeight: 600 }}>{cfg.label}</span>
+                            <span style={{ flexShrink: 0, color: COLORS.textMuted, fontSize: 12 }}>M {cfg.fee}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </details>
+                  );
+                })}
               </div>
+              {serviceGroups.length === 0 && (
+                <p style={{ padding: 24, color: COLORS.textMuted, textAlign: "center" }}>
+                  No services match your search.
+                </p>
+              )}
             </section>
 
             <section style={section.wrapper}>
@@ -821,7 +859,7 @@ function TrafficDashboard({ onLogout }) {
               <p style={section.subtitle}>Your most recent traffic service applications.</p>
               {applications.length === 0 ? (
                 <div style={{ textAlign: "center", padding: 40, color: COLORS.textMuted, fontSize: 13 }}>
-                  No applications yet. Use "Quick Actions" above to get started.
+                  No applications yet. Choose a service above to get started.
                 </div>
               ) : (
                 <div style={{ overflowX: "auto" }}>
@@ -847,102 +885,7 @@ function TrafficDashboard({ onLogout }) {
                 </div>
               )}
             </section>
-
-            {unpaidFines.length > 0 && (
-              <section style={section.wrapper}>
-                <h2 style={section.title}>Unpaid Fines</h2>
-                <p style={section.subtitle}>Pay fines directly from this dashboard.</p>
-                <div style={{ overflowX: "auto" }}>
-                  <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                    <thead>
-                      <tr>
-                        {["Reference", "Offence", "Date", "Amount", "Action"].map(h => (
-                          <th key={h} style={thStyle}>{h}</th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {unpaidFines.filter(fine => matchesDashboardSearch(fine, searchQuery)).map(fine => (
-                        <tr key={fine.fine_id}>
-                          <td style={tdStyle}><strong>{fine.fine_reference}</strong></td>
-                          <td style={tdStyle}>{fine.offence_description}</td>
-                          <td style={tdStyle}>{fine.offence_date ? new Date(fine.offence_date).toLocaleDateString("en-LS") : "—"}</td>
-                          <td style={tdStyle}>M {Number(fine.amount).toLocaleString()}</td>
-                          <td style={tdStyle}>
-                            <button onClick={() => setPayFineModal(fine)} style={btnSmall}>Pay Now</button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </section>
-            )}
           </>
-        )}
-
-        {/* APPLY TAB */}
-        {tab === "apply" && (
-          <section style={section.wrapper}>
-            <h2 style={section.title}>Available Services</h2>
-
-            <div style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
-              columnGap: 24,
-              rowGap: 8,
-              marginTop: 12
-            }}>
-              {serviceGroups.map(group => {
-                const Icon = group.icon;
-                return (
-                  <details key={group.label} style={{
-                    alignSelf: "start",
-                    borderBottom: `1px solid ${COLORS.borderLight}`
-                  }}>
-                    <summary style={{
-                      display: "flex", alignItems: "center", gap: 12,
-                      minHeight: 54, padding: "8px 4px",
-                      cursor: "pointer", listStyle: "none"
-                    }}>
-                      <span style={{
-                        display: "inline-flex", flexShrink: 0,
-                        alignItems: "center", justifyContent: "center",
-                        width: 36, height: 36, color: COLORS.blue,
-                        background: "#eff8ff", border: "1px solid #d1e9ff",
-                        borderRadius: 8
-                      }}>
-                        <Icon size={19} aria-hidden="true" />
-                      </span>
-                      <span style={{ flex: 1, minWidth: 0, color: COLORS.textDark, fontSize: 13, fontWeight: 700 }}>
-                        {group.label}
-                      </span>
-                      <span aria-hidden="true" style={{ color: COLORS.textMuted, fontSize: 16, lineHeight: 1 }}>⌄</span>
-                    </summary>
-                    <div style={{ padding: "0 4px 8px 52px" }}>
-                      {group.services.map(([key, cfg]) => (
-                        <button key={key} onClick={() => openServiceModal(key)} style={{
-                          display: "flex", justifyContent: "space-between", alignItems: "center",
-                          width: "100%", gap: 12, padding: "12px 0",
-                          color: COLORS.textDark, background: "transparent", border: 0,
-                          borderTop: `1px solid ${COLORS.borderLight}`,
-                          cursor: "pointer", textAlign: "left", fontFamily: "inherit"
-                        }}>
-                          <span style={{ fontSize: 13, fontWeight: 600 }}>{cfg.label}</span>
-                          <span style={{ flexShrink: 0, color: COLORS.textMuted, fontSize: 12 }}>M {cfg.fee}</span>
-                        </button>
-                      ))}
-                    </div>
-                  </details>
-                );
-              })}
-            </div>
-            {serviceGroups.length === 0 && (
-              <p style={{ padding: 24, color: COLORS.textMuted, textAlign: "center" }}>
-                No services match your search.
-              </p>
-            )}
-          </section>
         )}
 
         {/* APPLICATIONS TAB */}
@@ -1895,25 +1838,6 @@ function LicenceView({ licence, me, onClose }) {
 // ============================================================
 // SUB-COMPONENTS
 // ============================================================
-function ShortcutButton({ icon, label, onClick }) {
-  const Icon = icon;
-  return (
-    <button onClick={onClick} style={{
-      display: "flex", alignItems: "center", gap: 12,
-      padding: "16px 18px", fontSize: 13, fontWeight: 600,
-      color: COLORS.blue, background: "#eff8ff",
-      border: "1px solid #b2ddff", borderRadius: 10,
-      cursor: "pointer", textAlign: "left", fontFamily: "inherit",
-      transition: "all 0.15s"
-    }}>
-      <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 24, height: 24 }}>
-        <Icon size={22} />
-      </span>
-      <span>{label}</span>
-    </button>
-  );
-}
-
 function ProfileRow({ label, value }) {
   return (
     <div style={{

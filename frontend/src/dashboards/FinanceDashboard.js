@@ -249,28 +249,61 @@ function FinanceDashboard({ onLogout }) {
         />
 
         {tab === "new" && (
-          <section>
-            <h2 style={section.title}>Submit request</h2>
-            <p style={section.subtitle}>Check which pension benefit may apply to you.</p>
-            <article style={{
-              maxWidth: 620, background: "#fff", border: `1px solid ${COLORS.border}`,
-              borderRadius: 8, padding: 20, display: "flex", flexDirection: "column", gap: 12
-            }}>
-              <h3 style={{ margin: 0, fontSize: 16, color: COLORS.blue }}>
-                Check if I am Eligible for pensions
-              </h3>
-              <p style={{ margin: 0, fontSize: 13, color: COLORS.textMid, lineHeight: 1.55 }}>
-                Choose old age pension, retirement benefit, death / survivor benefit, or orphan pension.
-              </p>
-              <button type="button" onClick={() => openType(REQUEST_TYPES[0])} style={{
-                alignSelf: "flex-start", marginTop: 4, padding: "9px 14px",
-                border: 0, background: COLORS.blue, color: "#fff", borderRadius: 6,
-                fontWeight: 700, fontSize: 13, cursor: "pointer", fontFamily: "inherit"
+          <>
+            <section>
+              <h2 style={section.title}>Submit request</h2>
+              <p style={section.subtitle}>Check which pension benefit may apply to you.</p>
+              <article style={{
+                maxWidth: 620, background: "#fff", border: `1px solid ${COLORS.border}`,
+                borderRadius: 8, padding: 20, display: "flex", flexDirection: "column", gap: 12
               }}>
-                Start eligibility check
-              </button>
-            </article>
-          </section>
+                <h3 style={{ margin: 0, fontSize: 16, color: COLORS.blue }}>
+                  Check if I am Eligible for pensions
+                </h3>
+                <p style={{ margin: 0, fontSize: 13, color: COLORS.textMid, lineHeight: 1.55 }}>
+                  Choose old age pension, retirement benefit, death / survivor benefit, or orphan pension.
+                </p>
+                <button type="button" onClick={() => openType(REQUEST_TYPES[0])} style={{
+                  alignSelf: "flex-start", marginTop: 4, padding: "9px 14px",
+                  border: 0, background: COLORS.blue, color: "#fff", borderRadius: 6,
+                  fontWeight: 700, fontSize: 13, cursor: "pointer", fontFamily: "inherit"
+                }}>
+                  Start eligibility check
+                </button>
+              </article>
+            </section>
+
+            <section style={{ ...section.wrapper, marginTop: 24 }}>
+              <h2 style={section.title}>Recent requests</h2>
+              <p style={section.subtitle}>Your latest Finance requests.</p>
+              {requests.length === 0 ? (
+                <p style={{ color: COLORS.textMuted, fontSize: 13 }}>No requests yet.</p>
+              ) : (
+                <div style={{ display: "grid", gap: 10 }}>
+                  {requests.slice(0, 5).map(request => (
+                    <article key={request.request_id} style={{
+                      display: "flex", justifyContent: "space-between", alignItems: "center",
+                      gap: 12, flexWrap: "wrap", background: "#fff",
+                      border: `1px solid ${COLORS.border}`, borderRadius: 10, padding: 14
+                    }}>
+                      <div>
+                        <strong style={{ fontSize: 13 }}>{request.subject}</strong>
+                        <p style={{ margin: "4px 0 0", fontSize: 12, color: COLORS.textMuted }}>
+                          {request.reference_no} · {request.service_name} · Submitted {new Date(request.submitted_at).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                        <StatusBadge status={request.status} />
+                        <button onClick={() => openDetail(request.request_id)} style={btnOutline}>
+                          View details
+                        </button>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              )}
+            </section>
+          </>
         )}
 
         {tab === "mine" && (

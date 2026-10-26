@@ -981,6 +981,37 @@ function HomeAffairsDashboard({ onLogout }) {
           </div>
         </section>
 
+        <section style={{ ...section.wrapper, marginTop: 24 }}>
+          <h2 style={section.title}>Recent applications</h2>
+          <p style={section.subtitle}>Your latest Home Affairs applications.</p>
+          {applications.length === 0 ? (
+            <p style={{ color: COLORS.textMuted, fontSize: 13 }}>{t.noApplications}</p>
+          ) : (
+            <div style={{ display: "grid", gap: 10 }}>
+              {applications.slice(0, 5).map(app => (
+                <article key={app.application_id} style={{
+                  display: "flex", justifyContent: "space-between", alignItems: "center",
+                  gap: 12, flexWrap: "wrap", background: "#fff",
+                  border: `1px solid ${COLORS.border}`, borderRadius: 10, padding: 14
+                }}>
+                  <div>
+                    <strong style={{ fontSize: 13 }}>{app.reference_number}</strong>
+                    <p style={{ margin: "4px 0 0", fontSize: 12, color: COLORS.textMuted }}>
+                      {app.service_type} · {app.module} · Submitted {new Date(app.submitted_at).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <StatusBadge status={app.status} />
+                    <button onClick={() => openDetail(app.application_id)} style={btnOutline}>
+                      {t.viewDetails}
+                    </button>
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
+        </section>
+
         <section style={{ ...section.wrapper, marginTop: 32 }}>
           <h2 style={section.title}>{t.announcements}</h2>
           <p style={section.subtitle}>{t.announcementsDesc}</p>

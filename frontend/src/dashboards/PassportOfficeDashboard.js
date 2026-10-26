@@ -87,9 +87,9 @@ function PassportOfficeDashboard({ onLogout }) {
   const [activeService, setActiveService] = useState(null);
   const [fields, setFields] = useState([]);
   const [values, setValues] = useState({});
-  const [extraDocs, setExtraDocs] = useState([]);
   const [passportSizePhoto, setPassportSizePhoto] = useState(null);
   const [passportProof, setPassportProof] = useState(null);
+  const [replacementPoliceEvidence, setReplacementPoliceEvidence] = useState(null);
   const [emergencyObr, setEmergencyObr] = useState(null);
   const [submitError, setSubmitError] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -167,22 +167,31 @@ function PassportOfficeDashboard({ onLogout }) {
     required: true,
     placeholder: "Enter the number printed on the passport"
   };
-  const canContinueForm = Boolean(activeService && passportSizePhoto) &&
+  const additionalPassportFields = fields.filter(field =>
+    !(isLostReplacement && isPassportNumberField(field))
+  );
+  const requiredPassportFields = [
+    ...additionalPassportFields.filter(field => field.required),
+    ...(isEmergencyFirstTime && !additionalPassportFields.some(field => field.field_key === "reason")
+      ? [{ field_key: "reason", label: "Reason for emergency application" }]
+      : [])
+  ];
+  const hasRequiredDocuments = Boolean(activeService && passportSizePhoto) &&
     (!isEmergencyFirstTime || Boolean(emergencyObr)) &&
     (!isRenewal || Boolean(passportProof)) &&
     (!isDamagedReplacement || Boolean(passportProof)) &&
     (!isReplacement || Boolean(values.replacement_condition)) &&
+    (!isReplacement || Boolean(replacementPoliceEvidence)) &&
     (!isLostReplacement || Boolean(values.passport_number?.trim()));
-  const additionalPassportFields = fields.filter(field =>
-    !(isLostReplacement && isPassportNumberField(field))
-  );
+  const canSubmitForm = hasRequiredDocuments &&
+    requiredPassportFields.every(field => Boolean(values[field.field_key]?.trim()));
 
   function openService(serviceId) {
     setSubmitError("");
     setValues({});
-    setExtraDocs([]);
     setPassportSizePhoto(null);
     setPassportProof(null);
+    setReplacementPoliceEvidence(null);
     setEmergencyObr(null);
     api(`/passport/services/${serviceId}`)
       .then(data => {
@@ -195,9 +204,9 @@ function PassportOfficeDashboard({ onLogout }) {
   function closeService() {
     setActiveService(null);
     setFields([]);
-    setExtraDocs([]);
     setPassportSizePhoto(null);
     setPassportProof(null);
+    setReplacementPoliceEvidence(null);
     setEmergencyObr(null);
   }
 
@@ -226,8 +235,17 @@ function PassportOfficeDashboard({ onLogout }) {
       setSubmitError("Upload a clear image of the damaged passport's information page before continuing.");
       return;
     }
+    if (isReplacement && !replacementPoliceEvidence) {
+      setSubmitError("Upload police evidence confirming that the passport is lost or damaged.");
+      return;
+    }
     if (isLostReplacement && !values.passport_number?.trim()) {
       setSubmitError("Enter the passport number before continuing.");
+      return;
+    }
+    const missingField = requiredPassportFields.find(field => !values[field.field_key]?.trim());
+    if (missingField) {
+      setSubmitError(`${missingField.label} is required.`);
       return;
     }
 
@@ -241,11 +259,15 @@ function PassportOfficeDashboard({ onLogout }) {
         const prefix = isRenewal ? "passport_renewal_expired__" : "passport_damaged__";
         fd.append("documents", passportProof, `${prefix}${passportProof.name}`);
       }
+      if (replacementPoliceEvidence) {
+        fd.append(
+          "documents",
+          replacementPoliceEvidence,
+          `passport_replacement_police_evidence__${replacementPoliceEvidence.name}`
+        );
+      }
       if (emergencyObr) {
         fd.append("documents", emergencyObr, `emergency_obr__${emergencyObr.name}`);
-      }
-      for (const f of extraDocs) {
-        if (f instanceof File) fd.append("documents", f, `doc__${f.name}`);
       }
       const res = await api("/passport/applications", { method: "POST", body: fd });
       closeService();
@@ -400,18 +422,19 @@ function PassportOfficeDashboard({ onLogout }) {
         />
 
         {tab === "apply" && (
-          <section style={section.wrapper}>
-            <h2 style={section.title}>Available passport services</h2>
+          <>
+            <section style={section.wrapper}>
+              <h2 style={section.title}>Available passport services</h2>
 
             <div style={{
               marginBottom: 20, padding: 14, background: "#eff8ff",
               border: "1px solid #175cd344", borderRadius: 8,
               fontSize: 13, color: COLORS.blue
             }}>
-              A passport-size photo must be uploaded for every application before the details form can be completed.
+              A passport-size photo is required for every application before submission.
             </div>
 
-            {Object.keys(groupedServices).length === 0 && (
+              {Object.keys(groupedServices).length === 0 && (
               <div style={{
                 padding: 40, textAlign: "center", background: "#fff",
                 border: `1px solid ${COLORS.border}`, borderRadius: 12,
@@ -419,7 +442,7 @@ function PassportOfficeDashboard({ onLogout }) {
               }}>No passport services are currently available.</div>
             )}
 
-            {Object.keys(groupedServices).length > 0 && (
+              {Object.keys(groupedServices).length > 0 && (
               <div style={passportServiceGrid}>
                 {visibleServiceTypes.map(({ appType, services: serviceOptions }) => (
                   <article key={appType} style={passportServiceCard}>
@@ -477,13 +500,45 @@ function PassportOfficeDashboard({ onLogout }) {
                 ))}
               </div>
             )}
-            {Object.keys(groupedServices).length > 0 &&
-              visibleServiceTypes.every(group => group.services.length === 0) && (
+              {Object.keys(groupedServices).length > 0 &&
+                visibleServiceTypes.every(group => group.services.length === 0) && (
               <p style={{ color: COLORS.textMuted, fontSize: 13 }}>
                 No passport services match your search.
               </p>
-            )}
-          </section>
+              )}
+            </section>
+
+            <section style={{ ...section.wrapper, marginTop: 24 }}>
+              <h2 style={section.title}>Recent applications</h2>
+              <p style={section.subtitle}>Your latest passport applications.</p>
+              {applications.length === 0 ? (
+                <p style={{ color: COLORS.textMuted, fontSize: 13 }}>No applications yet.</p>
+              ) : (
+                <div style={{ display: "grid", gap: 10 }}>
+                  {applications.filter(app => matchesDashboardSearch(app, searchQuery)).slice(0, 5).map(app => (
+                    <article key={app.application_id} style={{
+                      display: "flex", justifyContent: "space-between", alignItems: "center",
+                      gap: 12, flexWrap: "wrap", background: "#fff",
+                      border: `1px solid ${COLORS.border}`, borderRadius: 10, padding: 14
+                    }}>
+                      <div>
+                        <strong style={{ fontSize: 13 }}>{app.reference_number}</strong>
+                        <p style={{ margin: "4px 0 0", fontSize: 12, color: COLORS.textMuted }}>
+                          {app.service_name} · Submitted {new Date(app.submitted_at).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                        <StatusBadge status={app.status} />
+                        <button onClick={() => openDetail(app.application_id)} style={btnOutline}>
+                          View details
+                        </button>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              )}
+            </section>
+          </>
         )}
 
         {tab === "mine" && (
@@ -855,15 +910,7 @@ function PassportOfficeDashboard({ onLogout }) {
           </div>
 
           <form onSubmit={submit}>
-            <PassportDocumentUpload
-              label="Passport-size photo"
-              instructions="Upload a clear passport-size photo for this application. This photo is required before any application details can be completed."
-              accept="image/*"
-              file={passportSizePhoto}
-              onChange={setPassportSizePhoto}
-            />
-
-            {passportSizePhoto && isReplacement && (
+            {isReplacement && (
               <Field
                 field={{
                   field_key: "replacement_condition",
@@ -880,18 +927,37 @@ function PassportOfficeDashboard({ onLogout }) {
                     passport_number: value === "Lost" ? previous.passport_number || "" : ""
                   }));
                   setPassportProof(null);
+                  setReplacementPoliceEvidence(null);
                 }}
               />
             )}
 
-            {passportSizePhoto && isLostReplacement && (
+            <PassportDocumentUpload
+              label="Passport-size photo"
+              instructions="Upload a clear passport-size photo for this application. It is required before submission."
+              accept="image/*"
+              file={passportSizePhoto}
+              onChange={setPassportSizePhoto}
+            />
+
+            {isReplacement && (
+              <PassportDocumentUpload
+                label="Police evidence of lost or damaged passport"
+                instructions="Upload a police report or other evidence issued by Police confirming that the passport is lost or damaged. This is required before submission."
+                accept=".pdf,image/*"
+                file={replacementPoliceEvidence}
+                onChange={setReplacementPoliceEvidence}
+              />
+            )}
+
+            {isLostReplacement && (
               <>
                 <div className="passport-form-warning" style={{
                   padding: 12, marginBottom: 14, borderRadius: 6,
                   background: "#fff4df", border: "1px solid #f0c36d",
                   color: "#7a3f00", fontSize: 13, lineHeight: 1.5
                 }}>
-                  Enter the passport number before continuing. An incorrect passport number will result in a five-year passport suspension.
+                  Enter the passport number before submitting. An incorrect passport number will result in a five-year passport suspension.
                 </div>
                 <Field
                   field={{ ...lostPassportNumberField, label: "Lost passport number", required: true }}
@@ -905,20 +971,20 @@ function PassportOfficeDashboard({ onLogout }) {
               </>
             )}
 
-            {passportSizePhoto && isDamagedReplacement && (
+            {isDamagedReplacement && (
               <PassportDocumentUpload
                 label="Damaged passport information page"
-                instructions="Upload a clear photo of the passport's first page, showing your name and personal information. You must upload it before continuing to the details form."
+                instructions="Upload a clear photo of the damaged passport's information page, showing your name and personal information. It is required before submission."
                 accept="image/*"
                 file={passportProof}
                 onChange={setPassportProof}
               />
             )}
 
-            {passportSizePhoto && isRenewal && (
+            {isRenewal && (
               <PassportDocumentUpload
                 label="Expired passport information page"
-                instructions="Upload a clear photo of the expired passport's first page, showing your name and personal information. You must upload it before continuing to the renewal form."
+                instructions="Upload a clear photo of the expired passport's first page, showing your name and personal information. It is required before submission."
                 accept="image/*"
                 file={passportProof}
                 onChange={setPassportProof}
@@ -935,7 +1001,7 @@ function PassportOfficeDashboard({ onLogout }) {
               />
             )}
 
-            {canContinueForm && additionalPassportFields.map(f => (
+            {(isRenewal || isReplacement || hasRequiredDocuments) && additionalPassportFields.map(f => (
               <Field
                 key={f.field_key}
                 field={f}
@@ -957,29 +1023,6 @@ function PassportOfficeDashboard({ onLogout }) {
               />
             )}
 
-            {canContinueForm && (
-              <div style={{ marginTop: 16, marginBottom: 16 }}>
-                <label style={{ display: "block", fontSize: 13, fontWeight: 600, marginBottom: 6 }}>
-                  Supporting documents (optional but recommended)
-                </label>
-                <p style={{ margin: "0 0 8px", fontSize: 12, color: COLORS.textMuted }}>
-                  National ID copy, birth certificate, previous passport, police report (for lost/stolen).
-                </p>
-                <input
-                  type="file"
-                  multiple
-                  onChange={e => setExtraDocs(Array.from(e.target.files || []))}
-                />
-                {extraDocs.length > 0 && (
-                  <ul style={{ margin: "8px 0 0", paddingLeft: 18, fontSize: 12, color: COLORS.textMid }}>
-                    {extraDocs.map((f, i) => (
-                      <li key={i}>{f.name} · {Math.round(f.size / 1024)} KB</li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            )}
-
             {submitError && (
               <p className="passport-submit-error" style={{
                 color: COLORS.error, fontSize: 13,
@@ -991,11 +1034,11 @@ function PassportOfficeDashboard({ onLogout }) {
               <button type="button" onClick={closeService} className="passport-dialog-cancel" style={btnOutline}>Cancel</button>
               <button
                 type="submit"
-                disabled={submitting || !canContinueForm}
+                disabled={submitting || !canSubmitForm}
                 style={{
                   ...btnPrimary,
-                  opacity: (submitting || !canContinueForm) ? 0.55 : 1,
-                  cursor: (submitting || !canContinueForm) ? "not-allowed" : "pointer"
+                  opacity: (submitting || !canSubmitForm) ? 0.55 : 1,
+                  cursor: (submitting || !canSubmitForm) ? "not-allowed" : "pointer"
                 }}
               >
                 {submitting ? "Submitting…" : "Submit application"}

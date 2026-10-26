@@ -283,6 +283,12 @@ async function logAudit(userId, applicationId, action, entityType, entityId, det
   } catch (err) { console.error("Audit error:", err.message); }
 }
 
+function isDateOfBirthField(field) {
+  return /\b(?:date\s+of\s+birth|dob)\b/i.test(
+    `${field.field_key || ""} ${field.label || ""}`.replace(/[_-]+/g, " ")
+  );
+}
+
 const PASSPORT_TIER_META = {
   standard:   { label: "Standard",   color: "#175cd3", note: "Best value" },
   urgent:     { label: "Urgent",     color: "#b45309", note: "Faster processing" },
@@ -508,7 +514,7 @@ app.get("/api/services/:id", async (req, res) => {
 
     res.json({
       service: s[0],
-      fields: f.map(row => ({
+      fields: f.filter(row => !isDateOfBirthField(row)).map(row => ({
         ...row,
         options: row.options_json
           ? (typeof row.options_json === "string" ? JSON.parse(row.options_json) : row.options_json)
@@ -556,7 +562,7 @@ app.post(
         [serviceId]
       );
       for (const def of defs) {
-        if (def.required && !fields[def.field_key]) {
+        if (def.required && !isDateOfBirthField(def) && !fields[def.field_key]) {
           throw new Error(`Missing required field: ${def.field_key}`);
         }
       }
@@ -1059,7 +1065,7 @@ app.get("/api/passport/services/:id", async (req, res) => {
 
     res.json({
       service,
-      fields: f.map(row => ({
+      fields: f.filter(row => !isDateOfBirthField(row)).map(row => ({
         ...row,
         options: row.options_json
           ? (typeof row.options_json === "string" ? JSON.parse(row.options_json) : row.options_json)
@@ -1114,6 +1120,10 @@ app.post(
         file.originalname.startsWith("emergency_obr__") &&
         (file.mimetype.startsWith("image/") || file.mimetype === "application/pdf")
       );
+      const hasReplacementPoliceEvidence = documents.some(file =>
+        file.originalname.startsWith("passport_replacement_police_evidence__") &&
+        (file.mimetype.startsWith("image/") || file.mimetype === "application/pdf")
+      );
 
       if (!isSelectablePassportService(service)) {
         throw new Error("This passport service is not available");
@@ -1130,6 +1140,9 @@ app.post(
       if (service.application_type === "replacement") {
         if (!["Lost", "Damaged"].includes(fields.replacement_condition)) {
           throw new Error("Choose whether the passport is lost or damaged");
+        }
+        if (!hasReplacementPoliceEvidence) {
+          throw new Error("Upload police evidence confirming that the passport is lost or damaged");
         }
         if (fields.replacement_condition === "Damaged" && !hasImageDocument("passport_damaged__")) {
           throw new Error("Upload a clear image of the damaged passport information page");
@@ -1152,7 +1165,7 @@ app.post(
         [serviceId]
       );
       for (const def of defs) {
-        if (def.required && !fields[def.field_key]) {
+        if (def.required && !isDateOfBirthField(def) && !fields[def.field_key]) {
           throw new Error(`Missing required field: ${def.field_key}`);
         }
       }

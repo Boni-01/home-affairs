@@ -162,7 +162,6 @@ const FIELDS_BY_TYPE = {
   ],
   police_clearance: [
     { key: "national_id_used",      label: "National ID number",            type: "text" },
-    { key: "date_of_birth",         label: "Date of birth",                 type: "date" },
     { key: "purpose",               label: "Purpose of clearance",          type: "text" },
     { key: "destination_country",   label: "Destination country (if any)",  type: "text" }
   ],
@@ -527,6 +526,7 @@ function PoliceDashboard({ onLogout }) {
 
         {/* ================= REPORT TAB ================= */}
         {tab === "report" && (
+          <>
           <section style={section.wrapper}>
             <h2 style={section.title}>What would you like to do?</h2>
             <p style={section.subtitle}>
@@ -597,6 +597,37 @@ function PoliceDashboard({ onLogout }) {
               </p>
             </aside>
           </section>
+          <section style={{ ...section.wrapper, marginTop: 24 }}>
+            <h2 style={section.title}>Recent applications</h2>
+            <p style={section.subtitle}>Your latest police reports and requests.</p>
+            {applications.length === 0 ? (
+              <p style={{ color: COLORS.textMuted, fontSize: 13 }}>No applications yet.</p>
+            ) : (
+              <div style={{ display: "grid", gap: 10 }}>
+                {applications.filter(app => matchesDashboardSearch(app, searchQuery)).slice(0, 5).map(app => (
+                  <article key={app.application_id} style={{
+                    display: "flex", justifyContent: "space-between", alignItems: "center",
+                    gap: 12, flexWrap: "wrap", background: "#fff",
+                    border: `1px solid ${COLORS.border}`, borderRadius: 10, padding: 14
+                  }}>
+                    <div>
+                      <strong style={{ fontSize: 13 }}>{app.reference_number}</strong>
+                      <p style={{ margin: "4px 0 0", fontSize: 12, color: COLORS.textMuted }}>
+                        {app.title} · Submitted {new Date(app.submitted_at).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                      <StatusBadge status={app.status} />
+                      <button onClick={() => openDetail(app.application_id)} style={btnOutline}>
+                        View details
+                      </button>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            )}
+          </section>
+          </>
         )}
 
         {/* ================= MY REPORTS TAB ================= */}
