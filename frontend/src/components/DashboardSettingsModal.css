@@ -150,6 +150,50 @@
   font-weight: 600;
 }
 
+.dashboard-settings-profile-form {
+  display: grid;
+  max-width: 620px;
+  gap: 12px;
+  margin-top: 22px;
+  padding-top: 20px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.dashboard-settings-profile-form h3,
+.dashboard-settings-profile-form p {
+  margin: 0;
+}
+
+.dashboard-settings-profile-form label {
+  display: grid;
+  gap: 6px;
+  color: #526174;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.dashboard-settings-profile-form input {
+  width: 100%;
+  min-height: 44px;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border: 1px solid #94a3b8;
+  border-radius: 6px;
+  background: #fff;
+  color: #1e293b;
+  font: 16px Arial, Helvetica, sans-serif;
+}
+
+.dashboard-settings-profile-form input:focus-visible {
+  outline: 3px solid rgb(0 32 159 / 20%);
+  border-color: #00209f;
+}
+
+.dashboard-settings-profile-message {
+  color: #067647 !important;
+  font-weight: 700;
+}
+
 .dashboard-settings-primary {
   padding: 10px 16px;
   border: 0;
@@ -281,6 +325,22 @@ body[data-theme="dark"] .dashboard-settings-close {
 
 body[data-theme="dark"] .dashboard-settings-profile div {
   border-color: #34516c;
+}
+
+body[data-theme="dark"] .dashboard-settings-profile-form {
+  border-color: #34516c;
+}
+
+body[data-theme="dark"] .dashboard-settings-profile-form label,
+body[data-theme="dark"] .dashboard-settings-profile-form h3,
+body[data-theme="dark"] .dashboard-settings-profile-message {
+  color: #fff !important;
+}
+
+body[data-theme="dark"] .dashboard-settings-profile-form input {
+  border-color: #49647d;
+  background: #06182d;
+  color: #fff;
 }
 
 body[data-theme="dark"] .dashboard-settings-service-links a {

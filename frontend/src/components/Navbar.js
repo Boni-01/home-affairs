@@ -61,7 +61,8 @@ function Navbar({
   activeTab,
   onTabChange,
   action,
-  user
+  user,
+  sectionNavigationClassName
 }) {
   const location = useLocation();
   const navigate = useNavigate();
@@ -71,13 +72,14 @@ function Navbar({
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [settingsTab, setSettingsTab] = useState("applications");
   const [storedProfile] = useState(readStoredProfile);
+  const [profileOverride, setProfileOverride] = useState(null);
   const isDashboard = items !== undefined;
   const authenticated = isAuthenticated ??
     (sessionStorage.getItem("home-affairs-authenticated") === "true");
   const isAdmin = location.pathname.startsWith("/admin/");
   const routes = isAdmin ? adminOffices : ministries;
   const dashboardItems = items || [];
-  const profile = user || storedProfile;
+  const profile = profileOverride || user || storedProfile;
   const isAccountItem = ([key]) =>
     isAdmin ? key === "notifications" : accountKeys.has(key);
   const accountItems = dashboardItems.filter(isAccountItem);
@@ -95,6 +97,16 @@ function Navbar({
     setProfileOpen(false);
     setSettingsOpen(false);
   }, [location.pathname]);
+
+  useEffect(() => {
+    const openProfile = () => {
+      setSettingsTab("profile");
+      setSettingsOpen(true);
+      setProfileOpen(false);
+    };
+    window.addEventListener("home-affairs-open-profile", openProfile);
+    return () => window.removeEventListener("home-affairs-open-profile", openProfile);
+  }, []);
 
   useEffect(() => {
     if (!profileOpen) return undefined;
@@ -326,6 +338,7 @@ function Navbar({
           items={workflowItems}
           activeTab={activeTab}
           onTabChange={onTabChange}
+          className={sectionNavigationClassName}
         />
       )}
       {settingsOpen && (
@@ -337,16 +350,20 @@ function Navbar({
           onTabChange={setSettingsTab}
           onClose={() => setSettingsOpen(false)}
           onNavigateToTab={handleTabChange}
+          onProfileUpdated={nextProfile => {
+            setProfileOverride(nextProfile);
+            sessionStorage.setItem("user-profile", JSON.stringify(nextProfile));
+          }}
         />
       )}
     </>
   );
 }
 
-function DashboardSectionNavigation({ items, activeTab, onTabChange }) {
+function DashboardSectionNavigation({ items, activeTab, onTabChange, className }) {
   if (items.length === 0) return null;
   return (
-    <nav className="dashboard-section-navigation" aria-label="Dashboard sections">
+    <nav className={"dashboard-section-navigation " + (className || "")} aria-label="Dashboard sections">
       {items.map(([key, label]) => (
         <button
           key={key}

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { auth, API_BASE } from "../Database/firebase";
 import "./DashboardSettingsModal.css";
 
 const SETTINGS_TABS = [
@@ -26,6 +27,13 @@ function getValue(value) {
   return value || "Not provided";
 }
 
+function dateInputValue(value) {
+  if (!value) return "";
+  if (typeof value === "string") return value.slice(0, 10);
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? "" : date.toISOString().slice(0, 10);
+}
+
 export default function DashboardSettingsModal({
   user,
   applicationItem,
@@ -33,11 +41,27 @@ export default function DashboardSettingsModal({
   activeTab,
   onTabChange,
   onClose,
-  onNavigateToTab
+  onNavigateToTab,
+  onProfileUpdated
 }) {
   const [isDarkMode, setIsDarkMode] = useState(
     () => document.body.dataset.theme === "dark"
   );
+  const [profileUser, setProfileUser] = useState(user);
+  const [profileForm, setProfileForm] = useState({
+    date_of_birth: dateInputValue(user?.date_of_birth),
+    phone: user?.phone || ""
+  });
+  const [profileSaving, setProfileSaving] = useState(false);
+  const [profileMessage, setProfileMessage] = useState("");
+
+  useEffect(() => {
+    setProfileUser(user);
+    setProfileForm({
+      date_of_birth: dateInputValue(user?.date_of_birth),
+      phone: user?.phone || ""
+    });
+  }, [user]);
 
   useEffect(() => {
     const closeOnEscape = event => {
@@ -61,6 +85,44 @@ export default function DashboardSettingsModal({
     window.dispatchEvent(new CustomEvent("home-affairs-theme-change", {
       detail: { isDarkMode: nextDarkMode }
     }));
+  };
+
+  const saveProfile = async event => {
+    event.preventDefault();
+    setProfileMessage("");
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+      setProfileMessage("Please sign in again before saving your profile.");
+      return;
+    }
+    setProfileSaving(true);
+    try {
+      const token = await currentUser.getIdToken();
+      const response = await fetch(API_BASE + "/me/profile", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + token
+        },
+        body: JSON.stringify(profileForm)
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || "Could not save profile details.");
+      setProfileUser(data.user);
+      setProfileForm({
+        date_of_birth: dateInputValue(data.user?.date_of_birth),
+        phone: data.user?.phone || ""
+      });
+      setProfileMessage("Profile details saved.");
+      onProfileUpdated?.(data.user);
+      window.dispatchEvent(new CustomEvent("home-affairs-profile-updated", {
+        detail: { user: data.user }
+      }));
+    } catch (error) {
+      setProfileMessage(error.message || "Could not save profile details.");
+    } finally {
+      setProfileSaving(false);
+    }
   };
 
   return (
@@ -124,13 +186,48 @@ export default function DashboardSettingsModal({
             <section className="dashboard-settings-card">
               <h3>Profile details</h3>
               <dl className="dashboard-settings-profile">
-                <div><dt>Full name</dt><dd>{getValue(user?.full_name || user?.name)}</dd></div>
-                <div><dt>Email</dt><dd>{getValue(user?.email)}</dd></div>
-                <div><dt>Phone</dt><dd>{getValue(user?.phone)}</dd></div>
-                <div><dt>National ID</dt><dd>{getValue(user?.national_id_number || user?.national_id)}</dd></div>
-                <div><dt>Account type</dt><dd>{getValue(user?.account_type || user?.role)}</dd></div>
-                <div><dt>Account status</dt><dd>{getValue(user?.account_status)}</dd></div>
+                <div><dt>Full name</dt><dd>{getValue(profileUser?.full_name || profileUser?.name)}</dd></div>
+                <div><dt>Email</dt><dd>{getValue(profileUser?.email)}</dd></div>
+                <div><dt>Phone</dt><dd>{getValue(profileUser?.phone)}</dd></div>
+                <div><dt>National ID</dt><dd>{getValue(profileUser?.national_id_number || profileUser?.national_id)}</dd></div>
+                <div><dt>Account type</dt><dd>{getValue(profileUser?.account_type || profileUser?.role)}</dd></div>
+                <div><dt>Account status</dt><dd>{getValue(profileUser?.account_status)}</dd></div>
               </dl>
+              <form className="dashboard-settings-profile-form" onSubmit={saveProfile}>
+                <h3>Update missing profile details</h3>
+                <p>Add your birth date here so services such as Old Age Pension can calculate your age automatically.</p>
+                <label>
+                  Date of birth
+                  <input
+                    type="date"
+                    required
+                    value={profileForm.date_of_birth}
+                    max={new Date().toISOString().slice(0, 10)}
+                    onChange={event => setProfileForm(previous => ({
+                      ...previous, date_of_birth: event.target.value
+                    }))}
+                  />
+                </label>
+                <label>
+                  Phone number
+                  <input
+                    type="tel"
+                    inputMode="tel"
+                    autoComplete="tel"
+                    value={profileForm.phone}
+                    placeholder="Optional contact number"
+                    onChange={event => setProfileForm(previous => ({
+                      ...previous, phone: event.target.value
+                    }))}
+                  />
+                </label>
+                {profileMessage && (
+                  <p className="dashboard-settings-profile-message" role="status">{profileMessage}</p>
+                )}
+                <button className="dashboard-settings-primary" type="submit" disabled={profileSaving}>
+                  {profileSaving ? "Saving..." : "Save profile"}
+                </button>
+              </form>
             </section>
           )}
 

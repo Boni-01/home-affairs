@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useRef } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { COLORS, layout, header, section } from "../styles/dashboardStyles";
 import Navbar from "../components/Navbar";
 import DashboardSearch, { matchesDashboardSearch } from "../components/DashboardSearch";
@@ -19,19 +19,6 @@ async function api(path, opts = {}) {
   return data;
 }
 
-const APPLICATION_TYPES = [
-  { key: "REGISTRATION", label: "Pension registration" },
-  { key: "RETIREMENT_BENEFIT", label: "Retirement benefit" },
-  { key: "RESIGNATION_BENEFIT", label: "Resignation benefit" },
-  { key: "TERMINATION_BENEFIT", label: "Termination benefit" },
-  { key: "RETRENCHMENT_BENEFIT", label: "Retrenchment benefit" },
-  { key: "DISABILITY_BENEFIT", label: "Disability benefit" },
-  { key: "DEATH_BENEFIT", label: "Death / survivor benefit" },
-  { key: "OLD_AGE_PENSION", label: "Old Age Pension application" },
-  { key: "RECORD_CORRECTION", label: "Record correction" },
-  { key: "OTHER", label: "Other pension request" }
-];
-
 const ENQUIRY_TYPES = [
   { key: "DELAYED_PAYMENT",        label: "Delayed payment" },
   { key: "MISSING_PAYMENT",        label: "Missing payment" },
@@ -48,31 +35,21 @@ function PensionsDashboard({ onLogout }) {
   const [tab, setTab] = useState("apply");
   const [searchQuery, setSearchQuery] = useState("");
   const [me, setMe] = useState(null);
-  const [programmes, setProgrammes] = useState([]);
-  const [profile, setProfile] = useState({ member: null, programme: null, contributions_summary: null });
+  const [profile, setProfile] = useState({
+    member: null, programme: null, contributions_summary: null,
+    identity: null, eligibility: null
+  });
   const [applications, setApplications] = useState([]);
   const [contributions, setContributions] = useState([]);
   const [payments, setPayments] = useState([]);
   const [enquiries, setEnquiries] = useState([]);
   const [notifications, setNotifications] = useState([]);
 
-  const [activeType, setActiveType] = useState(null);
-  const [details, setDetails] = useState({});
-  const [docs, setDocs] = useState([]);
-  const [submitting, setSubmitting] = useState(false);
-  const [submitError, setSubmitError] = useState("");
-
   const [selected, setSelected] = useState(null);
   const [detail, setDetail] = useState(null);
 
-  const [regForm, setRegForm] = useState({
-    programme_code: "PODCPF",
-    employment_number: "",
-    employer_name: "",
-    employment_start_date: "",
-    employment_end_date: ""
-  });
-  const [regDocs, setRegDocs] = useState([]);
+  const [paymentDestination, setPaymentDestination] = useState("");
+  const [savingPaymentDestination, setSavingPaymentDestination] = useState(false);
   const [regMsg, setRegMsg] = useState("");
 
   const [enquiryForm, setEnquiryForm] = useState({
@@ -83,16 +60,14 @@ function PensionsDashboard({ onLogout }) {
   const [enquiryMsg, setEnquiryMsg] = useState("");
 
   const [deletingId, setDeletingId] = useState(null);
-  const fileInputRef = useRef(null);
 
   const load = useCallback(async () => {
     try {
       const [
-        meRes, progRes, profileRes, appsRes, contribRes,
+        meRes, profileRes, appsRes, contribRes,
         payRes, enqRes, notifRes
       ] = await Promise.all([
         api("/me"),
-        api("/pensions/programmes"),
         api("/pensions/me"),
         api("/pensions/applications/my"),
         api("/pensions/contributions/my"),
@@ -101,12 +76,16 @@ function PensionsDashboard({ onLogout }) {
         api("/pensions/notifications")
       ]);
       setMe(meRes.user);
-      setProgrammes(progRes.programmes || []);
       setProfile({
         member: profileRes.member,
         programme: profileRes.programme,
-        contributions_summary: profileRes.contributions_summary
+        contributions_summary: profileRes.contributions_summary,
+        identity: profileRes.identity,
+        eligibility: profileRes.eligibility
       });
+      setPaymentDestination(
+        profileRes.member?.payment_destination || profileRes.identity?.payment_phone || ""
+      );
       setApplications(appsRes.applications || []);
       setContributions(contribRes.contributions || []);
       setPayments(payRes.payments || []);
@@ -118,69 +97,42 @@ function PensionsDashboard({ onLogout }) {
   }, []);
 
   useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    const refreshProfile = () => load();
+    window.addEventListener("home-affairs-profile-updated", refreshProfile);
+    return () => window.removeEventListener("home-affairs-profile-updated", refreshProfile);
+  }, [load]);
 
   async function submitRegistration(e) {
     e.preventDefault();
     setRegMsg("");
     try {
-      const fd = new FormData();
-      Object.entries(regForm).forEach(([key, value]) => fd.append(key, value));
-      for (const file of regDocs) {
-        if (file instanceof File) fd.append("documents", file, file.name);
-      }
-      const res = await api("/pensions/register", { method: "POST", body: fd });
-      setRegMsg(`Registration submitted. Reference: ${res.referenceNumber}`);
-      setRegForm({
-        programme_code: "PODCPF",
-        employment_number: "",
-        employer_name: "",
-        employment_start_date: "",
-        employment_end_date: ""
+      const res = await api("/pensions/register", {
+        method: "POST",
+        body: JSON.stringify({ payment_destination: paymentDestination })
       });
-      setRegDocs([]);
-      if (fileInputRef.current) fileInputRef.current.value = "";
+      setRegMsg(`Registration submitted. Reference: ${res.referenceNumber}`);
       await load();
     } catch (err) {
-      setRegMsg("Error: " + err.message);
+      setRegMsg(err.message);
     }
   }
 
-  function openType(type) {
-    setActiveType(type);
-    setDetails({});
-    setDocs([]);
-    setSubmitError("");
-  }
-
-  function closeType() {
-    setActiveType(null);
-    setDetails({});
-    setDocs([]);
-  }
-
-  async function submitApplication(e) {
+  async function savePaymentDestination(e) {
     e.preventDefault();
-    setSubmitError("");
-    if (!activeType) return;
-    setSubmitting(true);
+    setRegMsg("");
+    setSavingPaymentDestination(true);
     try {
-      const fd = new FormData();
-      fd.append("application_type", activeType.key);
-      if (profile.programme?.programme_code) {
-        fd.append("programme_code", profile.programme.programme_code);
-      }
-      fd.append("details", JSON.stringify(details));
-      for (const file of docs) {
-        if (file instanceof File) fd.append("documents", file, file.name);
-      }
-      const res = await api("/pensions/applications", { method: "POST", body: fd });
-      closeType();
+      await api("/pensions/me/payment-destination", {
+        method: "POST",
+        body: JSON.stringify({ payment_destination: paymentDestination })
+      });
+      setRegMsg("Payment number saved.");
       await load();
-      alert(`Submitted. Reference: ${res.referenceNumber}`);
     } catch (err) {
-      setSubmitError(err.message);
+      setRegMsg(err.message);
     } finally {
-      setSubmitting(false);
+      setSavingPaymentDestination(false);
     }
   }
 
@@ -262,91 +214,141 @@ function PensionsDashboard({ onLogout }) {
 
         <Navbar
           items={[
-            ["apply", "Submit application"]
+            ["apply", "Old Age Pension"],
+            ["profile", "Profile"],
+            ["mine", "My applications"],
+            ["contributions", "Contributions"],
+            ["payments", "Payments"],
+            ["enquiries", "Help and enquiries"],
+            ["notifications", "Updates"]
           ]}
           activeTab={tab}
           onTabChange={setTab}
           onLogout={onLogout}
           user={me}
+          sectionNavigationClassName="pensions-section-navigation"
         />
 
-        {/* ---------------- Recent applications ---------------- */}
+        {/* ---------------- Old Age Pension ---------------- */}
         {tab === "apply" && (
           <>
-            {!profile.member && (
-              <section style={section.wrapper}>
-                <h2 style={section.title}>Register as a pension member</h2>
-                <form onSubmit={submitRegistration}>
-                  <label style={labelStyle}>Programme</label>
-                  <select value={regForm.programme_code}
-                    onChange={e => setRegForm(previous => ({ ...previous, programme_code: e.target.value }))}
-                    style={{ ...inputStyle, marginBottom: 14 }}>
-                    {programmes.filter(programme => matchesDashboardSearch(programme, searchQuery)).map(programme => (
-                      <option key={programme.programme_code} value={programme.programme_code}>
-                        {programme.programme_name}
-                      </option>
-                    ))}
-                  </select>
+            <section style={{
+              ...section.wrapper, display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 280px), 1fr))",
+              gap: 20, alignItems: "center", padding: "26px 30px",
+              background: "linear-gradient(120deg, #fff 0%, #eef3ff 100%)",
+              border: "1px solid " + COLORS.borderLight, borderRadius: 16
+            }}>
+              <div>
+                <p style={header.eyebrow}>Ministry of Pensions</p>
+                <h2 style={{ ...section.title, fontSize: 26 }}>Apply for the Old Age Pension</h2>
+                <p style={{ ...section.subtitle, fontSize: 16, marginTop: 10 }}>
+                  We check your identity and age using your Home Affairs record. You only need to confirm where payments should go.
+                </p>
+                <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                  <span style={stepChip}><PensionIcon kind="identity" /> National ID from your profile</span>
+                  <span style={stepChip}><PensionIcon kind="calendar" /> Age checked automatically</span>
+                  <span style={stepChip}><PensionIcon kind="wallet" /> One payment number</span>
+                </div>
+              </div>
+              <div aria-hidden="true" style={{ textAlign: "center" }}>
+                <svg viewBox="0 0 240 170" width="100%" height="150">
+                  <rect x="23" y="18" width="194" height="134" rx="20" fill="#fff" stroke="#d6def5" strokeWidth="2" />
+                  <circle cx="120" cy="66" r="32" fill="#e6ebf9" />
+                  <path d="M103 74c1-13 7-20 17-20s16 7 17 20M109 63c0-10 4-16 11-16s11 6 11 16" fill="none" stroke="#00209F" strokeWidth="4" strokeLinecap="round" />
+                  <path d="M84 122h72M98 109h44" stroke="#009543" strokeWidth="6" strokeLinecap="round" />
+                  <circle cx="188" cy="36" r="18" fill="#009543" />
+                  <path d="m180 36 5 5 11-12" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </div>
+            </section>
 
-                  <label style={labelStyle}>Employment number</label>
-                  <input value={regForm.employment_number}
-                    onChange={e => setRegForm(previous => ({ ...previous, employment_number: e.target.value }))}
-                    style={{ ...inputStyle, marginBottom: 14 }} />
+            {profile.eligibility?.death_certificate_request && (
+              <div role="alert" style={alertCard}>
+                <PensionIcon kind="alert" />
+                <div>
+                  <strong>Payments are paused for verification.</strong>
+                  <p style={{ margin: "5px 0 0" }}>
+                    Home Affairs received a death certificate application for a person with your name. The Pensions Office must verify it before payments can continue.
+                    {profile.eligibility.death_certificate_request.reference_number
+                      ? " Reference: " + profile.eligibility.death_certificate_request.reference_number + "." : ""}
+                  </p>
+                </div>
+              </div>
+            )}
 
-                  <label style={labelStyle}>Employer name</label>
-                  <input value={regForm.employer_name}
-                    onChange={e => setRegForm(previous => ({ ...previous, employer_name: e.target.value }))}
-                    style={{ ...inputStyle, marginBottom: 14 }} />
+            <section style={{ ...section.wrapper, ...eligibilityCard }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 18 }}>
+                <div style={iconTile}><PensionIcon kind="identity" /></div>
+                <div>
+                  <h2 style={{ ...section.title, fontSize: 21 }}>Your eligibility</h2>
+                  <p style={{ ...section.subtitle, margin: 0, fontSize: 14 }}>Checked against your Home Affairs records.</p>
+                </div>
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12 }}>
+                <InfoCard label="Full name" value={profile.identity?.full_name || me?.full_name || "Loading profile"} />
+                <InfoCard label="National ID" value={profile.identity?.national_id_number || me?.national_id_number || me?.national_id || "Not on profile"} />
+                <InfoCard label="Age" value={profile.eligibility?.age == null ? "Add date of birth in Profile" : String(profile.eligibility.age) + " years"} />
+              </div>
+              {!profile.eligibility?.date_of_birth_available && !profile.member && (
+                <div style={{ ...noticeCard, marginTop: 16 }}>
+                  <PensionIcon kind="calendar" />
+                  <div>
+                    <p style={{ margin: "0 0 10px" }}>Add your date of birth in your profile to check your age. You do not need to wait for a Home Affairs approval.</p>
+                    <button type="button" onClick={() => window.dispatchEvent(new CustomEvent("home-affairs-open-profile"))}
+                      style={{ ...btnPrimary, fontSize: 14, padding: "10px 16px" }}>
+                      Add date of birth to profile
+                    </button>
+                  </div>
+                </div>
+              )}
+              {profile.eligibility?.age != null && profile.eligibility.age < 60 && !profile.member && (
+                <div style={{ ...noticeCard, marginTop: 16, background: "#fff4df", color: COLORS.warning }}>
+                  <PensionIcon kind="calendar" />
+                  <p style={{ margin: 0 }}>You are not yet eligible. You can apply when you are 60 years old.</p>
+                </div>
+              )}
+              {profile.member && (
+                <div style={{ ...noticeCard, marginTop: 16, background: profile.member.membership_status === "SUSPENDED" ? "#fdecea" : COLORS.successLight }}>
+                  <PensionIcon kind={profile.member.membership_status === "SUSPENDED" ? "alert" : "check"} />
+                  <p style={{ margin: 0 }}>
+                    {profile.member.membership_status === "SUSPENDED"
+                      ? "Your pension is suspended while your record is reviewed."
+                      : "You already have one pension application (" + profile.member.membership_status.replace(/_/g, " ").toLowerCase() + "). A person can receive only one pension."}
+                  </p>
+                </div>
+              )}
+            </section>
 
-                  <label style={labelStyle}>Employment start date</label>
-                  <input type="date" value={regForm.employment_start_date}
-                    onChange={e => setRegForm(previous => ({ ...previous, employment_start_date: e.target.value }))}
-                    style={{ ...inputStyle, marginBottom: 14 }} />
-
-                  <label style={labelStyle}>Employment end date</label>
-                  <input type="date" value={regForm.employment_end_date}
-                    onChange={e => setRegForm(previous => ({ ...previous, employment_end_date: e.target.value }))}
-                    style={{ ...inputStyle, marginBottom: 14 }} />
-
-                  <label style={labelStyle}>Supporting documents (ID, employment record etc.)</label>
-                  <input type="file" multiple ref={fileInputRef}
-                    onChange={e => setRegDocs(Array.from(e.target.files || []))}
-                    style={{ marginBottom: 14 }} />
-
-                  {regMsg && (
-                    <p style={{
-                      color: regMsg.startsWith("Error") ? COLORS.error : COLORS.green,
-                      fontSize: 13, marginBottom: 12
-                    }}>{regMsg}</p>
-                  )}
-                  <button type="submit" style={btnPrimary}>Register</button>
+            {(profile.eligibility?.eligible || profile.member) && !profile.eligibility?.death_certificate_request && (
+              <section style={{ ...section.wrapper, ...eligibilityCard }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 12 }}>
+                  <div style={iconTile}><PensionIcon kind="wallet" /></div>
+                  <div>
+                    <h2 style={{ ...section.title, fontSize: 21 }}>{profile.member ? "Payment number" : "Where should we send your pension?"}</h2>
+                    <p style={{ ...section.subtitle, margin: 0, fontSize: 14 }}>Enter a cellphone or bank account number. Use your profile phone or another number.</p>
+                  </div>
+                </div>
+                {profile.identity?.payment_phone && (
+                  <button type="button" onClick={() => setPaymentDestination(profile.identity.payment_phone)} style={{ ...btnOutline, margin: "8px 0 14px", fontSize: 15 }}>
+                    Use phone on my profile ({profile.identity.phone})
+                  </button>
+                )}
+                <form onSubmit={profile.member ? savePaymentDestination : submitRegistration} style={{ maxWidth: 560 }}>
+                  <label htmlFor="pension-payment-destination" style={{ ...labelStyle, fontSize: 15 }}>Payment phone or account number</label>
+                  <input id="pension-payment-destination" type="tel" inputMode="numeric" autoComplete="tel"
+                    value={paymentDestination}
+                    onChange={e => setPaymentDestination(e.target.value.replace(/[^0-9]/g, "").slice(0, 32))}
+                    placeholder="Digits only, include country code" pattern="[0-9]{6,32}" maxLength={32} required
+                    style={{ ...inputStyle, fontSize: 18, padding: "14px 16px", margin: "4px 0 8px", minHeight: 52 }} />
+                  <p style={{ color: COLORS.textMuted, fontSize: 13, margin: "0 0 18px" }}>Check the number carefully. This is where pension payments will be sent.</p>
+                  {regMsg && <p role="status" style={{ color: /could not|error|valid|already|missing|must be|found/i.test(regMsg) ? COLORS.error : COLORS.success, fontSize: 14 }}>{regMsg}</p>}
+                  <button type="submit" disabled={savingPaymentDestination} style={{ ...btnPrimary, fontSize: 16, minHeight: 50, padding: "12px 24px" }}>
+                    {profile.member ? (savingPaymentDestination ? "Saving..." : "Save payment number") : "Apply for pension"}
+                  </button>
                 </form>
               </section>
             )}
-
-            <section style={section.wrapper}>
-              <h2 style={section.title}>Submit a pension application</h2>
-              <p style={section.subtitle}>
-                Choose the type of application you want to submit. We'll ask for the
-                required details and supporting documents.
-              </p>
-              <div style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-                gap: 8
-              }}>
-                {APPLICATION_TYPES.filter(type => matchesDashboardSearch(type, searchQuery)).map(type => (
-                  <button key={type.key} type="button" onClick={() => openType(type)} style={{
-                    padding: 14, border: `1px solid ${COLORS.borderLight}`,
-                    borderRadius: 8, background: "#fff", color: COLORS.textDark,
-                    cursor: "pointer", fontFamily: "inherit", fontWeight: 700,
-                    fontSize: 13, textAlign: "left"
-                  }}>
-                    {type.label}
-                  </button>
-                ))}
-              </div>
-            </section>
 
             <section style={{ ...section.wrapper, marginTop: 24 }}>
               <h2 style={section.title}>Recent applications</h2>
@@ -631,51 +633,6 @@ function PensionsDashboard({ onLogout }) {
         )}
       </div>
 
-      {activeType && (
-        <Overlay onClose={closeType}>
-          <h2 style={{ margin: "0 0 4px", color: COLORS.blue }}>{activeType.label}</h2>
-          <p style={{ margin: "0 0 18px", fontSize: 13, color: COLORS.textMuted }}>
-            Fill in the details. The pension office will review your submission.
-          </p>
-          <form onSubmit={submitApplication}>
-            <label style={labelStyle}>Reason / details</label>
-            <textarea rows={4}
-              value={details.reason || ""}
-              onChange={e => setDetails(previous => ({ ...previous, reason: e.target.value }))}
-              style={{ ...inputStyle, marginBottom: 14 }} />
-
-            <label style={labelStyle}>Bank account (for payments, if applicable)</label>
-            <input value={details.bank_account || ""}
-              onChange={e => setDetails(previous => ({ ...previous, bank_account: e.target.value }))}
-              style={{ ...inputStyle, marginBottom: 14 }} />
-
-            <label style={labelStyle}>Bank name</label>
-            <input value={details.bank_name || ""}
-              onChange={e => setDetails(previous => ({ ...previous, bank_name: e.target.value }))}
-              style={{ ...inputStyle, marginBottom: 14 }} />
-
-            <label style={labelStyle}>Supporting documents</label>
-            <input type="file" multiple
-              onChange={e => setDocs(Array.from(e.target.files || []))}
-              style={{ marginBottom: 14 }} />
-
-            {submitError && (
-              <p style={{
-                color: COLORS.error, fontSize: 13, marginTop: 14,
-                padding: 10, background: "#fdecea", borderRadius: 6
-              }}>{submitError}</p>
-            )}
-
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 20 }}>
-              <button type="button" onClick={closeType} style={btnOutline}>Cancel</button>
-              <button type="submit" disabled={submitting} style={btnPrimary}>
-                {submitting ? "Submitting…" : "Submit"}
-              </button>
-            </div>
-          </form>
-        </Overlay>
-      )}
-
       {/* ---------------- Application detail overlay ---------------- */}
       {selected && detail && (
         <Overlay onClose={() => { setSelected(null); setDetail(null); }}>
@@ -756,6 +713,39 @@ function PensionsDashboard({ onLogout }) {
         </Overlay>
       )}
     </main>
+  );
+}
+
+// ============================================================
+function InfoCard({ label, value }) {
+  return (
+    <div style={{
+      padding: "14px 16px",
+      borderRadius: 10,
+      border: "1px solid " + COLORS.borderLight,
+      background: "#f8faff",
+      minHeight: 66
+    }}>
+      <div style={{ color: COLORS.textMuted, fontSize: 12, marginBottom: 6 }}>{label}</div>
+      <strong style={{ color: COLORS.textDark, fontSize: 16, lineHeight: 1.35, overflowWrap: "anywhere" }}>{value}</strong>
+    </div>
+  );
+}
+
+function PensionIcon({ kind }) {
+  const iconPath = {
+    identity: <><rect x="3" y="5" width="18" height="14" rx="2" /><circle cx="9" cy="11" r="2" /><path d="M6 16c.6-1.5 1.6-2 3-2s2.4.5 3 2M14 10h4M14 14h4" /></>,
+    calendar: <><rect x="4" y="5" width="16" height="16" rx="2" /><path d="M8 3v4M16 3v4M4 10h16M8 14h2M14 14h2M8 17h2" /></>,
+    wallet: <><rect x="3" y="6" width="18" height="14" rx="2" /><path d="M3 9h18M16 14h2M6 6V4h12v2" /></>,
+    alert: <><path d="M12 3 2.8 20h18.4L12 3Z" /><path d="M12 9v5M12 17h.01" /></>,
+    check: <><circle cx="12" cy="12" r="9" /><path d="m8 12 2.5 2.5L16 9" /></>
+  }[kind];
+  return (
+    <svg width="26" height="26" viewBox="0 0 24 24" fill="none"
+      stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"
+      strokeLinejoin="round" aria-hidden="true" style={{ flex: "0 0 auto" }}>
+      {iconPath}
+    </svg>
   );
 }
 
@@ -866,6 +856,58 @@ const subHeading = {
   fontSize: 12, color: COLORS.textMuted,
   textTransform: "uppercase", marginTop: 18,
   marginBottom: 6, letterSpacing: 0.6, fontWeight: 700
+};
+
+const eligibilityCard = {
+  background: "#fff",
+  border: "1px solid " + COLORS.borderLight,
+  borderRadius: 14,
+  padding: 24,
+  boxShadow: "0 3px 12px rgba(0,32,159,0.04)"
+};
+const iconTile = {
+  width: 48,
+  height: 48,
+  borderRadius: 12,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  color: COLORS.blue,
+  background: COLORS.blueLight,
+  flex: "0 0 auto"
+};
+const stepChip = {
+  display: "inline-flex",
+  alignItems: "center",
+  gap: 8,
+  padding: "5px 0",
+  color: COLORS.textMid,
+  fontSize: 13,
+  fontWeight: 600
+};
+const noticeCard = {
+  display: "flex",
+  alignItems: "flex-start",
+  gap: 12,
+  padding: 14,
+  borderRadius: 10,
+  background: COLORS.infoLight,
+  color: COLORS.textDark,
+  fontSize: 14,
+  lineHeight: 1.5
+};
+const alertCard = {
+  display: "flex",
+  alignItems: "flex-start",
+  gap: 12,
+  marginBottom: 20,
+  padding: 16,
+  border: "1px solid #f3b5b0",
+  borderRadius: 10,
+  background: "#fdecea",
+  color: COLORS.error,
+  fontSize: 14,
+  lineHeight: 1.5
 };
 
 export default PensionsDashboard;

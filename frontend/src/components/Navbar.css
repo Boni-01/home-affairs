@@ -196,6 +196,36 @@
   box-shadow: inset 0 -2px var(--nav-blue);
 }
 
+.pensions-section-navigation button {
+  min-height: 42px;
+  padding: 9px 16px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #fff;
+  color: #1e293b;
+  box-shadow: 0 1px 2px rgb(15 23 42 / 7%);
+  font-size: 14px;
+}
+
+.pensions-section-navigation button:hover {
+  border-color: #009543;
+  background: #e6f6ee;
+  color: #007a36;
+}
+
+.pensions-section-navigation button.active,
+.pensions-section-navigation button.active:hover {
+  border-color: #00209f;
+  background: #00209f;
+  color: #fff;
+  box-shadow: 0 2px 6px rgb(0 32 159 / 20%);
+}
+
+.pensions-section-navigation button:focus-visible {
+  outline: 3px solid rgb(0 32 159 / 28%);
+  outline-offset: 2px;
+}
+
 .nav-link {
   display: inline-block;
   padding: 8px 14px;

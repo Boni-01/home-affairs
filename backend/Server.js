@@ -8,6 +8,7 @@ const express = require("express");
 const cors = require("cors");
 const path = require("path");
 const fs = require("fs");
+const crypto = require("crypto");
 const mysql = require("mysql2/promise");
 const multer = require("multer");
 
@@ -62,6 +63,60 @@ async function initializeDatabase() {
           'GOV_PAYMENT','GENERAL_ENQUIRY'
         ) NOT NULL`);
       console.log("Finance request type updated to support GOV_PAYMENT");
+    }
+    const [pensionDestinationColumn] = await c.query(
+      "SHOW COLUMNS FROM pension_members LIKE 'payment_destination'"
+    );
+    if (!pensionDestinationColumn.length) {
+      await c.query(
+        "ALTER TABLE pension_members ADD COLUMN payment_destination VARCHAR(32) NULL AFTER date_of_birth"
+      );
+      console.log("Pension payment destination column added");
+    }
+    const [userDateOfBirthColumn] = await c.query(
+      "SHOW COLUMNS FROM users LIKE 'date_of_birth'"
+    );
+    if (!userDateOfBirthColumn.length) {
+      await c.query(
+        "ALTER TABLE users ADD COLUMN date_of_birth DATE NULL AFTER phone"
+      );
+      console.log("User profile date of birth column added");
+    }
+    const [pensionIdentityHashColumn] = await c.query(
+      "SHOW COLUMNS FROM pension_members LIKE 'national_id_hash'"
+    );
+    if (!pensionIdentityHashColumn.length) {
+      await c.query(
+        "ALTER TABLE pension_members ADD COLUMN national_id_hash CHAR(64) NULL AFTER national_id_encrypted"
+      );
+    }
+    const [pensionIdentityHashIndex] = await c.query(
+      "SHOW INDEX FROM pension_members WHERE Key_name = 'uq_pension_member_national_id_hash'"
+    );
+    if (!pensionIdentityHashIndex.length) {
+      await c.query(
+        "ALTER TABLE pension_members ADD UNIQUE INDEX uq_pension_member_national_id_hash (national_id_hash)"
+      );
+    }
+    const [pensionIdentityRows] = await c.query(
+      "SELECT m.member_id, COALESCE(n.national_id_number, u.national_id) AS national_id " +
+      "FROM pension_members m JOIN users u ON u.user_id = m.user_id " +
+      "LEFT JOIN citizen_national_ids n ON n.user_id = u.user_id " +
+      "WHERE m.national_id_hash IS NULL"
+    );
+    for (const row of pensionIdentityRows) {
+      const normalizedId = String(row.national_id || "").replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
+      if (!normalizedId) continue;
+      const identityHash = crypto.createHash("sha256").update(normalizedId).digest("hex");
+      try {
+        await c.query(
+          "UPDATE pension_members SET national_id_hash = ? WHERE member_id = ? AND national_id_hash IS NULL",
+          [identityHash, row.member_id]
+        );
+      } catch (err) {
+        if (err.code !== "ER_DUP_ENTRY") throw err;
+        console.warn("Duplicate pension National ID found during migration; left for review.");
+      }
     }
     console.log("MySQL connected →", process.env.DB_NAME || "lesotho_gov");
   } finally {
@@ -446,6 +501,47 @@ app.get("/api/me", verifyToken, async (req, res) => {
     }),
     isAdmin: req.dbUser.role === "admin"
   });
+});
+
+app.post("/api/me/profile", verifyToken, async (req, res) => {
+  if (!req.dbUser) return res.status(404).json({ error: "Not registered" });
+  const { date_of_birth, phone } = req.body || {};
+  const dob = String(date_of_birth || "").trim();
+  const dobDate = new Date(dob + "T00:00:00Z");
+  const todayDate = new Date(new Date().toISOString().slice(0, 10) + "T00:00:00Z");
+  const validDob = /^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(dob) &&
+    !Number.isNaN(dobDate.getTime()) &&
+    dobDate.toISOString().slice(0, 10) === dob &&
+    dobDate <= todayDate;
+  if (!validDob) {
+    return res.status(400).json({ error: "Enter a valid date of birth that is not in the future." });
+  }
+  const phoneValue = String(phone || "").trim();
+  if (phoneValue && !/^[+0-9 ()-]{6,24}$/.test(phoneValue)) {
+    return res.status(400).json({ error: "Enter a valid phone number." });
+  }
+  try {
+    await db.query(
+      "UPDATE users SET date_of_birth = ?, phone = ? WHERE user_id = ?",
+      [dob, phoneValue || null, req.dbUser.user_id]
+    );
+    const [users] = await db.query(
+      "SELECT * FROM users WHERE user_id = ? LIMIT 1",
+      [req.dbUser.user_id]
+    );
+    const [nid] = await db.query(
+      "SELECT national_id_number FROM citizen_national_ids WHERE user_id = ? LIMIT 1",
+      [req.dbUser.user_id]
+    );
+    const user = await userWithPhoto({
+      ...users[0],
+      national_id_number: nid[0]?.national_id_number || users[0].national_id
+    });
+    res.json({ success: true, user });
+  } catch (err) {
+    console.error("Profile update error:", err);
+    res.status(500).json({ error: "Could not save profile details." });
+  }
 });
 
 // ============================================================
@@ -4977,12 +5073,113 @@ app.get("/api/pensions/programmes", async (req, res) => {
   }
 });
 
+function pensionAgeOnDate(dateOfBirth, today = new Date()) {
+  if (!dateOfBirth) return null;
+  const dob = new Date(dateOfBirth);
+  if (Number.isNaN(dob.getTime())) return null;
+  let age = today.getFullYear() - dob.getFullYear();
+  const beforeBirthday = today.getMonth() < dob.getMonth() ||
+    (today.getMonth() === dob.getMonth() && today.getDate() < dob.getDate());
+  if (beforeBirthday) age -= 1;
+  return age >= 0 ? age : null;
+}
+
+async function getPensionIdentity(conn, userId, authPhone = null) {
+  const [[identity]] = await conn.query(
+    `SELECT u.full_name, u.phone, u.national_id,
+            (SELECT n.national_id_number FROM citizen_national_ids n
+             WHERE n.user_id = u.user_id LIMIT 1) AS national_id_number,
+            (SELECT COALESCE(cr.date_of_birth, crq.date_of_event,
+                    (SELECT v.field_value FROM application_field_values v
+                     WHERE v.application_id = a.application_id
+                       AND v.field_key IN ('holder_date_of_birth','date_of_birth','child_dob')
+                     ORDER BY CASE v.field_key
+                       WHEN 'holder_date_of_birth' THEN 0
+                       WHEN 'date_of_birth' THEN 1 ELSE 2 END
+                     LIMIT 1))
+             FROM applications a
+             JOIN service_catalog s ON s.service_id = a.service_id
+             LEFT JOIN civil_record_requests crq ON crq.application_id = a.application_id
+             LEFT JOIN civil_records cr ON cr.civil_record_id = crq.civil_record_id
+             WHERE a.user_id = u.user_id
+               AND s.service_code IN ('NICR_BIRTH_CERT','NICR_BIRTH_REG','NICR_LATE_BIRTH')
+               AND LOWER(a.status) IN ('approved','complete','completed','issued')
+               AND (LOWER(TRIM(COALESCE(cr.subject_full_name, crq.subject_full_name, ''))) = LOWER(TRIM(u.full_name))
+                    OR EXISTS (
+                      SELECT 1 FROM application_field_values holder
+                      WHERE holder.application_id = a.application_id
+                        AND holder.field_key IN ('certificate_holder_name','full_name')
+                        AND LOWER(TRIM(holder.field_value)) = LOWER(TRIM(u.full_name))
+                    ))
+             ORDER BY a.decision_at DESC, a.application_id DESC
+             LIMIT 1) AS verified_date_of_birth
+     FROM users u WHERE u.user_id = ? LIMIT 1`,
+    [userId]
+  );
+  if (!identity) return null;
+  const [[profile]] = await conn.query(
+    "SELECT date_of_birth FROM users WHERE user_id = ? LIMIT 1",
+    [userId]
+  );
+  const idNumber = identity.national_id_number || identity.national_id || null;
+  const phone = authPhone || identity.phone || null;
+  const dateOfBirth = identity.verified_date_of_birth || profile?.date_of_birth || null;
+  return {
+    full_name: identity.full_name,
+    national_id_number: idNumber,
+    legacy_national_id: identity.national_id || null,
+    phone,
+    date_of_birth: dateOfBirth,
+    date_of_birth_source: identity.verified_date_of_birth ? "HOME_AFFAIRS" : "PROFILE",
+    age: pensionAgeOnDate(dateOfBirth),
+    payment_phone: phone ? String(phone).replace(/[^0-9]/g, "") : ""
+  };
+}
+
+async function findDeathCertificateRequest(conn, fullName) {
+  if (!fullName) return null;
+  const [rows] = await conn.query(
+    `SELECT a.application_id, a.reference_number, a.status, a.submitted_at
+     FROM applications a
+     JOIN service_catalog s ON s.service_id = a.service_id
+     LEFT JOIN civil_record_requests crq ON crq.application_id = a.application_id
+     WHERE s.service_code = 'NICR_DEATH_CERT'
+       AND LOWER(a.status) NOT IN ('rejected','cancelled','withdrawn')
+       AND (LOWER(TRIM(crq.subject_full_name)) = LOWER(TRIM(?))
+            OR EXISTS (
+              SELECT 1 FROM application_field_values v
+              WHERE v.application_id = a.application_id
+                AND v.field_key = 'deceased_full_name'
+                AND LOWER(TRIM(v.field_value)) = LOWER(TRIM(?))
+            ))
+     ORDER BY a.submitted_at DESC, a.application_id DESC LIMIT 1`,
+    [fullName, fullName]
+  );
+  return rows[0] || null;
+}
+
+async function pausePensionMember(conn, memberId, deathRequest) {
+  await conn.query(
+    "UPDATE pension_members SET membership_status = 'SUSPENDED' WHERE member_id = ?",
+    [memberId]
+  );
+  const reason = "Payment paused for death certificate review" +
+    (deathRequest?.reference_number ? " " + deathRequest.reference_number : "");
+  await conn.query(
+    "UPDATE pension_payments SET status = 'CANCELLED', failure_reason = ? " +
+    "WHERE member_id = ? AND status IN ('SCHEDULED','PENDING','PROCESSING')",
+    [reason, memberId]
+  );
+}
+
 // ------------------------------------------------------------
 // PENSIONS — my profile (member + programme + contributions summary)
 // ------------------------------------------------------------
 app.get("/api/pensions/me", verifyToken, async (req, res) => {
   if (!req.dbUser) return res.status(404).json({ error: "Register first" });
   try {
+    const identity = await getPensionIdentity(db, req.dbUser.user_id, req.phone);
+    const deathCertificateRequest = await findDeathCertificateRequest(db, identity?.full_name);
     const [members] = await db.query(
       `SELECT m.*, p.programme_code, p.programme_name, p.description AS programme_description,
               p.eligibility_notes
@@ -4993,10 +5190,23 @@ app.get("/api/pensions/me", verifyToken, async (req, res) => {
     );
 
     if (!members.length) {
-      return res.json({ member: null, programme: null, contributions_summary: null });
+      return res.json({
+        member: null, programme: null, contributions_summary: null,
+        identity,
+        eligibility: {
+          age: identity?.age ?? null,
+          eligible: Boolean(identity?.age >= 60 && !deathCertificateRequest),
+          date_of_birth_available: Boolean(identity?.date_of_birth),
+          death_certificate_request: deathCertificateRequest
+        }
+      });
     }
 
     const member = members[0];
+    if (deathCertificateRequest) {
+      await pausePensionMember(db, member.member_id, deathCertificateRequest);
+      member.membership_status = "SUSPENDED";
+    }
 
     const [[summary]] = await db.query(
       `SELECT COUNT(*) AS months_recorded,
@@ -5010,6 +5220,13 @@ app.get("/api/pensions/me", verifyToken, async (req, res) => {
 
     res.json({
       member,
+      identity,
+      eligibility: {
+        age: identity?.age ?? pensionAgeOnDate(member.date_of_birth),
+        eligible: Boolean(identity?.age >= 60 && !deathCertificateRequest),
+        date_of_birth_available: Boolean(identity?.date_of_birth),
+        death_certificate_request: deathCertificateRequest
+      },
       programme: {
         programme_code: member.programme_code,
         programme_name: member.programme_name,
@@ -5021,6 +5238,35 @@ app.get("/api/pensions/me", verifyToken, async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Failed" });
+  }
+});
+
+app.post("/api/pensions/me/payment-destination", verifyToken, async (req, res) => {
+  if (!req.dbUser) return res.status(404).json({ error: "Register first" });
+  const destination = String(req.body?.payment_destination || "").trim();
+  if (!/^[0-9]{6,32}$/.test(destination)) {
+    return res.status(400).json({ error: "Enter a valid phone or bank account number using digits only." });
+  }
+  try {
+    const [members] = await db.query(
+      "SELECT member_id FROM pension_members WHERE user_id = ? LIMIT 1",
+      [req.dbUser.user_id]
+    );
+    if (!members.length) return res.status(404).json({ error: "Apply for the Old Age Pension before changing payment details." });
+    const identity = await getPensionIdentity(db, req.dbUser.user_id, req.phone);
+    const deathRequest = await findDeathCertificateRequest(db, identity?.full_name);
+    if (deathRequest) {
+      await pausePensionMember(db, members[0].member_id, deathRequest);
+      return res.status(409).json({ error: "Payment details are locked while Home Affairs verifies a death certificate application." });
+    }
+    await db.query(
+      "UPDATE pension_members SET payment_destination = ? WHERE member_id = ?",
+      [destination, members[0].member_id]
+    );
+    res.json({ success: true, payment_destination: destination });
+  } catch (err) {
+    console.error("Pension payment destination error:", err);
+    res.status(500).json({ error: "Could not update payment details" });
   }
 });
 
@@ -5137,61 +5383,80 @@ app.get("/api/pensions/estimate/my", verifyToken, async (req, res) => {
 // ------------------------------------------------------------
 app.post("/api/pensions/register", verifyToken, async (req, res) => {
   if (!req.dbUser) return res.status(400).json({ error: "Register first" });
-  const {
-    programme_code,
-    date_of_birth,
-    employment_number,
-    employer_name,
-    employment_start_date,
-    employment_end_date
-  } = req.body || {};
+  const { payment_destination } = req.body || {};
 
   const conn = await db.getConnection();
   try {
     await conn.beginTransaction();
 
-    // Resolve programme: by code, or first active programme
-    let programme = null;
-    if (programme_code) {
-      const [progs] = await conn.query(
-        "SELECT * FROM pension_programmes WHERE programme_code = ? AND is_active = 1",
-        [programme_code]
-      );
-      programme = progs[0] || null;
+    const identity = await getPensionIdentity(conn, req.dbUser.user_id, req.phone);
+    if (!identity?.national_id_number) {
+      throw new Error("Your National ID is missing from your profile. Update it with Home Affairs before applying.");
     }
-    if (!programme) {
-      const [progs] = await conn.query(
-        "SELECT * FROM pension_programmes WHERE is_active = 1 ORDER BY programme_id LIMIT 1"
-      );
-      programme = progs[0] || null;
+    if (!identity.date_of_birth || identity.age === null) {
+      throw new Error("Add your date of birth in Profile before applying.");
     }
+    if (identity.age < 60) {
+      throw new Error("You must be 60 or older to apply for the Old Age Pension.");
+    }
+    const deathCertificateRequest = await findDeathCertificateRequest(conn, identity.full_name);
+    if (deathCertificateRequest) {
+      throw new Error("A death certificate application was found for this name. Pension payments are paused while Home Affairs verifies the record.");
+    }
+
+    const destination = String(payment_destination || identity.payment_phone || "").trim();
+    if (!/^[0-9]{6,32}$/.test(destination)) {
+      throw new Error("Enter a valid phone or bank account number using digits only.");
+    }
+
+    // This citizen form is for the Old Age Pension only.
+    const [progs] = await conn.query(
+      "SELECT * FROM pension_programmes WHERE programme_code = 'OAP' AND is_active = 1 LIMIT 1"
+    );
+    const programme = progs[0] || null;
     if (!programme) throw new Error("No pension programme is configured");
+    const normalizedNationalId = String(identity.national_id_number || "")
+      .replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
+    const identityHash = crypto.createHash("sha256").update(normalizedNationalId).digest("hex");
 
     const [existing] = await conn.query(
-      "SELECT member_id FROM pension_members WHERE user_id = ?",
-      [req.dbUser.user_id]
+      `SELECT m.member_id
+       FROM pension_members m
+       JOIN users u ON u.user_id = m.user_id
+       LEFT JOIN citizen_national_ids n ON n.user_id = u.user_id
+       WHERE m.user_id = ?
+          OR m.national_id_hash = ?
+          OR u.national_id IN (?, ?)
+          OR n.national_id_number IN (?, ?)
+       LIMIT 1`,
+      [
+        req.dbUser.user_id,
+        identityHash,
+        identity.national_id_number || "",
+        identity.legacy_national_id || "",
+        identity.national_id_number || "",
+        identity.legacy_national_id || ""
+      ]
     );
     if (existing.length) {
-      throw new Error("You are already registered as a pension member");
+      throw new Error("This National ID is already linked to a pension. A person can receive only one pension.");
     }
 
     const memberNumber = `MBR-${Date.now()}`;
 
     const [mRes] = await conn.query(
       `INSERT INTO pension_members
-         (user_id, programme_id, member_number, date_of_birth,
+         (user_id, programme_id, member_number, date_of_birth, national_id_hash, payment_destination,
           employment_number, employer_name, employment_start_date, employment_end_date,
           membership_status, identity_verification_status)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'PENDING_VERIFICATION', 'PENDING')`,
+       VALUES (?, ?, ?, ?, ?, ?, NULL, NULL, NULL, NULL, 'PENDING_VERIFICATION', 'PENDING')`,
       [
         req.dbUser.user_id,
         programme.programme_id,
         memberNumber,
-        date_of_birth || null,
-        employment_number || null,
-        employer_name || null,
-        employment_start_date || null,
-        employment_end_date || null
+        identity.date_of_birth,
+        identityHash,
+        destination
       ]
     );
     const memberId = mRes.insertId;
@@ -5203,7 +5468,8 @@ app.post("/api/pensions/register", verifyToken, async (req, res) => {
          (reference_number, applicant_user_id, member_id, programme_id,
           application_type, submitted_details, status, submitted_at)
        VALUES (?, ?, ?, ?, 'REGISTRATION', ?, 'SUBMITTED', NOW())`,
-      [ref, req.dbUser.user_id, memberId, programme.programme_id, JSON.stringify(req.body)]
+      [ref, req.dbUser.user_id, memberId, programme.programme_id,
+       JSON.stringify({ programme_code: "OAP", payment_destination: destination })]
     );
     const appId = aRes.insertId;
 
@@ -5250,7 +5516,8 @@ app.post("/api/pensions/register", verifyToken, async (req, res) => {
       success: true,
       memberId,
       applicationId: appId,
-      referenceNumber: ref
+      referenceNumber: ref,
+      age: identity.age
     });
   } catch (err) {
     await conn.rollback();
@@ -5275,13 +5542,9 @@ app.post(
       return res.status(400).json({ error: "application_type is required" });
     }
 
-    const allowedTypes = [
-      "RETIREMENT_BENEFIT","RESIGNATION_BENEFIT","TERMINATION_BENEFIT",
-      "RETRENCHMENT_BENEFIT","DISABILITY_BENEFIT","DEATH_BENEFIT",
-      "OLD_AGE_PENSION","RECORD_CORRECTION","OTHER"
-    ];
+    const allowedTypes = ["OLD_AGE_PENSION"];
     if (!allowedTypes.includes(application_type)) {
-      return res.status(400).json({ error: "Invalid application_type" });
+      return res.status(400).json({ error: "Only the Old Age Pension application is available in the citizen portal." });
     }
 
     let details = {};
@@ -5295,6 +5558,21 @@ app.post(
     try {
       await conn.beginTransaction();
 
+      const identity = await getPensionIdentity(conn, req.dbUser.user_id, req.phone);
+      if (!identity?.date_of_birth || identity.age === null || identity.age < 60) {
+        throw new Error("Your profile date of birth must show that you are at least 60.");
+      }
+      if (await findDeathCertificateRequest(conn, identity.full_name)) {
+        throw new Error("A death certificate application is under review. Pension payments are paused.");
+      }
+      const [priorApplications] = await conn.query(
+        "SELECT application_id FROM pension_applications WHERE applicant_user_id = ? AND application_type = 'OLD_AGE_PENSION' AND status NOT IN ('REJECTED','CANCELLED') LIMIT 1",
+        [req.dbUser.user_id]
+      );
+      if (priorApplications.length) {
+        throw new Error("You already have an Old Age Pension application. A person can receive only one pension.");
+      }
+
       // 1. Try to resolve the member (may not exist yet)
       let member = null;
       const [members] = await conn.query(
@@ -5302,6 +5580,10 @@ app.post(
         [req.dbUser.user_id]
       );
       if (members.length) member = members[0];
+      if (!member) throw new Error("Register for the Old Age Pension before submitting this request.");
+      if (member.membership_status === "SUSPENDED" || member.membership_status === "DECEASED") {
+        throw new Error("This pension is suspended. Contact the Pensions Office for help.");
+      }
 
       // 2. Resolve the programme:
       //    a) by explicit programme_code
@@ -5969,6 +6251,24 @@ app.post("/api/pensions/admin/payments", verifyToken, requireAdmin, async (req, 
   const conn = await db.getConnection();
   try {
     await conn.beginTransaction();
+    if (member_id) {
+      const [members] = await conn.query(
+        `SELECT m.member_id, m.membership_status, u.full_name
+         FROM pension_members m
+         JOIN users u ON u.user_id = m.user_id
+         WHERE m.member_id = ? FOR UPDATE`,
+        [member_id]
+      );
+      if (!members.length) throw new Error("Pension member not found");
+      const deathRequest = await findDeathCertificateRequest(conn, members[0].full_name);
+      if (deathRequest || ["DECEASED", "SUSPENDED"].includes(members[0].membership_status)) {
+        if (deathRequest) {
+          await pausePensionMember(conn, member_id, deathRequest);
+          await conn.commit();
+        }
+        throw new Error("Payment stopped. A death certificate request or suspension requires Home Affairs review.");
+      }
+    }
     const [progs] = await conn.query(
       "SELECT programme_id FROM pension_programmes WHERE programme_code = ?",
       [programme_code]
