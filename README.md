@@ -2851,6 +2851,71 @@ ALTER TABLE users
   AFTER national_id;
 If you get "Duplicate column name 'photo_path'", skip this step.
 
+### Step 5: Apply the latest database updates
+If your `lesotho_gov` database already exists, run this migration once in MySQL Workbench or the MySQL command line. It adds pension payment destinations and hashed National ID lookup, adds date-of-birth review and identity-hold fields to user accounts, and enables government payment requests.
+
+```sql
+USE lesotho_gov;
+
+-- Add a payment destination for pension members
+ALTER TABLE pension_members
+  ADD COLUMN payment_destination VARCHAR(32) NULL
+  AFTER date_of_birth;
+
+-- Add the user's date of birth
+ALTER TABLE users
+  ADD COLUMN date_of_birth DATE NULL
+  AFTER phone;
+
+-- Store birth dates awaiting admin review and whether a date is verified
+ALTER TABLE users
+  ADD COLUMN pending_date_of_birth DATE NULL
+  AFTER date_of_birth,
+  ADD COLUMN date_of_birth_verified TINYINT(1) NOT NULL DEFAULT 0
+  AFTER pending_date_of_birth;
+
+-- Add an account hold for lost or stolen ID reports
+ALTER TABLE users
+  ADD COLUMN identity_hold_status ENUM('clear', 'review')
+    NOT NULL DEFAULT 'clear'
+    AFTER account_status,
+  ADD COLUMN identity_hold_reason VARCHAR(255) NULL
+    AFTER identity_hold_status,
+  ADD COLUMN identity_hold_reference VARCHAR(64) NULL
+    AFTER identity_hold_reason;
+
+-- Send existing, unverified birth dates to the admin review queue
+UPDATE users
+SET pending_date_of_birth = date_of_birth
+WHERE date_of_birth IS NOT NULL
+  AND date_of_birth_verified = 0
+  AND pending_date_of_birth IS NULL;
+
+-- Add a hashed National ID to pension members
+ALTER TABLE pension_members
+  ADD COLUMN national_id_hash CHAR(64) NULL
+  AFTER national_id_encrypted;
+
+-- Enforce one pension record per National ID
+ALTER TABLE pension_members
+  ADD UNIQUE INDEX uq_pension_member_national_id_hash (national_id_hash);
+
+-- Allow government payment requests
+ALTER TABLE finance_service_requests
+  MODIFY COLUMN request_type ENUM(
+    'TAX_REQUEST',
+    'TAX_CLEARANCE',
+    'TAX_DECLARATION',
+    'SUPPLIER_REGISTRATION',
+    'INVOICE_CLAIM',
+    'TAX_REFUND',
+    'GOV_PAYMENT',
+    'GENERAL_ENQUIRY'
+  ) NOT NULL;
+```
+
+Run this migration only once per database. The `ALTER TABLE` statements add columns and an index, so rerunning them on an already updated database will produce duplicate-column or duplicate-index errors. For a brand-new database, use the complete schema above instead; it already includes the `GOV_PAYMENT` request type.
+
 # Firebase Setup
 You do NOT need to create a Firebase project. We use one shared project. You only need to:
 
