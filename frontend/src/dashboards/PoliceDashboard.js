@@ -229,7 +229,6 @@ function PoliceDashboard({ onLogout }) {
   });
   const [letterMsg, setLetterMsg] = useState("");
   const [letterPreview, setLetterPreview] = useState(null);
-  const [downloadingLetterId, setDownloadingLetterId] = useState(null);
 
   // Certified documents
   const [certDocs, setCertDocs] = useState([]);
@@ -376,39 +375,6 @@ function PoliceDashboard({ onLogout }) {
       const data = await api(`/police/letters/${id}`);
       setLetterPreview(data.letter);
     } catch (err) { alert(err.message); }
-  }
-
-  async function downloadLetter(letter) {
-    const id = letter.letterId || letter.letter_id;
-    if (!id) {
-      setLetterMsg("Error: Letter reference is missing.");
-      return;
-    }
-    setDownloadingLetterId(id);
-    try {
-      const user = auth.currentUser;
-      const token = user ? await user.getIdToken() : null;
-      const response = await fetch(`${API_BASE}/police/letters/${id}/pdf`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {}
-      });
-      if (!response.ok) {
-        const data = await response.json().catch(() => ({}));
-        throw new Error(data.error || "Failed to download stamped letter");
-      }
-      const pdfBlob = await response.blob();
-      const url = URL.createObjectURL(pdfBlob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `${String(letter.reference || letter.reference_number || "police-letter").replace(/[^a-zA-Z0-9_-]/g, "_")}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.setTimeout(() => URL.revokeObjectURL(url), 1000);
-    } catch (err) {
-      setLetterMsg("Error: " + err.message);
-    } finally {
-      setDownloadingLetterId(null);
-    }
   }
 
   // ---------------- CERTIFIED DOCUMENTS ----------------
@@ -795,12 +761,6 @@ function PoliceDashboard({ onLogout }) {
                     Letter preview
                   </h3>
                   <div style={{ display: "flex", gap: 8 }}>
-                    <button
-                      onClick={() => downloadLetter(letterPreview)}
-                      disabled={downloadingLetterId !== null}
-                      style={btnPrimary}>
-                      {downloadingLetterId ? "Preparing PDF…" : "Download stamped PDF"}
-                    </button>
                     <button onClick={() => setLetterPreview(null)} style={btnOutline}>
                       Close
                     </button>
@@ -842,17 +802,9 @@ function PoliceDashboard({ onLogout }) {
                       {l.reference_number} · Issued {new Date(l.issued_at).toLocaleString()}
                     </p>
                   </div>
-                  <div style={{ display: "flex", gap: 8 }}>
-                    <button onClick={() => openLetter(l.letter_id)} style={btnOutline}>
-                      Open
-                    </button>
-                    <button
-                      onClick={() => downloadLetter(l)}
-                      disabled={downloadingLetterId !== null}
-                      style={btnPrimary}>
-                      {downloadingLetterId === l.letter_id ? "Preparing…" : "Download stamped PDF"}
-                    </button>
-                  </div>
+                  <button onClick={() => openLetter(l.letter_id)} style={btnOutline}>
+                    Open
+                  </button>
                 </div>
               </article>
             ))}
