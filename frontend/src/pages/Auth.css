@@ -1,37 +1,8 @@
 .auth-page,
 .help-page {
-  position: relative;
-  isolation: isolate;
   background-color: #F4F7FB;
-}
-
-.auth-page::before,
-.help-page::before {
-  content: "";
-  position: fixed;
-  z-index: -1;
-  inset: 0;
-  pointer-events: none;
-  background-image: url("../dashboards/arms.png");
-  background-repeat: no-repeat;
-  background-position: center;
-  background-size: cover;
-  opacity: 0.2;
 }
 
 body[data-theme="dark"] .auth-page {
   background-color: #06182D;
-}
-
-body[data-theme="dark"] .auth-page::before,
-body[data-theme="dark"] .help-page::before {
-  filter: brightness(1.6) saturate(0.85);
-  opacity: 0.28;
-}
-
-@media (max-width: 700px) {
-  .auth-page::before,
-  .help-page::before {
-    background-position: center;
-  }
 }
