@@ -84,7 +84,7 @@ export default function Help() {
 		<main className="help-page" style={styles.page}>
 			<div style={styles.content}>
 				<p className="help-eyebrow" style={styles.eyebrow}>SUPPORT</p>
-				<h1 style={styles.heading}>Help and frequently asked questions</h1>
+				<h1 style={styles.heading}>Help and Frequently asked questions</h1>
 				<p className="help-intro" style={styles.intro}>
 					Find step-by-step guidance for using the services. Follow the instructions on each service
 					page for specific requirements.

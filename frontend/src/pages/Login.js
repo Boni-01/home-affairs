@@ -326,7 +326,7 @@ function Login({ onSuccess, getPostAuthRoute }) {
                 transition: "background 0.2s"
               }}
             >
-              ← Back to Home
+              Home
             </Link>
             <p style={{ margin: 0, fontSize: 12, color: "#9ca3af", textAlign: "center" }}>
               Need help recovering access? Contact helpdesk@gov.ls or call local support lines.
