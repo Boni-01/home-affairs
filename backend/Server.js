@@ -5353,13 +5353,16 @@ app.get("/api/pensions/me", verifyToken, async (req, res) => {
       [member.member_id]
     );
 
+    const eligibilityDateOfBirth = identity?.date_of_birth || member.date_of_birth;
+    const eligibilityAge = pensionAgeOnDate(eligibilityDateOfBirth);
+
     res.json({
       member,
       identity,
       eligibility: {
-        age: identity?.age ?? pensionAgeOnDate(member.date_of_birth),
-        eligible: Boolean(identity?.age >= 60 && !deathCertificateRequest),
-        date_of_birth_available: Boolean(identity?.date_of_birth),
+        age: eligibilityAge,
+        eligible: Boolean(eligibilityAge >= 60 && !deathCertificateRequest),
+        date_of_birth_available: Boolean(eligibilityDateOfBirth),
         death_certificate_request: deathCertificateRequest
       },
       programme: {
@@ -5529,7 +5532,7 @@ app.post("/api/pensions/register", verifyToken, async (req, res) => {
       throw new Error("Your National ID is missing from your profile. Update it with Home Affairs before applying.");
     }
     if (!identity.date_of_birth || identity.age === null) {
-      throw new Error("Add your date of birth in Profile before applying.");
+      throw new Error("A verified date of birth linked to your National ID is required. Contact Home Affairs to update your identity record.");
     }
     if (identity.age < 60) {
       throw new Error("You must be 60 or older to apply for the Old Age Pension.");

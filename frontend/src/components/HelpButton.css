@@ -118,6 +118,130 @@ body[data-theme="dark"] .auth-page * {
   color: #fff !important;
 }
 
+body[data-theme="dark"] .navbar .logo-title,
+body[data-theme="dark"] .navbar .logo-subtitle,
+body[data-theme="dark"] .navbar .nav-link {
+  color: #fff !important;
+}
+
+body[data-theme="dark"] .dashboard-page.pensions-dashboard > div > header,
+body[data-theme="dark"] .dashboard-page.pensions-dashboard > div > header * {
+  color: #fff !important;
+}
+
+body[data-theme="dark"] .dashboard-page.pensions-dashboard .dashboard-search,
+body[data-theme="dark"] .dashboard-page.pensions-dashboard .dashboard-search input {
+  border-color: #34516c !important;
+  background: #102b48 !important;
+  color: #fff !important;
+}
+
+body[data-theme="dark"] .dashboard-page.pensions-dashboard .dashboard-search input::placeholder {
+  color: #c4d2df !important;
+}
+
+body[data-theme="dark"] .dashboard-page.pensions-dashboard .pension-apply-hero {
+  border-color: #34516c !important;
+  background: transparent !important;
+}
+
+body[data-theme="dark"] .dashboard-page.pensions-dashboard .pensions-hero-copy,
+body[data-theme="dark"] .dashboard-page.pensions-dashboard .pensions-hero-copy * {
+  color: #fff !important;
+}
+
+body[data-theme="dark"] .dashboard-page.pensions-dashboard .pensions-hero-copy p:not(:first-child) {
+  color: #c4d2df !important;
+}
+
+body[data-theme="dark"] .dashboard-page.pensions-dashboard .pensions-section-navigation button:not(.active) {
+  border-color: transparent !important;
+  background: transparent !important;
+  color: #fff !important;
+  box-shadow: none !important;
+}
+
+body[data-theme="dark"] .dashboard-page.pensions-dashboard .pensions-section-navigation button:not(.active):hover {
+  background: #102b48 !important;
+}
+
+body[data-theme="dark"] .dashboard-page.pensions-dashboard .pension-eligibility-panel,
+body[data-theme="dark"] .dashboard-page.pensions-dashboard .pension-payment-panel {
+  border-color: #34516c !important;
+  background: transparent !important;
+}
+
+body[data-theme="dark"] .dashboard-page.pensions-dashboard .pension-eligibility-panel > div:first-child h2,
+body[data-theme="dark"] .dashboard-page.pensions-dashboard .pension-eligibility-panel > div:first-child p,
+body[data-theme="dark"] .dashboard-page.pensions-dashboard .pension-payment-panel h2,
+body[data-theme="dark"] .dashboard-page.pensions-dashboard .pension-payment-panel p {
+  color: #fff !important;
+}
+
+body[data-theme="dark"] .dashboard-page.pensions-dashboard .pension-eligibility-panel > div:first-child > div:first-child,
+body[data-theme="dark"] .dashboard-page.pensions-dashboard .pension-payment-panel > div:first-child > div:first-child {
+  border-color: #31527a !important;
+  background: #172b4d !important;
+  color: #93c5fd !important;
+}
+
+body[data-theme="dark"] .dashboard-page.pensions-dashboard .pension-eligibility-panel > div:first-child > div:first-child svg,
+body[data-theme="dark"] .dashboard-page.pensions-dashboard .pension-payment-panel > div:first-child > div:first-child svg {
+  color: #93c5fd !important;
+  stroke: #93c5fd !important;
+}
+
+body[data-theme="dark"] .dashboard-page.pensions-dashboard .pension-info-card {
+  border-color: #34516c !important;
+  background: #102b48 !important;
+}
+
+body[data-theme="dark"] .dashboard-page.pensions-dashboard .pension-info-card-label {
+  color: #c4d2df !important;
+}
+
+body[data-theme="dark"] .dashboard-page.pensions-dashboard .pension-info-card-value {
+  color: #fff !important;
+}
+
+body[data-theme="dark"] .dashboard-page.pensions-dashboard .pension-status-warning {
+  border-color: #94721e !important;
+  background: #33270b !important;
+}
+
+body[data-theme="dark"] .dashboard-page.pensions-dashboard .pension-status-warning,
+body[data-theme="dark"] .dashboard-page.pensions-dashboard .pension-status-warning * {
+  color: #ffe08a !important;
+}
+
+body[data-theme="dark"] .dashboard-page.pensions-dashboard .pension-status-member {
+  border-color: #087443 !important;
+  background: #123b31 !important;
+}
+
+body[data-theme="dark"] .dashboard-page.pensions-dashboard .pension-status-suspended,
+body[data-theme="dark"] .dashboard-page.pensions-dashboard .pension-death-alert {
+  border-color: #a33a3a !important;
+  background: #3b1f26 !important;
+}
+
+body[data-theme="dark"] .dashboard-page.pensions-dashboard .pension-death-alert,
+body[data-theme="dark"] .dashboard-page.pensions-dashboard .pension-death-alert * {
+  color: #ffc9c9 !important;
+}
+
+body[data-theme="dark"] .dashboard-page.pensions-dashboard input,
+body[data-theme="dark"] .dashboard-page.pensions-dashboard select,
+body[data-theme="dark"] .dashboard-page.pensions-dashboard textarea {
+  background: #102b48 !important;
+  color: #fff !important;
+}
+
+body[data-theme="dark"] .dashboard-page.pensions-dashboard input::placeholder,
+body[data-theme="dark"] .dashboard-page.pensions-dashboard textarea::placeholder {
+  color: #c4d2df !important;
+}
+
 body[data-theme="dark"] .dashboard-page article {
   background: #102b48 !important;
   border-color: #34516c !important;

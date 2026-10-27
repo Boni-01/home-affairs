@@ -185,7 +185,7 @@ function PensionsDashboard({ onLogout }) {
   const deletableStatuses = ["DRAFT","SUBMITTED","MORE_INFORMATION_REQUIRED"];
 
   return (
-    <main className="dashboard-page" style={layout.page}>
+    <main className="dashboard-page pensions-dashboard" style={layout.page}>
       <div style={layout.container}>
         <header style={header.wrapper}>
           <div style={{
@@ -225,14 +225,14 @@ function PensionsDashboard({ onLogout }) {
         {/* ---------------- Old Age Pension ---------------- */}
         {tab === "apply" && (
           <>
-            <section style={{
+            <section className="pension-apply-hero" style={{
               ...section.wrapper, display: "grid",
               gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 280px), 1fr))",
               gap: 20, alignItems: "center", padding: "26px 30px",
               background: "linear-gradient(120deg, #fff 0%, #eef3ff 100%)",
               border: "1px solid " + COLORS.borderLight, borderRadius: 16
             }}>
-              <div>
+              <div className="pensions-hero-copy">
                 <p style={header.eyebrow}>Ministry of Pensions</p>
                 <h2 style={{ ...section.title, fontSize: 26 }}>Apply for the Old Age Pension</h2>
                 <p style={{ ...section.subtitle, fontSize: 16, marginTop: 10 }}>
@@ -257,7 +257,7 @@ function PensionsDashboard({ onLogout }) {
             </section>
 
             {profile.eligibility?.death_certificate_request && (
-              <div role="alert" style={alertCard}>
+              <div className="pension-death-alert" role="alert" style={alertCard}>
                 <PensionIcon kind="alert" />
                 <div>
                   <strong>Payments are paused for verification.</strong>
@@ -270,27 +270,27 @@ function PensionsDashboard({ onLogout }) {
               </div>
             )}
 
-            <section style={{ ...section.wrapper, ...eligibilityCard }}>
+            <section className="pension-eligibility-panel" style={{ ...section.wrapper, ...eligibilityCard }}>
               <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 18 }}>
                 <div style={iconTile}><PensionIcon kind="identity" /></div>
                 <div>
                   <h2 style={{ ...section.title, fontSize: 21 }}>Your eligibility</h2>
-                  <p style={{ ...section.subtitle, margin: 0, fontSize: 14 }}>Checked against your Home Affairs records.</p>
+                  <p style={{ ...section.subtitle, margin: 0, fontSize: 14 }}>Age is calculated automatically from your verified Home Affairs birth date linked to your National ID.</p>
                 </div>
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12 }}>
                 <InfoCard label="Full name" value={profile.identity?.full_name || me?.full_name || "Loading profile"} />
                 <InfoCard label="National ID" value={profile.identity?.national_id_number || me?.national_id_number || me?.national_id || "Not on profile"} />
-                <InfoCard label="Age" value={profile.eligibility?.age == null ? "Date of birth not on record" : String(profile.eligibility.age) + " years"} />
+                <InfoCard label="Age" value={profile.eligibility?.age == null ? "No verified birth date linked to your National ID" : String(profile.eligibility.age) + " years"} />
               </div>
               {profile.eligibility?.age != null && profile.eligibility.age < 60 && !profile.member && (
-                <div style={{ ...noticeCard, marginTop: 16, background: "#fff4df", color: COLORS.warning }}>
+                <div className="pension-status-notice pension-status-warning" style={{ ...noticeCard, marginTop: 16, background: "#fff4df", color: COLORS.warning }}>
                   <PensionIcon kind="calendar" />
                   <p style={{ margin: 0 }}>You are not yet eligible. You can apply when you are 60 years old.</p>
                 </div>
               )}
               {profile.member && (
-                <div style={{ ...noticeCard, marginTop: 16, background: profile.member.membership_status === "SUSPENDED" ? "#fdecea" : COLORS.successLight }}>
+                <div className={`pension-status-notice ${profile.member.membership_status === "SUSPENDED" ? "pension-status-suspended" : "pension-status-member"}`} style={{ ...noticeCard, marginTop: 16, background: profile.member.membership_status === "SUSPENDED" ? "#fdecea" : COLORS.successLight }}>
                   <PensionIcon kind={profile.member.membership_status === "SUSPENDED" ? "alert" : "check"} />
                   <p style={{ margin: 0 }}>
                     {profile.member.membership_status === "SUSPENDED"
@@ -302,7 +302,7 @@ function PensionsDashboard({ onLogout }) {
             </section>
 
             {(profile.eligibility?.eligible || profile.member) && !profile.eligibility?.death_certificate_request && (
-              <section style={{ ...section.wrapper, ...eligibilityCard }}>
+              <section className="pension-payment-panel" style={{ ...section.wrapper, ...eligibilityCard }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 12 }}>
                   <div style={iconTile}><PensionIcon kind="wallet" /></div>
                   <div>
@@ -700,15 +700,16 @@ function PensionsDashboard({ onLogout }) {
 // ============================================================
 function InfoCard({ label, value }) {
   return (
-    <div style={{
-      padding: "14px 16px",
+    <div className="pension-info-card" style={{
+      padding: "16px 18px",
       borderRadius: 10,
-      border: "1px solid " + COLORS.borderLight,
-      background: "#f8faff",
-      minHeight: 66
+      border: "1px solid " + COLORS.border,
+      background: COLORS.white,
+      minHeight: 72,
+      boxShadow: "0 2px 6px rgba(0,32,159,0.06)"
     }}>
-      <div style={{ color: COLORS.textMuted, fontSize: 12, marginBottom: 6 }}>{label}</div>
-      <strong style={{ color: COLORS.textDark, fontSize: 16, lineHeight: 1.35, overflowWrap: "anywhere" }}>{value}</strong>
+      <div className="pension-info-card-label" style={{ color: COLORS.textMid, fontSize: 13, fontWeight: 600, marginBottom: 7 }}>{label}</div>
+      <strong className="pension-info-card-value" style={{ display: "block", color: COLORS.blueDark, fontSize: 17, lineHeight: 1.4, overflowWrap: "anywhere" }}>{value}</strong>
     </div>
   );
 }
