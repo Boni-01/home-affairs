@@ -22,3 +22,12 @@ test('opens the help page from the help button', async () => {
 
   expect(screen.getByRole('heading', { name: /help and frequently asked questions/i })).toBeInTheDocument();
 });
+
+test('returns home from the help page', async () => {
+  render(<App />);
+
+  await userEvent.click(screen.getByRole('button', { name: /help/i }));
+  await userEvent.click(screen.getByRole('link', { name: /^home$/i }));
+
+  expect(await screen.findByRole('heading', { name: /welcome back/i })).toBeInTheDocument();
+});

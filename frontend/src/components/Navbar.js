@@ -73,6 +73,7 @@ function Navbar({
   const [settingsTab, setSettingsTab] = useState("applications");
   const [storedProfile] = useState(readStoredProfile);
   const isDashboard = items !== undefined;
+  const showHomeLink = location.pathname === "/help";
   const authenticated = isAuthenticated ??
     (sessionStorage.getItem("home-affairs-authenticated") === "true");
   const isAdmin = location.pathname.startsWith("/admin/");
@@ -209,6 +210,18 @@ function Navbar({
             {authenticated ? (
               <>
                 <ul className="nav-links">
+                  {showHomeLink && (
+                    <li>
+                      <Link
+                        to="/"
+                        className={`nav-link${isActive("/") ? " active" : ""}`}
+                        aria-current={isActive("/") ? "page" : undefined}
+                        onClick={() => setMobileOpen(false)}
+                      >
+                        Home
+                      </Link>
+                    </li>
+                  )}
                   {routes.map(({ label, route }) => (
                     <li key={route}>
                       <Link
@@ -299,6 +312,18 @@ function Navbar({
               </>
             ) : (
               <ul className="nav-links">
+                {showHomeLink && (
+                  <li>
+                    <Link
+                      to="/"
+                      className={`nav-link${isActive("/") ? " active" : ""}`}
+                      aria-current={isActive("/") ? "page" : undefined}
+                      onClick={() => setMobileOpen(false)}
+                    >
+                      Home
+                    </Link>
+                  </li>
+                )}
                 <li>
                   <Link
                     to="/login"
