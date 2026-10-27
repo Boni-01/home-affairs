@@ -124,7 +124,15 @@ function Login({ onSuccess, getPostAuthRoute }) {
       sessionStorage.removeItem("is-admin");
     }
 
-    onSuccess?.();
+    const profileName =
+      data.user.first_name ||
+      data.user.firstName ||
+      data.user.full_name ||
+      data.user.name ||
+      firebaseUser.displayName ||
+      "";
+    const firstName = String(profileName).trim().split(/\s+/)[0];
+    onSuccess?.(firstName);
 
     const nextRoute = resolvePostAuthRoute();
     navigate(nextRoute, { replace: true });

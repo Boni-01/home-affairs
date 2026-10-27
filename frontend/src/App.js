@@ -20,7 +20,7 @@ import Footer from "./components/Footer";
 import HelpButton from "./components/HelpButton";
 import AccessibilityToolbar from "./components/AccessibilityToolbar";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   BrowserRouter,
   Navigate,
@@ -81,9 +81,20 @@ function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(
     () => sessionStorage.getItem("home-affairs-authenticated") === "true"
   );
-  const handleAuthenticationSuccess = () => {
+  const [statusMessage, setStatusMessage] = useState("");
+
+  useEffect(() => {
+    if (!statusMessage) return undefined;
+    const timeoutId = window.setTimeout(() => setStatusMessage(""), 5000);
+    return () => window.clearTimeout(timeoutId);
+  }, [statusMessage]);
+
+  const handleAuthenticationSuccess = (firstName) => {
     sessionStorage.setItem("home-affairs-authenticated", "true");
     setIsAuthenticated(true);
+    if (firstName) {
+      setStatusMessage(`Welcome back, ${firstName}. Your dashboard is ready.`);
+    }
   };
 
   const handleLogout = () => {
@@ -94,6 +105,7 @@ function App() {
     sessionStorage.removeItem("selected-ministry");
     sessionStorage.removeItem("is-admin");
     setIsAuthenticated(false);
+    setStatusMessage("You’ve been logged out. We hope to see you again soon.");
   };
 
   return (
@@ -103,6 +115,33 @@ function App() {
         flexDirection: "column",
         minHeight: "100vh"
       }}>
+        {statusMessage && (
+          <div
+            role="status"
+            aria-live="polite"
+            style={{
+              position: "fixed",
+              top: 16,
+              left: "50%",
+              transform: "translateX(-50%)",
+              zIndex: 2000,
+              width: "max-content",
+              maxWidth: "calc(100% - 32px)",
+              boxSizing: "border-box",
+              padding: "14px 20px",
+              borderRadius: 8,
+              background: "#e6f6ee",
+              border: "1px solid #009543",
+              color: "#14532d",
+              boxShadow: "0 8px 24px rgba(0, 0, 0, 0.16)",
+              textAlign: "center",
+              fontSize: 15,
+              fontWeight: 600
+            }}
+          >
+            {statusMessage}
+          </div>
+        )}
         <AccessibilityToolbar />
         <Navbar
           isAuthenticated={isAuthenticated}
