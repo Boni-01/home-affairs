@@ -39,6 +39,43 @@ const FIELD_GROUPS = {
   ]
 };
 
+const RETIREMENT_CATEGORIES = [
+  { value: "REGULAR", label: "Regular civil servant, teacher, or office worker", minimumAge: 60 },
+  { value: "UNIFORMED", label: "Police, soldier, or prison officer", minimumAge: 55 },
+  { value: "EARLY_PERMISSION", label: "Early retirement with special government permission", minimumAge: 45 }
+];
+
+const DEATH_SURVIVOR_DOCUMENTS = [
+  "Official death certificate of the worker",
+  "Worker's nomination form",
+  "Your Lesotho National ID card",
+  "Master of the High Court letter confirming entitlement",
+  "Stamped bank letter"
+];
+
+const ORPHAN_DOCUMENTS = [
+  "Child's birth certificate",
+  "Death certificate(s) of the parent or parents",
+  "National ID card of the child's guardian",
+  "Village Chief's letter confirming the child is an orphan",
+  "School letter confirming the child attends classes"
+];
+
+function ageOnDate(dateOfBirth) {
+  if (!dateOfBirth) return null;
+  const [year, month, day] = String(dateOfBirth).slice(0, 10).split("-").map(Number);
+  const birthDate = new Date(Date.UTC(year, month - 1, day));
+  if (
+    !year || !month || !day ||
+    birthDate.getUTCFullYear() !== year ||
+    birthDate.getUTCMonth() !== month - 1 ||
+    birthDate.getUTCDate() !== day
+  ) return null;
+
+  const age = new Date().getFullYear() - year;
+  return age >= 0 ? age : null;
+}
+
 function FinanceDashboard({ onLogout }) {
   const [tab, setTab] = useState("new");
   const [me, setMe] = useState(null);
@@ -118,18 +155,51 @@ function FinanceDashboard({ onLogout }) {
 
     const benefitType = fields.benefit_type;
     const benefit = FIELD_GROUPS.PENSION_ELIGIBILITY[0].options.find(option => option.value === benefitType);
-    const needsAge = ["OLD_AGE", "RETIREMENT"].includes(benefitType);
-    const needsCertificate = ["DEATH_SURVIVOR", "ORPHAN"].includes(benefitType);
+    const retirementCategory = RETIREMENT_CATEGORIES.find(
+      category => category.value === fields.retirement_category
+    );
+    const requiresDocuments = ["DEATH_SURVIVOR", "ORPHAN"].includes(benefitType);
+    const requiredDocuments = benefitType === "DEATH_SURVIVOR"
+      ? DEATH_SURVIVOR_DOCUMENTS
+      : benefitType === "ORPHAN" ? ORPHAN_DOCUMENTS : [];
     if (!benefitType) {
       setSubmitError("Select a pension benefit.");
       return;
     }
-    if (needsAge && (!fields.age || Number(fields.age) < 0 || Number(fields.age) > 120)) {
-      setSubmitError("Enter an age between 0 and 120.");
+    const identityAge = ageOnDate(me?.date_of_birth);
+    if (["OLD_AGE", "RETIREMENT"].includes(benefitType) && identityAge === null) {
+      setSubmitError("A verified date of birth linked to your National ID is required. Update your identity details with Home Affairs first.");
       return;
     }
-    if (needsCertificate && (!docs[0] || !docs[0].type.startsWith("image/"))) {
-      setSubmitError("Upload a photo of the required certificate.");
+    if (benefitType === "RETIREMENT" && !retirementCategory) {
+      setSubmitError("Select your retirement category.");
+      return;
+    }
+    if (
+      benefitType === "RETIREMENT" &&
+      retirementCategory.value === "EARLY_PERMISSION" &&
+      !fields.early_retirement_permission
+    ) {
+      setSubmitError("Confirm that you have special government permission for early retirement.");
+      return;
+    }
+    if (benefitType === "DEATH_SURVIVOR" && !fields.beneficiary_relationship) {
+      setSubmitError("Select your relationship to the deceased worker.");
+      return;
+    }
+    if (benefitType === "ORPHAN") {
+      const childAge = ageOnDate(fields.child_date_of_birth);
+      if (childAge === null || !fields.parental_status) {
+        setSubmitError("Enter the child's valid date of birth and confirm the parental circumstances.");
+        return;
+      }
+      if (childAge >= 18) {
+        setSubmitError("An orphan pension is for a child under 18.");
+        return;
+      }
+    }
+    if (requiresDocuments && docs.length < requiredDocuments.length) {
+      setSubmitError(`Upload all ${requiredDocuments.length} required documents.`);
       return;
     }
 
@@ -143,7 +213,20 @@ function FinanceDashboard({ onLogout }) {
       fd.append("requestType", activeType.key);
       fd.append("subject", `Pension eligibility: ${benefit.label}`);
       fd.append("description", form.description || `Eligibility check for ${benefit.label}.`);
-      fd.append("fields", JSON.stringify(fields));
+      const submittedFields = {
+        ...fields,
+        ...(benefitType === "OLD_AGE" || benefitType === "RETIREMENT"
+          ? { age: identityAge }
+          : {}),
+        ...(benefitType === "RETIREMENT" && retirementCategory
+          ? { minimum_eligible_age: retirementCategory.minimumAge }
+          : {}),
+        ...(benefitType === "OLD_AGE" ? { minimum_eligible_age: 70 } : {}),
+        ...(benefitType === "ORPHAN"
+          ? { child_age: ageOnDate(fields.child_date_of_birth) }
+          : {})
+      };
+      fd.append("fields", JSON.stringify(submittedFields));
       for (const f of docs) {
         if (f instanceof File) fd.append("documents", f, f.name);
       }
@@ -214,10 +297,33 @@ function FinanceDashboard({ onLogout }) {
   const unread = notifications.filter(n => !n.read_at).length;
   const deletableStatuses = ["DRAFT", "SUBMITTED", "ACTION_REQUIRED"];
   const benefitType = fields.benefit_type;
-  const needsAge = ["OLD_AGE", "RETIREMENT"].includes(benefitType);
-  const certificateLabel = benefitType === "DEATH_SURVIVOR"
-    ? "Photo of death certificate"
-    : benefitType === "ORPHAN" ? "Photo of birth certificate" : "";
+  const benefit = FIELD_GROUPS.PENSION_ELIGIBILITY[0].options.find(
+    option => option.value === benefitType
+  );
+  const identityAge = ageOnDate(me?.date_of_birth);
+  const retirementCategory = RETIREMENT_CATEGORIES.find(
+    category => category.value === fields.retirement_category
+  );
+  const childAge = ageOnDate(fields.child_date_of_birth);
+  const requiredDocuments = benefitType === "DEATH_SURVIVOR"
+    ? DEATH_SURVIVOR_DOCUMENTS
+    : benefitType === "ORPHAN" ? ORPHAN_DOCUMENTS : [];
+  const isAgeBenefit = ["OLD_AGE", "RETIREMENT"].includes(benefitType);
+  const minimumBenefitAge = benefitType === "OLD_AGE"
+    ? 70
+    : benefitType === "RETIREMENT" ? retirementCategory?.minimumAge : null;
+  const ageRequirementMet = minimumBenefitAge !== null &&
+    identityAge !== null && identityAge >= minimumBenefitAge &&
+    !(benefitType === "RETIREMENT" &&
+      retirementCategory?.value === "EARLY_PERMISSION" &&
+      !fields.early_retirement_permission);
+  const qualifiesForBenefit = benefitType === "OLD_AGE" || benefitType === "RETIREMENT"
+    ? ageRequirementMet
+    : benefitType === "DEATH_SURVIVOR"
+      ? Boolean(fields.beneficiary_relationship)
+      : benefitType === "ORPHAN"
+        ? Boolean(childAge !== null && childAge < 18 && fields.parental_status)
+        : false;
 
   return (
     <main className="dashboard-page" style={layout.page}>
@@ -579,22 +685,143 @@ function FinanceDashboard({ onLogout }) {
               </div>
             ))}
 
-            {needsAge && (
+            <div style={{
+              marginBottom: 14, padding: 12, border: `1px solid ${COLORS.border}`,
+              borderRadius: 8, background: COLORS.lightBg, color: COLORS.textDark
+            }}>
+              <strong style={{ display: "block", marginBottom: 6 }}>
+                Your verified age from Home Affairs: {identityAge === null ? "Not available" : `${identityAge} years`}
+              </strong>
+              <div style={{ fontSize: 13, lineHeight: 1.6 }}>
+                <div>Full name: {me?.full_name || "Not available"}</div>
+                <div>National ID: {me?.national_id_number || me?.national_id || "Not available"}</div>
+                <div>Date of birth: {me?.date_of_birth ? String(me.date_of_birth).slice(0, 10) : "Not verified"}</div>
+              </div>
+              {isAgeBenefit && identityAge === null && (
+                <p role="alert" style={{ color: COLORS.error, fontSize: 13, margin: "8px 0 0" }}>
+                  A verified date of birth linked to your National ID is required. Update your identity details with Home Affairs first.
+                </p>
+              )}
+            </div>
+
+            {benefitType === "RETIREMENT" && (
               <>
-                <label style={labelStyle}>Your age *</label>
-                <input type="number" min="0" max="120" required value={fields.age || ""}
-                  onChange={e => setFields(p => ({ ...p, age: e.target.value }))}
-                  style={{ ...inputStyle, marginBottom: 14 }} />
+                <label style={labelStyle}>Retirement category *</label>
+                <select required value={fields.retirement_category || ""}
+                  onChange={e => setFields(previous => ({
+                    ...previous,
+                    retirement_category: e.target.value,
+                    early_retirement_permission: false
+                  }))}
+                  style={{ ...inputStyle, marginBottom: 14 }}>
+                  <option value="">Select your category...</option>
+                  {RETIREMENT_CATEGORIES.map(category => (
+                    <option key={category.value} value={category.value}>
+                      {category.label} (minimum age {category.minimumAge})
+                    </option>
+                  ))}
+                </select>
+                {retirementCategory?.value === "EARLY_PERMISSION" && (
+                  <label style={{ display: "flex", gap: 8, alignItems: "flex-start", marginBottom: 14, fontSize: 13 }}>
+                    <input type="checkbox" checked={Boolean(fields.early_retirement_permission)}
+                      onChange={e => setFields(previous => ({
+                        ...previous, early_retirement_permission: e.target.checked
+                      }))} />
+                    I have special government permission for early retirement.
+                  </label>
+                )}
               </>
             )}
 
-            {certificateLabel && (
+            {benefitType === "DEATH_SURVIVOR" && (
               <>
-                <label style={labelStyle}>{certificateLabel} *</label>
-                <input type="file" accept="image/*" required ref={fileRef}
-                  onChange={e => setDocs(Array.from(e.target.files || []))}
-                  style={{ marginBottom: 14 }} />
+                <label style={labelStyle}>Your relationship to the deceased worker *</label>
+                <select required value={fields.beneficiary_relationship || ""}
+                  onChange={e => setFields(previous => ({
+                    ...previous, beneficiary_relationship: e.target.value
+                  }))}
+                  style={{ ...inputStyle, marginBottom: 14 }}>
+                  <option value="">Select your relationship...</option>
+                  <option value="SPOUSE">Husband or wife</option>
+                  <option value="CHILD">Child</option>
+                  <option value="NOMINATED">Person nominated by the worker</option>
+                </select>
               </>
+            )}
+
+            {benefitType === "ORPHAN" && (
+              <>
+                <label style={labelStyle}>Child's date of birth *</label>
+                <input type="date" required value={fields.child_date_of_birth || ""}
+                  max={new Date().toISOString().slice(0, 10)}
+                  onChange={e => setFields(previous => ({
+                    ...previous, child_date_of_birth: e.target.value
+                  }))}
+                  style={{ ...inputStyle, marginBottom: 14 }} />
+                <p style={{ margin: "-6px 0 14px", fontSize: 13, color: COLORS.textMid }}>
+                  Child's age: {childAge === null ? "Enter a valid date of birth" : `${childAge} years`}
+                </p>
+                <label style={labelStyle}>Parental circumstances *</label>
+                <select required value={fields.parental_status || ""}
+                  onChange={e => setFields(previous => ({
+                    ...previous, parental_status: e.target.value
+                  }))}
+                  style={{ ...inputStyle, marginBottom: 14 }}>
+                  <option value="">Select...</option>
+                  <option value="ONE_PARENT_DECEASED">One parent has died</option>
+                  <option value="BOTH_PARENTS_DECEASED">Both parents have died</option>
+                </select>
+              </>
+            )}
+
+            {requiredDocuments.length > 0 && (
+              <div style={{ marginBottom: 14 }}>
+                <strong style={{ display: "block", marginBottom: 6 }}>Documents required</strong>
+                <ul style={{ margin: "0 0 12px", paddingLeft: 20, fontSize: 13, lineHeight: 1.6 }}>
+                  {requiredDocuments.map(document => <li key={document}>{document}</li>)}
+                </ul>
+                <label style={labelStyle}>Upload all {requiredDocuments.length} documents *</label>
+                <input type="file" accept="image/*,.pdf" multiple required ref={fileRef}
+                  onChange={e => setDocs(Array.from(e.target.files || []))}
+                  style={{ marginBottom: 6 }} />
+                <p style={{ margin: 0, fontSize: 12, color: COLORS.textMuted }}>
+                  Select one file for each required document. {docs.length} of {requiredDocuments.length} selected.
+                </p>
+              </div>
+            )}
+
+            {benefitType && (
+              <div role="status" style={{
+                margin: "0 0 14px", padding: 12, borderRadius: 8,
+                border: `1px solid ${qualifiesForBenefit ? COLORS.success : COLORS.border}`,
+                background: qualifiesForBenefit ? COLORS.successLight : COLORS.lightBg,
+                color: qualifiesForBenefit ? COLORS.success : COLORS.textDark,
+                fontSize: 13, lineHeight: 1.5
+              }}>
+                <strong>
+                  {qualifiesForBenefit
+                    ? `You qualify for ${benefit?.label} based on the information provided.`
+                    : `You do not currently meet the requirements for ${benefit?.label}.`}
+                </strong>
+                <div>
+                  {benefitType === "OLD_AGE"
+                    ? `Old age pension requires a verified age of 70 or older. Your verified age is ${identityAge === null ? "not available" : `${identityAge} years`}.`
+                    : benefitType === "RETIREMENT"
+                      ? retirementCategory
+                        ? `This category requires age ${retirementCategory.minimumAge} or older${retirementCategory.value === "EARLY_PERMISSION" ? " and special government permission" : ""}. Your verified age is ${identityAge === null ? "not available" : `${identityAge} years`}.`
+                        : "Choose a retirement category to check the required age: 60 for regular workers, 55 for police/soldiers/prison officers, or 45 with special government permission."
+                      : benefitType === "DEATH_SURVIVOR"
+                        ? `A spouse, child, or person nominated by the deceased worker may qualify. Upload all ${DEATH_SURVIVOR_DOCUMENTS.length} required documents for verification.`
+                        : `The child must be under 18 and have lost one or both parents. Upload all ${ORPHAN_DOCUMENTS.length} required documents for verification.`}
+                  {qualifiesForBenefit && (
+                    <div>
+                      {benefitType === "DEATH_SURVIVOR" || benefitType === "ORPHAN"
+                        ? "Final eligibility depends on verification of the required documents."
+                        : "Final eligibility is subject to Finance verification of the information and documents."}
+                    </div>
+                  )}
+                </div>
+              </div>
             )}
 
             <label style={labelStyle}>Additional details (optional)</label>
