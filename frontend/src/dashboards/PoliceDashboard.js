@@ -4,6 +4,7 @@ import Navbar from "../components/Navbar";
 import DashboardSearch, { matchesDashboardSearch } from "../components/DashboardSearch";
 import { auth, API_BASE } from "../Database/firebase";
 import CollectionCentreReferral from "../components/CollectionCentreReferral";
+import "./PoliceDashboard.css";
 
 async function api(path, opts = {}) {
   const user = auth.currentUser;
@@ -201,7 +202,6 @@ function PoliceDashboard({ onLogout }) {
   const [categories, setCategories] = useState([]);
   const [applications, setApplications] = useState([]);
   const [notifications, setNotifications] = useState([]);
-  const [feedback, setFeedback] = useState([]);
 
   // Application form
   const [activeType, setActiveType] = useState(null);
@@ -214,10 +214,6 @@ function PoliceDashboard({ onLogout }) {
   // Detail view
   const [detail, setDetail] = useState(null);
   const [selected, setSelected] = useState(null);
-
-  // Feedback
-  const [feedbackForm, setFeedbackForm] = useState({ application_id: "", rating: 5, comments: "" });
-  const [feedbackMsg, setFeedbackMsg] = useState("");
 
   // Delete state
   const [deletingId, setDeletingId] = useState(null);
@@ -248,14 +244,13 @@ function PoliceDashboard({ onLogout }) {
   const load = useCallback(async () => {
     try {
       const [
-        meRes, catRes, appsRes, notifRes, fbRes,
+        meRes, catRes, appsRes, notifRes,
         tplRes, letRes, cdRes, cdNotifRes
       ] = await Promise.all([
         api("/me"),
         api("/police/categories"),
         api("/police/applications/my"),
         api("/police/notifications"),
-        api("/police/feedback/my"),
         api("/police/letter-templates"),
         api("/police/letters/my"),
         api("/police/certified-documents/my"),
@@ -265,7 +260,6 @@ function PoliceDashboard({ onLogout }) {
       setCategories(catRes.categories || []);
       setApplications(appsRes.applications || []);
       setNotifications(notifRes.notifications || []);
-      setFeedback(fbRes.feedback || []);
       setLetterTemplates(tplRes.templates || []);
       setLetters(letRes.letters || []);
       setCertDocs(cdRes.documents || []);
@@ -351,24 +345,6 @@ function PoliceDashboard({ onLogout }) {
         prev.map(n => n.notification_id === id ? { ...n, read_at: new Date().toISOString() } : n)
       );
     } catch (err) { console.error(err); }
-  }
-
-  // ---------------- FEEDBACK ----------------
-  async function submitFeedback(e) {
-    e.preventDefault();
-    setFeedbackMsg("");
-    try {
-      await api("/police/feedback", {
-        method: "POST",
-        body: JSON.stringify(feedbackForm)
-      });
-      setFeedbackMsg("Thank you — feedback received.");
-      setFeedbackForm({ application_id: "", rating: 5, comments: "" });
-      const fbRes = await api("/police/feedback/my");
-      setFeedback(fbRes.feedback || []);
-    } catch (err) {
-      setFeedbackMsg("Error: " + err.message);
-    }
   }
 
   // ---------------- LETTERS ----------------
@@ -515,8 +491,7 @@ function PoliceDashboard({ onLogout }) {
             ["mine", `My reports (${applications.length})`],
             ["letters", `Letters (${letters.length})`],
             ["certify", `Certify document (${certDocs.length})`],
-            ["notifications", `Notifications${unread ? ` (${unread})` : ""}`],
-            ["feedback", "Feedback"]
+            ["notifications", `Notifications${unread ? ` (${unread})` : ""}`]
           ]}
           activeTab={tab}
           onTabChange={setTab}
@@ -707,13 +682,13 @@ function PoliceDashboard({ onLogout }) {
 
         {/* ================= LETTERS TAB ================= */}
         {tab === "letters" && (
-          <section>
+          <section className="police-letters-section">
             <h2 style={section.title}>Police letters</h2>
             <p style={section.subtitle}>
               Generate official letters from templates. You can download any letter as a PDF.
             </p>
 
-            <div style={{
+            <div className="police-letters-card" style={{
               background: "#fff", border: `1px solid ${COLORS.border}`,
               borderRadius: 12, padding: 24, marginBottom: 20
             }}>
@@ -777,7 +752,7 @@ function PoliceDashboard({ onLogout }) {
             </div>
 
             {letterPreview && (
-              <div style={{
+              <div className="police-letters-card" style={{
                 background: "#fff", border: `1px solid ${COLORS.border}`,
                 borderRadius: 12, padding: 24, marginBottom: 20
               }}>
@@ -791,7 +766,7 @@ function PoliceDashboard({ onLogout }) {
                     </button>
                   </div>
                 </div>
-                <pre style={{
+                <pre className="police-letter-preview" style={{
                   whiteSpace: "pre-wrap",
                   fontFamily: "Consolas, monospace",
                   fontSize: 12,
@@ -816,7 +791,7 @@ function PoliceDashboard({ onLogout }) {
               </p>
             )}
             {letters.filter(l => matchesDashboardSearch(l, searchQuery)).map(l => (
-              <article key={l.letter_id} style={{
+              <article key={l.letter_id} className="police-letters-card" style={{
                 background: "#fff", border: `1px solid ${COLORS.border}`,
                 borderRadius: 10, padding: 16, marginBottom: 10
               }}>
@@ -987,75 +962,6 @@ function PoliceDashboard({ onLogout }) {
           </section>
         )}
 
-        {/* ================= FEEDBACK TAB ================= */}
-        {tab === "feedback" && (
-          <section>
-            <h2 style={section.title}>Feedback</h2>
-            <p style={section.subtitle}>Tell us how we did. Your feedback helps improve service.</p>
-
-            <div style={{
-              background: "#fff", border: `1px solid ${COLORS.border}`,
-              borderRadius: 12, padding: 24, marginBottom: 20
-            }}>
-              <form onSubmit={submitFeedback}>
-                <label style={labelStyle}>Related application (optional)</label>
-                <select value={feedbackForm.application_id}
-                  onChange={e => setFeedbackForm(p => ({ ...p, application_id: e.target.value }))}
-                  style={{ ...inputStyle, marginBottom: 14 }}>
-                  <option value="">— None —</option>
-                  {applications.filter(a => matchesDashboardSearch(a, searchQuery)).map(a => (
-                    <option key={a.application_id} value={a.application_id}>
-                      {a.reference_number} · {a.title}
-                    </option>
-                  ))}
-                </select>
-
-                <label style={labelStyle}>Rating (1–5)</label>
-                <input type="number" min={1} max={5}
-                  value={feedbackForm.rating}
-                  onChange={e => setFeedbackForm(p => ({ ...p, rating: Number(e.target.value) }))}
-                  style={{ ...inputStyle, marginBottom: 14 }} />
-
-                <label style={labelStyle}>Comments</label>
-                <textarea rows={4}
-                  value={feedbackForm.comments}
-                  onChange={e => setFeedbackForm(p => ({ ...p, comments: e.target.value }))}
-                  style={{ ...inputStyle, marginBottom: 14 }} />
-
-                {feedbackMsg && (
-                  <p style={{
-                    color: feedbackMsg.startsWith("Error") ? COLORS.error : COLORS.green,
-                    fontSize: 13, marginBottom: 12
-                  }}>{feedbackMsg}</p>
-                )}
-                <button type="submit" style={btnPrimary}>Submit feedback</button>
-              </form>
-            </div>
-
-            <h3 style={{ fontSize: 14, color: COLORS.blue, marginBottom: 12 }}>My past feedback</h3>
-            {feedback.length === 0 && (
-              <p style={{ color: COLORS.textMuted, fontSize: 13 }}>No feedback submitted yet.</p>
-            )}
-            {feedback.filter(f => matchesDashboardSearch(f, searchQuery)).map(f => (
-              <article key={f.feedback_id} style={{
-                background: "#fff", border: `1px solid ${COLORS.border}`,
-                borderRadius: 10, padding: 16, marginBottom: 10
-              }}>
-                <div style={{ display: "flex", justifyContent: "space-between" }}>
-                  <strong style={{ fontSize: 13 }}>Rating: {f.rating}/5</strong>
-                  <small style={{ color: COLORS.textMuted, fontSize: 11 }}>
-                    {new Date(f.submitted_at).toLocaleString()}
-                  </small>
-                </div>
-                {f.comments && (
-                  <p style={{ margin: "6px 0 0", fontSize: 13, color: COLORS.textMid }}>
-                    {f.comments}
-                  </p>
-                )}
-              </article>
-            ))}
-          </section>
-        )}
       </div>
 
       {/* ============== APPLICATION FORM OVERLAY ============== */}
