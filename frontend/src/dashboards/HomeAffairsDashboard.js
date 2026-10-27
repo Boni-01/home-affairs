@@ -5,6 +5,7 @@ import DashboardSearch from "../components/DashboardSearch";
 import Navbar from "../components/Navbar";
 import { auth, API_BASE } from "../Database/firebase";
 import CollectionCentreReferral from "../components/CollectionCentreReferral";
+import armsImage from "./arms.png";
 
 // ============================================================
 // API helper
@@ -1515,12 +1516,20 @@ function SettingsModal({
                   justifyContent: "space-between",
                   boxShadow: "0 12px 28px rgba(0,32,159,0.25)"
                 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                    <div>
+                  <div style={{
+                    display: "grid",
+                    gridTemplateColumns: "40px 1fr 72px",
+                    alignItems: "start",
+                    gap: 8
+                  }}>
+                    <img src={armsImage} alt="Lesotho coat of arms" style={{
+                      width: 36, height: 42, objectFit: "contain"
+                    }} />
+                    <div style={{ textAlign: "center" }}>
                       <p style={{
                         margin: 0, fontSize: 9, letterSpacing: 1.6,
                         textTransform: "uppercase", opacity: 0.85
-                      }}>Kingdom of Lesotho</p>
+                      }}>Kingdom Of Lesotho</p>
                       <p style={{ margin: "4px 0 0", fontSize: 13, fontWeight: 700 }}>
                         National Identity Card
                       </p>
@@ -2406,11 +2415,19 @@ function NationalIDCard({ application, fields, onClose }) {
         color: "#fff", borderRadius: 10, padding: 24,
         aspectRatio: "85/54", maxWidth: 520, margin: "0 auto"
       }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-          <div>
+        <div style={{
+          display: "grid",
+          gridTemplateColumns: "48px 1fr 72px",
+          alignItems: "start",
+          gap: 8
+        }}>
+          <img src={armsImage} alt="Lesotho coat of arms" style={{
+            width: 44, height: 48, objectFit: "contain"
+          }} />
+          <div style={{ textAlign: "center" }}>
             <p style={{
               margin: 0, fontSize: 10, letterSpacing: 1.4, textTransform: "uppercase"
-            }}>Kingdom of Lesotho</p>
+            }}>Kingdom Of Lesotho</p>
             <p style={{ margin: "2px 0 0", fontSize: 14, fontWeight: 700 }}>
               National Identity Card
             </p>
@@ -2489,20 +2506,36 @@ function CivilCertificate({ application, fields, onClose }) {
         borderRadius: 10, padding: 32, maxWidth: 620, margin: "0 auto"
       }}>
         <div style={{
-          textAlign: "center", borderBottom: `2px solid ${COLORS.blue}`,
-          paddingBottom: 16, marginBottom: 20
+          borderBottom: `2px solid ${COLORS.blue}`,
+          paddingBottom: 16,
+          marginBottom: 20
         }}>
-          <p style={{
-            margin: 0, fontSize: 11, letterSpacing: 2,
-            textTransform: "uppercase", color: COLORS.blue
-          }}>Kingdom of Lesotho</p>
-          <h2 style={{
-            margin: "6px 0 0", fontSize: 22,
-            color: COLORS.blue, fontWeight: 700
-          }}>{title}</h2>
-          <p style={{ margin: "4px 0 0", fontSize: 11, color: COLORS.textMuted }}>
-            Issued by the Ministry of Home Affairs
-          </p>
+          <div style={{
+            display: "grid",
+            gridTemplateColumns: "48px auto 48px",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 10,
+            textAlign: "center"
+          }}>
+            <img src={armsImage} alt="Lesotho coat of arms" style={{
+              width: 44, height: 48, objectFit: "contain"
+            }} />
+            <div>
+              <p style={{
+                margin: 0, fontSize: 11, letterSpacing: 2,
+                textTransform: "uppercase", color: COLORS.blue
+              }}>Kingdom Of Lesotho</p>
+              <h2 style={{
+                margin: "6px 0 0", fontSize: 22,
+                color: COLORS.blue, fontWeight: 700
+              }}>{title}</h2>
+              <p style={{ margin: "4px 0 0", fontSize: 11, color: COLORS.textMuted }}>
+                Issued by the Ministry of Home Affairs
+              </p>
+            </div>
+            <span aria-hidden="true" />
+          </div>
         </div>
 
         <p style={{ margin: "0 0 8px", fontSize: 12, color: COLORS.textMuted }}>
@@ -2577,7 +2610,7 @@ function ImmigrationPermit({ application, fields, onClose }) {
           <p style={{
             margin: 0, fontSize: 11, letterSpacing: 2,
             textTransform: "uppercase", color: COLORS.green
-          }}>Kingdom of Lesotho</p>
+          }}>Kingdom Of Lesotho</p>
           <h2 style={{ margin: "6px 0 0", fontSize: 22, color: COLORS.green }}>
             Immigration Permit
           </h2>
@@ -2624,7 +2657,13 @@ function LivestockCertificate({ application, fields, onClose }) {
         border: `2px solid ${COLORS.blue}`, borderRadius: 10, padding: 32,
         maxWidth: 620, margin: "0 auto"
       }}>
-        <h2 style={{ margin: 0, color: COLORS.blue, textAlign: "center" }}>
+        <p style={{
+          margin: 0, color: COLORS.blue, textAlign: "center",
+          fontSize: 11, letterSpacing: 2, textTransform: "uppercase"
+        }}>
+          Kingdom Of Lesotho
+        </p>
+        <h2 style={{ margin: "6px 0 0", color: COLORS.blue, textAlign: "center" }}>
           Livestock Registration Certificate
         </h2>
         <p style={{ textAlign: "center", fontSize: 11, color: COLORS.textMuted }}>
@@ -2664,7 +2703,13 @@ function GenericCertificate({ application, fields, onClose }) {
   return (
     <div>
       <div>
-        <h2 style={{ margin: 0, color: COLORS.blue }}>{application.service_type}</h2>
+        <p style={{
+          margin: 0, textAlign: "center", fontSize: 11, letterSpacing: 2,
+          textTransform: "uppercase", color: COLORS.blue
+        }}>Kingdom Of Lesotho</p>
+        <h2 style={{ margin: "6px 0 0", color: COLORS.blue, textAlign: "center" }}>
+          {application.service_type}
+        </h2>
         <p style={{ margin: "4px 0 20px", fontSize: 13, color: COLORS.textMuted }}>
           Reference: {application.reference_number}
         </p>
