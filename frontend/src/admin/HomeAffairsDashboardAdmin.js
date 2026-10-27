@@ -371,16 +371,16 @@ function HomeAffairsDashboardAdmin({ onLogout }) {
               <button type="submit" disabled={creatingBirthCertificate} style={{ ...actionButton, gridColumn: "1 / -1", padding: "11px 16px" }}>{creatingBirthCertificate ? "Saving record…" : "Approve record and generate reference"}</button>
             </form>
             {birthCertificateError && <p role="alert" style={{ color: COLORS.error, fontSize: 13 }}>{birthCertificateError}</p>}
-            {createdBirthCertificate && <div role="status" style={{ marginTop: 12, padding: 14, background: "#ecfdf3", border: "1px solid #86efac", borderRadius: 8 }}>
+            {createdBirthCertificate && <div className="home-affairs-created-birth-certificate" role="status" style={{ marginTop: 12, padding: 14, background: "#ecfdf3", border: "1px solid #86efac", borderRadius: 8 }}>
               <strong style={{ color: "#067647" }}>Approved birth-certificate record created</strong>
               <div style={{ marginTop: 5, color: COLORS.blue, fontSize: 21, fontWeight: 800, letterSpacing: 1 }}>{createdBirthCertificate.reference_number}</div>
               <div style={{ marginTop: 4, fontSize: 12, color: COLORS.textMid }}>The reference has been copied into the National ID form below. Review the remaining particulars and issue the ID when eligible.</div>
             </div>}
           </article>
-          <article style={cards.cardPadded}>
+          <article className="home-affairs-birth-certificate-references" style={cards.cardPadded}>
             <h2 style={section.title}>Recent birth-certificate references</h2>
             {birthCertificates.length === 0 ? <p style={section.subtitle}>No admin-created birth-certificate records yet.</p> : birthCertificates.slice(0, 8).map(certificate => <div key={certificate.birth_certificate_id} style={{ padding: "10px 0", borderBottom: `1px solid ${COLORS.borderLight}` }}>
-              <strong style={{ color: COLORS.blue }}>{certificate.reference_number}</strong>
+              <strong className="home-affairs-birth-certificate-reference-number" style={{ color: COLORS.blue }}>{certificate.reference_number}</strong>
               <div style={{ marginTop: 3, fontSize: 12, color: COLORS.textDark }}>{certificate.full_name}</div>
               <div style={{ marginTop: 2, fontSize: 11, color: COLORS.textMuted }}>{String(certificate.date_of_birth).slice(0, 10)} · {certificate.record_status}</div>
             </div>)}

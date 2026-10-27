@@ -251,35 +251,37 @@ export default function AccessibilityToolbar() {
       >
         <div className="accessibility-toolbar-controls">
           <span className="accessibility-toolbar-label">Accessibility</span>
-          <button
-            type="button"
-            className="accessibility-control"
-            aria-label="Decrease text size"
-            onClick={() => adjustZoom(-ZOOM_STEP)}
-            disabled={zoom <= MIN_ZOOM}
-          >
-            <svg className="accessibility-control-icon" viewBox="0 0 24 24" aria-hidden="true">
-              <circle cx="10.5" cy="10.5" r="6.5" />
-              <path d="m15.5 15.5 5 5M7.5 10.5h6" />
-            </svg>
-            <span>A-</span>
-          </button>
-          <span className="accessibility-zoom-level" aria-live="polite">
-            {Math.round(zoom * 100)}%
-          </span>
-          <button
-            type="button"
-            className="accessibility-control"
-            aria-label="Increase text size"
-            onClick={() => adjustZoom(ZOOM_STEP)}
-            disabled={zoom >= MAX_ZOOM}
-          >
-            <svg className="accessibility-control-icon" viewBox="0 0 24 24" aria-hidden="true">
-              <circle cx="10.5" cy="10.5" r="6.5" />
-              <path d="m15.5 15.5 5 5M7.5 10.5h6m-3-3v6" />
-            </svg>
-            <span>A+</span>
-          </button>
+          <div className="accessibility-zoom-controls">
+            <button
+              type="button"
+              className="accessibility-control"
+              aria-label="Decrease text size"
+              onClick={() => adjustZoom(-ZOOM_STEP)}
+              disabled={zoom <= MIN_ZOOM}
+            >
+              <svg className="accessibility-control-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="10.5" cy="10.5" r="6.5" />
+                <path d="m15.5 15.5 5 5M7.5 10.5h6" />
+              </svg>
+              <span>A-</span>
+            </button>
+            <span className="accessibility-zoom-level" aria-live="polite">
+              {Math.round(zoom * 100)}%
+            </span>
+            <button
+              type="button"
+              className="accessibility-control"
+              aria-label="Increase text size"
+              onClick={() => adjustZoom(ZOOM_STEP)}
+              disabled={zoom >= MAX_ZOOM}
+            >
+              <svg className="accessibility-control-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="10.5" cy="10.5" r="6.5" />
+                <path d="m15.5 15.5 5 5M7.5 10.5h6m-3-3v6" />
+              </svg>
+              <span>A+</span>
+            </button>
+          </div>
           <button
             type="button"
             className="accessibility-control accessibility-contrast-toggle"

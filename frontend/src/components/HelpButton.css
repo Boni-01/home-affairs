@@ -192,6 +192,28 @@ body[data-theme="dark"] .dashboard-page article {
   border-color: #34516c !important;
 }
 
+body[data-theme="dark"] .dashboard-page .home-affairs-birth-certificate-references {
+  background: #102b48 !important;
+  border-color: #49647d !important;
+}
+
+body[data-theme="dark"] .dashboard-page .home-affairs-birth-certificate-references > div {
+  border-color: #34516c !important;
+}
+
+body[data-theme="dark"] .dashboard-page .home-affairs-birth-certificate-references .home-affairs-birth-certificate-reference-number {
+  color: #93c5fd !important;
+}
+
+body[data-theme="dark"] .dashboard-page .home-affairs-created-birth-certificate {
+  background: #123c2b !important;
+  border-color: #218854 !important;
+}
+
+body[data-theme="dark"] .dashboard-page .home-affairs-created-birth-certificate > div:first-of-type {
+  color: #86efac !important;
+}
+
 body[data-theme="dark"] .dashboard-page .admin-status-badge,
 body[data-theme="dark"] .dashboard-page .admin-tier-badge {
   border: 1px solid #009543 !important;
