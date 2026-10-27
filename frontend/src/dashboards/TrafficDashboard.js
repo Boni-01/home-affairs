@@ -443,6 +443,22 @@ const SERVICE_GROUPS = [
 // ============================================================
 // COMPONENT
 // ============================================================
+function trafficCitizenPrefill(serviceType, user) {
+  if (!user) return {};
+  if (serviceType === "DRIVING_SCHOOL_REGISTRATION") return {
+    owner_name: user.full_name || "",
+    owner_id: user.national_id_number || user.national_id || "",
+    physical_address: user.residential_address || "",
+    contact_phone: user.phone || "",
+    contact_email: user.email || ""
+  };
+  if (serviceType === "INSTRUCTOR_REGISTRATION") return {
+    full_name: user.full_name || "",
+    national_id: user.national_id_number || user.national_id || ""
+  };
+  return {};
+}
+
 function TrafficDashboard({ onLogout }) {
   const [tab, setTab] = useState("apply");
   const [searchQuery, setSearchQuery] = useState("");
@@ -536,7 +552,7 @@ function TrafficDashboard({ onLogout }) {
   // Open service modal
   const openServiceModal = (serviceType) => {
     setSelectedServiceType(serviceType);
-    setFormFields({});
+    setFormFields(trafficCitizenPrefill(serviceType, me));
     setFormTitle(SERVICE_CONFIG[serviceType]?.label || "");
     setFormDescription("");
     setFormUrgency("NORMAL");
@@ -1392,13 +1408,17 @@ function TrafficDashboard({ onLogout }) {
           )}
 
           <form onSubmit={submitApplication}>
+            {me && <div style={{ marginBottom: 14, padding: 12, background: "#eff8ff", borderRadius: 8, fontSize: 12, color: COLORS.textMid }}>
+              Applicant: <strong>{me.full_name || "—"}</strong> · National ID: <strong>{me.national_id_number || me.national_id || "—"}</strong>{me.residential_address ? <> · Home Affairs address: <strong>{me.residential_address}</strong></> : null}
+              <div style={{ marginTop: 4 }}>Your verified Home Affairs identity is linked automatically. Vehicle and service-specific details are entered separately.</div>
+            </div>}
             <div style={{ marginBottom: 14 }}>
               <label style={labelStyle}>Service Type *</label>
               <select
                 value={selectedServiceType}
                 onChange={e => {
                   setSelectedServiceType(e.target.value);
-                  setFormFields({});
+                  setFormFields(trafficCitizenPrefill(e.target.value, me));
                   setFormTitle(SERVICE_CONFIG[e.target.value]?.label || "");
                 }}
                 required

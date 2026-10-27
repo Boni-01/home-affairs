@@ -58,7 +58,7 @@ Core concept: One verified citizen profile, reused across all government service
 # What's Built So Far
 Complete authentication (Email, Google, Phone OTP)
 
-Auto-assigned National IDs (LS########)
+Home Affairs-issued 12-digit National IDs (starting with 10), used for citizen account registration and sign-in
 
 Home Affairs module (NICR, Immigration, LRMIS)
 
@@ -426,10 +426,6 @@ CREATE TABLE users (
     password_hash VARCHAR(255) NOT NULL DEFAULT 'firebase-managed',
     account_type ENUM('citizen','officer','admin') NOT NULL DEFAULT 'citizen',
     role ENUM('admin','client') NOT NULL DEFAULT 'client',
-    admin_guard TINYINT
-        GENERATED ALWAYS AS (
-            CASE WHEN role = 'admin' THEN 1 ELSE NULL END
-        ) STORED UNIQUE,
     phone_verified BOOLEAN DEFAULT FALSE,
     email_verified BOOLEAN DEFAULT FALSE,
     account_verified BOOLEAN DEFAULT FALSE,
@@ -463,7 +459,7 @@ CREATE TABLE citizen_profiles (
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
 );
 
--- 1.3 Permanent National ID registry (auto-generated LS########)
+-- 1.3 Permanent National ID registry (allocated by Home Affairs)
 CREATE TABLE citizen_national_ids (
     national_id_pk BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     user_id BIGINT UNSIGNED NOT NULL UNIQUE,
@@ -471,6 +467,11 @@ CREATE TABLE citizen_national_ids (
     issued_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
 );
+
+-- National ID numbers are allocated by Home Affairs from an approved
+-- birth-certificate application before citizens can create an account.
+-- The application record stores the identity particulars and account email;
+-- registration claims the number into citizen_national_ids.
 
 -- 1.4 Officers (for future use)
 CREATE TABLE officers (

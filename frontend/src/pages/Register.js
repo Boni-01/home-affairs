@@ -1,11 +1,13 @@
 import React, { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
-  createUserWithEmailAndPassword,
+  signInWithCustomToken,
   signInWithPopup,
   updateProfile,
   signInWithPhoneNumber,
-  RecaptchaVerifier
+  RecaptchaVerifier,
+  EmailAuthProvider,
+  linkWithCredential
 } from "firebase/auth";
 import {
   auth,
@@ -58,7 +60,7 @@ function Register({ onSuccess, getPostAuthRoute }) {
   const [lastName, setLastName] = useState(
     location.state?.prefill?.name?.split(" ").slice(1).join(" ") || ""
   );
-  const [email, setEmail] = useState(location.state?.prefill?.email || "");
+  const [nationalId, setNationalId] = useState("");
   const [phone, setPhone] = useState("+266");
   const [authMode, setAuthMode] = useState("email");
   const [otpSent, setOtpSent] = useState(false);
@@ -89,7 +91,8 @@ function Register({ onSuccess, getPostAuthRoute }) {
       firebaseUser.displayName ||
       "Unknown User";
 
-    const body = { full_name: fullName, phone: firebaseUser.phoneNumber || (authMode === "phone" ? phone : "") };
+    const body = { full_name: fullName, national_id: nationalId.trim(),
+      password, phone: firebaseUser.phoneNumber || (authMode === "phone" ? phone : "") };
 
     const res = await fetch(`${API_BASE}/register`, {
       method: "POST",
@@ -134,11 +137,18 @@ function Register({ onSuccess, getPostAuthRoute }) {
     }
     setLoading(true);
     try {
-      const cred = await createUserWithEmailAndPassword(auth, email, password);
-      await updateProfile(cred.user, {
-        displayName: `${firstName} ${lastName}`
+      if (!/^10\d{10}$/.test(nationalId.trim())) throw new Error("Enter the 12-digit National ID issued by Home Affairs.");
+      const registration = await fetch(`${API_BASE}/auth/register-national-id`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ national_id: nationalId.trim(), full_name: `${firstName} ${lastName}`.trim(), password })
       });
-      await saveProfileToBackend(cred.user);
+      const registrationData = await registration.json();
+      if (!registration.ok) throw new Error(registrationData.error || "National ID registration failed.");
+      const cred = await signInWithCustomToken(auth, registrationData.token);
+      await updateProfile(cred.user, {
+        displayName: registrationData.full_name || `${firstName} ${lastName}`
+      });
+      await saveProfileToBackend(cred.user, { fullName: registrationData.full_name || `${firstName} ${lastName}` });
     } catch (err) {
       console.error(err);
       setError(prettyError(err));
@@ -168,6 +178,7 @@ function Register({ onSuccess, getPostAuthRoute }) {
     setLoading(true);
     try {
       const credential = await confirmationResult.confirm(otp);
+      if (password !== confirmPassword || password.length < 8) throw new Error("Choose a password of at least 8 characters and confirm it.");
       await updateProfile(credential.user, { displayName: `${firstName} ${lastName}`.trim() });
       await saveProfileToBackend(credential.user, { fullName: `${firstName} ${lastName}`.trim() });
     } catch (err) {
@@ -181,17 +192,20 @@ function Register({ onSuccess, getPostAuthRoute }) {
 
     setLoading(true);
     try {
+      if (password !== confirmPassword || password.length < 8) throw new Error("Choose a password of at least 8 characters and confirm it.");
       const cred = await signInWithPopup(auth, googleProvider);
       const user = cred.user;
+      if (!user.email) throw new Error("This Google account must have an email address to register.");
+      const linked = await linkWithCredential(user, EmailAuthProvider.credential(user.email, password));
 
-      const nameParts = (user.displayName || "").split(" ");
+      const nameParts = (linked.user.displayName || "").split(" ");
       const firstNameVal = firstName || nameParts[0] || "";
       const lastNameVal = lastName || nameParts.slice(1).join(" ") || "";
 
       if (!firstName && firstNameVal) setFirstName(firstNameVal);
       if (!lastName && lastNameVal) setLastName(lastNameVal);
 
-      await saveProfileToBackend(user, {
+      await saveProfileToBackend(linked.user, {
         firstName: firstNameVal,
         lastName: lastNameVal
       });
@@ -329,6 +343,12 @@ function Register({ onSuccess, getPostAuthRoute }) {
             ))}
           </div>
           <form onSubmit={authMode === "phone" ? (otpSent ? handlePhoneRegister : handleSendPhoneCode) : handleEmailRegister}>
+              <label style={{ display: "block", color: "#263b35", fontSize: 13, fontWeight: 600, marginBottom: 14 }}>
+                National ID issued by Home Affairs
+                <input type="text" inputMode="numeric" autoComplete="off" required maxLength={12}
+                  pattern="10[0-9]{10}" value={nationalId} onChange={e => setNationalId(e.target.value)}
+                  placeholder="10XXXXXXXXXX" style={{ ...fieldStyle, display: "block", marginTop: 6 }} />
+              </label>
               <div style={{
                 display: "grid",
                 gridTemplateColumns: "1fr 1fr",
@@ -346,29 +366,23 @@ function Register({ onSuccess, getPostAuthRoute }) {
                     value={lastName} onChange={(e) => setLastName(e.target.value)}
                     style={{ ...fieldStyle, display: "block", marginTop: 6 }} />
                 </label>
-                {authMode === "email" && <label style={{ gridColumn: "1 / -1", color: "#263b35", fontSize: 13, fontWeight: 600 }}>
-                  Email address
-                  <input type="email" autoComplete="email" required
-                    value={email} onChange={(e) => setEmail(e.target.value)}
-                    style={{ ...fieldStyle, display: "block", marginTop: 6 }} />
-                </label>}
                 {authMode === "phone" && <label style={{ gridColumn: "1 / -1", color: "#263b35", fontSize: 13, fontWeight: 600 }}>
                   Phone number
                   <input type="tel" autoComplete="tel" required disabled={otpSent} value={phone}
                     onChange={e => setPhone(e.target.value)} style={{ ...fieldStyle, display: "block", marginTop: 6 }} />
                 </label>}
-                {authMode === "email" && <label style={{ color: "#263b35", fontSize: 13, fontWeight: 600 }}>
+                <label style={{ color: "#263b35", fontSize: 13, fontWeight: 600 }}>
                   Password
                   <input type="password" autoComplete="new-password" minLength={8} required
                     value={password} onChange={(e) => setPassword(e.target.value)}
                     style={{ ...fieldStyle, display: "block", marginTop: 6 }} />
-                </label>}
-                {authMode === "email" && <label style={{ color: "#263b35", fontSize: 13, fontWeight: 600 }}>
+                </label>
+                <label style={{ color: "#263b35", fontSize: 13, fontWeight: 600 }}>
                   Confirm password
                   <input type="password" autoComplete="new-password" minLength={8} required
                     value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)}
                     style={{ ...fieldStyle, display: "block", marginTop: 6 }} />
-                </label>}
+                </label>
               </div>
 
               {authMode === "phone" && otpSent && <label style={{ display: "block", color: "#263b35", fontSize: 13, fontWeight: 600 }}>
@@ -376,9 +390,9 @@ function Register({ onSuccess, getPostAuthRoute }) {
                 <input type="text" inputMode="numeric" autoComplete="one-time-code" required value={otp}
                   onChange={e => setOtp(e.target.value)} style={{ ...fieldStyle, display: "block", marginTop: 6 }} />
               </label>}
-              {authMode === "email" && <p style={{ margin: "10px 0 6px", color: COLORS.textMuted, fontSize: 12 }}>
+              <p style={{ margin: "10px 0 6px", color: COLORS.textMuted, fontSize: 12 }}>
                 Password must be at least 8 characters.
-              </p>}
+              </p>
 
               {error && <p role="alert" style={{ color: COLORS.error, fontSize: 13, margin: "6px 0" }}>{error}</p>}
 

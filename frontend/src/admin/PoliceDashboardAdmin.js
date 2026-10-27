@@ -1,6 +1,8 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { COLORS, layout, header, cards, grids, section } from "../styles/dashboardStyles";
 import Navbar from "../components/Navbar";
+import OfficialDocuments, { OfficialFields } from "../components/OfficialRecord";
+import arms from "../dashboards/arms.png";
 import { auth, API_BASE } from "../Database/firebase";
 
 async function api(path, opts = {}) {
@@ -199,6 +201,18 @@ export default function PoliceDashboardAdmin({ onLogout }) {
       await openApplication(selected.application_id);
       await loadQueue();
       await loadStats();
+    } catch (err) { alert(err.message); }
+    finally { setUpdating(false); }
+  }
+
+  async function issueLossLetter() {
+    if (!selected) return;
+    setUpdating(true);
+    try {
+      const result = await api(`/police/admin/applications/${selected.application_id}/loss-letter`, { method: "POST", body: JSON.stringify({}) });
+      alert(`Police Loss Report Letter ${result.alreadyIssued ? "already issued" : "issued"}: ${result.reference}`);
+      await openApplication(selected.application_id);
+      await loadQueue();
     } catch (err) { alert(err.message); }
     finally { setUpdating(false); }
   }
@@ -493,37 +507,17 @@ export default function PoliceDashboardAdmin({ onLogout }) {
                     </div>
                   </div>
 
-                  <h3 style={subHeading}>Submitted details</h3>
-                  {detail?.values?.map((v, i) => (
-                    <Row key={i} label={v.field_key.replace(/_/g, " ")} value={v.field_value} />
-                  ))}
+                  <OfficialFields values={detail?.values || []} title="Case particulars" />
 
                   {detail?.evidence?.length > 0 && (
                     <>
-                      <h3 style={subHeading}>Evidence</h3>
-                      {detail.evidence.map(e => (
-                        <div key={e.evidence_id} style={{
-                          display: "flex", justifyContent: "space-between",
-                          alignItems: "center", gap: 10, padding: "6px 0",
-                          borderBottom: `1px solid ${COLORS.borderLight}`
-                        }}>
-                          <a href={`${API_BASE.replace("/api", "")}${e.storage_path}`}
-                             target="_blank" rel="noreferrer"
-                             style={{ color: COLORS.blue, fontSize: 13 }}>
-                            {e.original_filename}
-                          </a>
-                          <div style={{ display: "flex", gap: 6 }}>
-                            <button onClick={() => verifyEvidence(e.evidence_id, "verified")}
-                              style={miniBtnOk}>Verify</button>
-                            <button onClick={() => verifyEvidence(e.evidence_id, "rejected")}
-                              style={miniBtnNo}>Reject</button>
-                            <span style={{
-                              fontSize: 11, color: COLORS.textMuted,
-                              textTransform: "uppercase", alignSelf: "center"
-                            }}>{e.verification_status}</span>
-                          </div>
-                        </div>
-                      ))}
+                      <OfficialDocuments title="Police evidence and attachments"
+                        documents={detail.evidence} baseUrl={API_BASE.replace("/api", "")}
+                        actionsFor={e => <>
+                          <button onClick={() => verifyEvidence(e.evidence_id, "verified")} style={miniBtnOk}>Verify</button>
+                          <button onClick={() => verifyEvidence(e.evidence_id, "rejected")} style={miniBtnNo}>Reject</button>
+                          <span style={{ fontSize: 10, color: "#64748b", textTransform: "uppercase" }}>{e.verification_status}</span>
+                        </>} />
                     </>
                   )}
 
@@ -565,6 +559,11 @@ export default function PoliceDashboardAdmin({ onLogout }) {
                       <button disabled={updating} onClick={() => setStatus("approved")} style={quickBtn(COLORS.green)}>
                         Approve
                       </button>
+                      {selected.application_type === "lost_item_report" && selected.status === "approved" && (
+                        <button disabled={updating} onClick={issueLossLetter} style={quickBtn("#155eef")}>
+                          Issue Loss Report Letter
+                        </button>
+                      )}
                     </div>
                   </div>
 
@@ -691,25 +690,27 @@ export default function PoliceDashboardAdmin({ onLogout }) {
             {letters.map(l => (
               <article key={l.letter_id} style={{
                 background: "#fff", border: `1px solid ${COLORS.border}`,
-                borderRadius: 10, padding: 16, marginBottom: 10
+                borderRadius: 3, padding: 0, marginBottom: 16, overflow: "hidden",
+                boxShadow: "0 3px 12px rgba(15,35,65,.08)"
               }}>
-                <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 14, padding: "16px 20px 12px", background: "#fbfcfe", borderBottom: "3px solid #123b75" }}>
+                  <img src={arms} alt="Kingdom of Lesotho coat of arms" style={{ width: 54, height: 54, objectFit: "contain" }} />
                   <div>
-                    <strong style={{ fontSize: 13 }}>{l.title}</strong>
-                    <p style={{ margin: "2px 0 0", fontSize: 11, color: COLORS.textMuted }}>
-                      {l.reference_number} · {l.full_name} · {new Date(l.issued_at).toLocaleString()}
-                    </p>
+                    <div style={{ color: "#123b75", fontSize: 11, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase" }}>Kingdom of Lesotho · Lesotho Mounted Police Service</div>
+                    <strong style={{ display: "block", marginTop: 5, fontSize: 15, color: "#172b4d" }}>{l.title}</strong>
                   </div>
                   <span style={{
                     padding: "3px 10px", background: COLORS.blueLight, color: COLORS.blue,
                     borderRadius: 20, fontSize: 11, fontWeight: 700, textTransform: "uppercase"
                   }}>{l.letter_type.replace(/_/g, " ")}</span>
                 </div>
+                <div style={{ padding: "10px 20px", borderBottom: "1px solid #e2e8f0", color: "#526174", fontSize: 11 }}>
+                  <strong>Reference:</strong> {l.reference_number} &nbsp;·&nbsp; <strong>To:</strong> {l.full_name} &nbsp;·&nbsp; <strong>Issued:</strong> {new Date(l.issued_at).toLocaleString()}
+                </div>
                 <pre style={{
-                  whiteSpace: "pre-wrap", marginTop: 10, fontFamily: "Consolas, monospace",
-                  fontSize: 12, lineHeight: 1.5, padding: 12,
-                  background: "#f8fafc", border: `1px solid ${COLORS.borderLight}`,
-                  borderRadius: 8, maxHeight: 240, overflowY: "auto"
+                  whiteSpace: "pre-wrap", margin: 0, fontFamily: "Georgia, 'Times New Roman', serif",
+                  fontSize: 13, lineHeight: 1.8, padding: 20, color: "#27364b",
+                  background: "#fff", maxHeight: 320, overflowY: "auto"
                 }}>{l.body}</pre>
               </article>
             ))}

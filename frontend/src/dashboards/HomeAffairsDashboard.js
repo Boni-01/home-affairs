@@ -128,11 +128,7 @@ const NATIONAL_ID_SERVICE_CODES = new Set([
 ]);
 
 const BIRTH_CERTIFICATE_EXTRA_FIELDS = {
-  Lost: [
-    { field_key: "lost_date", label: "Date the certificate was lost", field_type: "date", required: true },
-    { field_key: "loss_details", label: "Details of how it was lost", field_type: "textarea", required: true },
-    { field_key: "police_case_number", label: "Police case number (if reported)", field_type: "text", required: false }
-  ],
+  Lost: [],
   Damaged: [
     { field_key: "damage_date", label: "Date the certificate was damaged", field_type: "date", required: true },
     { field_key: "damage_description", label: "Describe the damage", field_type: "textarea", required: true }
@@ -235,6 +231,9 @@ const REQUIRED_DOCUMENTS = {
 
 function getRequirementFormFields(serviceCode, values) {
   if (serviceCode === "NICR_ID_NEW") return [NATIONAL_ID_AGE_FIELD];
+  // A copy request must point to the existing civil registry record. Do not
+  // collect a second, potentially conflicting set of birth particulars.
+  if (serviceCode === "NICR_BIRTH_CERT") return [];
 
   const fields = REQUIREMENT_FIELDS[serviceCode] || [];
   if (serviceCode !== "NICR_MARRIAGE_CERT") return fields;
@@ -256,7 +255,7 @@ function getRequirementFormFields(serviceCode, values) {
 }
 
 function getRequirementUploads(serviceCode, values) {
-  if (serviceCode === "NICR_BIRTH_CERT") return REQUIRED_DOCUMENTS.birth;
+  if (serviceCode === "NICR_BIRTH_CERT") return [];
   if (serviceCode === "NICR_ID_NEW") {
     if (values.applicant_age_category === "16 or younger") {
       return [REQUIRED_DOCUMENTS.nationalId.minor];
@@ -319,6 +318,16 @@ function getServiceRequirements(activeService, selectedService) {
         ]
       }]
     };
+  }
+
+  if (service.service_code === "NICR_BIRTH_CERT" && selectedService) {
+    const items = [
+      "Choose an approved Home Affairs birth record already linked to your account.",
+      "Give the reason you need a certified copy. Verified name and birth details are reused automatically."
+    ];
+    if (selectedService.certificate_condition === "Lost") items.push("First report the loss to Police. After approval, select the Police Loss Report Letter as proof.");
+    if (selectedService.certificate_condition === "Damaged") items.push("Provide the damage date and description, and upload a clear photo of the damaged certificate.");
+    return { groups: [{ label: "Certified copy request", items }] };
   }
 
   if (service.service_code === "NICR_BIRTH_CERT") {
@@ -828,6 +837,8 @@ function HomeAffairsDashboard({ onLogout }) {
   const [me, setMe] = useState(null);
   const [services, setServices] = useState([]);
   const [applications, setApplications] = useState([]);
+  const [birthRecords, setBirthRecords] = useState([]);
+  const [policeLetters, setPoliceLetters] = useState([]);
   const [notifications, setNotifications] = useState([]);
   const [activeModule, setActiveModule] = useState("NICR");
 
@@ -859,16 +870,20 @@ function HomeAffairsDashboard({ onLogout }) {
 
   const load = useCallback(async () => {
     try {
-      const [meRes, svcRes, appsRes, notifRes] = await Promise.all([
+      const [meRes, svcRes, appsRes, notifRes, birthRes, policeLetterRes] = await Promise.all([
         api("/me"),
         api("/services"),
         api("/applications/my"),
-        api("/notifications")
+        api("/notifications"),
+        api("/birth-certificates/my"),
+        api("/police/letters/my")
       ]);
       setMe(meRes.user);
       setServices(svcRes.services || []);
       setApplications(appsRes.applications || []);
       setNotifications(notifRes.notifications || []);
+      setBirthRecords(birthRes.records || []);
+      setPoliceLetters(policeLetterRes.letters || []);
     } catch (err) { console.error(err); }
   }, []);
 
@@ -1156,15 +1171,27 @@ function HomeAffairsDashboard({ onLogout }) {
   }, [activeModule, allModuleServices]);
   const groupedServicesModule = activeModule === "IMMIGRATION" || activeModule === "LRMIS";
   const serviceRequirements = activeService
-    ? getServiceRequirements(activeService, selectedService)
+    ? getServiceRequirements(activeService, selectedService
+      ? { ...selectedService, certificate_condition: values.certificate_condition }
+      : selectedService)
     : null;
   const requirementFormFields = selectedService
     ? getRequirementFormFields(selectedService.service_code, values)
     : [];
   const requirementFieldKeys = new Set(requirementFormFields.map(field => field.field_key));
+  const copyRequestManagedFields = new Set([
+    "child_first_name", "child_middle_name", "child_last_name", "child_dob", "child_sex",
+    "child_weight_at_birth", "child_place_of_occurrence", "certificate_condition",
+    "birth_certificate_reference", "reason_for_copy", "lost_date", "loss_details",
+    "police_loss_letter_reference", "damage_date", "damage_description"
+  ]);
   const requirementUploads = selectedService
     ? getRequirementUploads(selectedService.service_code, values)
     : [];
+  const matchingPoliceLetters = policeLetters.filter(letter =>
+    letter.letter_type === "loss_report" &&
+    letter.birth_certificate_reference === values.birth_certificate_reference
+  );
 
   return (
     <main className="dashboard-page" style={layout.page}>
@@ -1381,6 +1408,18 @@ function HomeAffairsDashboard({ onLogout }) {
               />
             )}
             {activeService.service_code === "NICR_BIRTH_CERT" && (
+              <>
+              <p style={{ padding: 12, background: "#eef5ff", borderRadius: 8, fontSize: 13 }}>
+                Select the approved birth record already held by Home Affairs. The record details will be reused automatically.
+              </p>
+              {birthRecords.length === 0 && <p style={{ fontSize: 12, color: COLORS.textMuted }}>No approved birth records are linked to this account yet. Ask Home Affairs to register/link the existing record before requesting a copy.</p>}
+              <Field
+                field={{ field_key: "birth_certificate_reference", label: "Approved birth record", field_type: "select", required: true,
+                  options: birthRecords.map(record => `${record.reference_number} · ${record.full_name} · ${new Date(record.date_of_birth).toLocaleDateString()}`) }}
+                value={(() => { const record = birthRecords.find(item => item.reference_number === values.birth_certificate_reference); return record ? `${record.reference_number} · ${record.full_name} · ${new Date(record.date_of_birth).toLocaleDateString()}` : ""; })()}
+                onChange={value => { const record = birthRecords.find(item => `${item.reference_number} · ${item.full_name} · ${new Date(item.date_of_birth).toLocaleDateString()}` === value); setValues(previous => ({ ...previous, birth_certificate_reference: record?.reference_number || "" })); }}
+                onFile={() => {}}
+              />
               <Field
                 field={{
                   field_key: "certificate_condition",
@@ -1415,6 +1454,21 @@ function HomeAffairsDashboard({ onLogout }) {
                 }}
                 onFile={() => {}}
               />
+              {values.certificate_condition === "Standard copy" && (
+                <Field field={{ field_key: "reason_for_copy", label: "Why do you need this copy?", field_type: "textarea", required: true }} value={values.reason_for_copy || ""} onChange={value => setValues(previous => ({ ...previous, reason_for_copy: value }))} onFile={() => {}} />
+              )}
+              {values.certificate_condition === "Lost" && (
+                <>
+                  <p style={{ padding: 12, background: "#fff7ed", borderRadius: 8, fontSize: 13 }}><strong>Step 1:</strong> Report the lost certificate to Police. After an officer approves the report and issues a Loss Report Letter, select that letter below as proof.</p>
+                  <Field field={{ field_key: "reason_for_copy", label: "Why do you need a replacement?", field_type: "textarea", required: true }} value={values.reason_for_copy || ""} onChange={value => setValues(previous => ({ ...previous, reason_for_copy: value }))} onFile={() => {}} />
+                  <Field field={{ field_key: "lost_date", label: "Date the certificate was lost", field_type: "date", required: true }} value={values.lost_date || ""} onChange={value => setValues(previous => ({ ...previous, lost_date: value }))} onFile={() => {}} />
+                  <Field field={{ field_key: "loss_details", label: "What happened?", field_type: "textarea", required: true }} value={values.loss_details || ""} onChange={value => setValues(previous => ({ ...previous, loss_details: value }))} onFile={() => {}} />
+                  {matchingPoliceLetters.length === 0 && <p style={{ fontSize: 12, color: COLORS.textMuted }}>No matching Police letter yet. Submit your loss report in the Police page and return here after an officer approves it and issues the letter.</p>}
+                  <Field field={{ field_key: "police_loss_letter_reference", label: "Police Loss Report Letter", field_type: "select", required: true, options: matchingPoliceLetters.map(letter => `${letter.reference_number} · report ${letter.report_reference || ""}`) }} value={(() => { const letter = matchingPoliceLetters.find(item => item.reference_number === values.police_loss_letter_reference); return letter ? `${letter.reference_number} · report ${letter.report_reference || ""}` : ""; })()} onChange={value => { const letter = matchingPoliceLetters.find(item => `${item.reference_number} · report ${item.report_reference || ""}` === value); setValues(previous => ({ ...previous, police_loss_letter_reference: letter?.reference_number || "" })); }} onFile={() => {}} />
+                </>
+              )}
+              {values.certificate_condition === "Damaged" && <Field field={{ field_key: "reason_for_copy", label: "Why do you need a replacement?", field_type: "textarea", required: true }} value={values.reason_for_copy || ""} onChange={value => setValues(previous => ({ ...previous, reason_for_copy: value }))} onFile={() => {}} />}
+              </>
             )}
             {requirementFormFields.map(field => (
               <Field
@@ -1461,7 +1515,8 @@ function HomeAffairsDashboard({ onLogout }) {
             )}
             {!(selectedService?.service_code === "NICR_ID_LOST" &&
                 selectedService.national_id_variant === "Damaged" && !files[DAMAGED_ID_UPLOAD.key]) &&
-              fields.filter(field => !requirementFieldKeys.has(field.field_key)).map(f => (
+              fields.filter(field => !requirementFieldKeys.has(field.field_key) &&
+                !(selectedService?.service_code === "NICR_BIRTH_CERT" && copyRequestManagedFields.has(field.field_key))).map(f => (
               <Field
                 key={f.field_key}
                 field={f}

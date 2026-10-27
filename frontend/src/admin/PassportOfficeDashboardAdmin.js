@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { COLORS, layout, header, cards, grids, section } from "../styles/dashboardStyles";
 import Navbar from "../components/Navbar";
+import OfficialDocuments, { OfficialFields } from "../components/OfficialRecord";
 import { auth, API_BASE } from "../Database/firebase";
 
 async function api(path, opts = {}) {
@@ -497,26 +498,9 @@ function PassportOfficeDashboardAdmin({ onLogout }) {
                     </div>
                   </div>
 
-                  <h3 style={subHeading}>Submitted fields</h3>
-                  {detail?.values?.map(v => (
-                    <Row key={v.field_key} label={v.field_key.replace(/_/g, " ")} value={v.field_value} />
-                  ))}
-
-                  {detail?.documents?.length > 0 && (
-                    <>
-                      <h3 style={subHeading}>Documents</h3>
-                      <ul style={{ paddingLeft: 18, fontSize: 13 }}>
-                        {detail.documents.map(d => (
-                          <li key={d.document_id}>
-                            <a href={`${API_BASE.replace("/api", "")}${d.storage_path}`}
-                               target="_blank" rel="noreferrer" style={{ color: COLORS.blue }}>
-                              {d.original_filename}
-                            </a>
-                          </li>
-                        ))}
-                      </ul>
-                    </>
-                  )}
+                  <OfficialFields values={detail?.values || []} />
+                  <OfficialDocuments documents={detail?.documents || []}
+                    baseUrl={API_BASE.replace("/api", "")} />
 
                   {detail?.history?.length > 0 && (
                     <>

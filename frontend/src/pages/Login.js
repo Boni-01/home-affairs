@@ -4,6 +4,7 @@ import {
   signInWithEmailAndPassword,
   signInWithPopup,
   signInWithPhoneNumber,
+  signInWithCustomToken,
   RecaptchaVerifier
 } from "firebase/auth";
 import {
@@ -134,8 +135,20 @@ function Login({ onSuccess, getPostAuthRoute }) {
     setInfo("");
     setLoading(true);
     try {
-      const cred = await signInWithEmailAndPassword(auth, email, password);
-      await completeLogin(cred.user);
+      const identifier = email.trim();
+      if (/^10\d{10}$/.test(identifier)) {
+        const response = await fetch(`${API_BASE}/auth/login-national-id`, {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ national_id: identifier, password })
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || "National ID sign-in failed.");
+        const credential = await signInWithCustomToken(auth, data.token);
+        await completeLogin(credential.user);
+      } else {
+        const cred = await signInWithEmailAndPassword(auth, identifier, password);
+        await completeLogin(cred.user);
+      }
     } catch (err) {
       console.error(err);
       setError(prettyError(err));
@@ -362,11 +375,11 @@ function Login({ onSuccess, getPostAuthRoute }) {
             <form onSubmit={handleEmailLogin}>
               <div style={{ marginBottom: "14px" }}>
                 <label htmlFor="email" style={{ display: "block", fontWeight: 600, color: "#263648", fontSize: 13 }}>
-                  Email address
+                  Email address or National ID
                 </label>
                 <input
-                  id="email" type="email" autoComplete="email"
-                  placeholder="you@example.com" required
+                  id="email" type="text" autoComplete="username"
+                  placeholder="Email address or 12-digit National ID" required
                   value={email} onChange={(e) => setEmail(e.target.value)}
                   style={fieldStyle}
                 />

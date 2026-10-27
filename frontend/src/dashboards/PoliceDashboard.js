@@ -140,7 +140,9 @@ const FIELDS_BY_TYPE = {
   lost_item_report: [
     { key: "incident_date",     label: "When was it lost?",                 type: "datetime-local" },
     { key: "incident_location", label: "Where was it lost?",                type: "text" },
-    { key: "items_lost",        label: "What was lost?",                    type: "textarea" }
+    { key: "items_lost",        label: "What was lost?",                    type: "textarea" },
+    { key: "document_type",     label: "Lost document type",                type: "select", options: ["Birth certificate", "National ID", "Other"] },
+    { key: "birth_certificate_reference", label: "Home Affairs birth certificate reference (if reporting a lost birth certificate)", type: "text" }
   ],
   missing_person_report: [
     { key: "missing_person_name",  label: "Missing person's full name",     type: "text" },
@@ -288,6 +290,10 @@ function PoliceDashboard({ onLogout }) {
   async function submit(e) {
     e.preventDefault();
     setSubmitError("");
+    if (activeType?.key === "lost_item_report" && fields.document_type === "Birth certificate" && !fields.birth_certificate_reference?.trim()) {
+      setSubmitError("Enter the Home Affairs reference printed on the birth certificate so the report can be linked to the correct record.");
+      return;
+    }
     setSubmitting(true);
     try {
       const cat = categories.find(c => c.category_code === activeType.categoryCode);
@@ -701,7 +707,7 @@ function PoliceDashboard({ onLogout }) {
                   onChange={e => setLetterForm(p => ({ ...p, letter_type: e.target.value }))}
                   style={{ ...inputStyle, marginBottom: 14 }}>
                   <option value="">Select…</option>
-                  {letterTemplates.map(t => (
+                  {letterTemplates.filter(t => t.key !== "loss_report").map(t => (
                     <option key={t.key} value={t.key}>{t.label}</option>
                   ))}
                 </select>
@@ -994,7 +1000,11 @@ function PoliceDashboard({ onLogout }) {
             {(FIELDS_BY_TYPE[activeType.key] || []).map(f => (
               <div key={f.key} style={{ marginBottom: 14 }}>
                 <label style={labelStyle}>{f.label}</label>
-                {f.type === "textarea" ? (
+                {f.type === "select" ? (
+                  <select value={fields[f.key] || ""} onChange={e => setFields(p => ({ ...p, [f.key]: e.target.value }))} style={inputStyle}>
+                    <option value="">Select…</option>{f.options.map(option => <option key={option} value={option}>{option}</option>)}
+                  </select>
+                ) : f.type === "textarea" ? (
                   <textarea rows={3} value={fields[f.key] || ""}
                     onChange={e => setFields(p => ({ ...p, [f.key]: e.target.value }))}
                     style={inputStyle} />

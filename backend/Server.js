@@ -9,6 +9,7 @@ const cors = require("cors");
 const path = require("path");
 const fs = require("fs");
 const crypto = require("crypto");
+const { promisify } = require("util");
 const mysql = require("mysql2/promise");
 const multer = require("multer");
 
@@ -16,6 +17,7 @@ const { PDFDocument, rgb } = require("pdf-lib");
 
 const { initializeApp, cert } = require("firebase-admin/app");
 const { getAuth } = require("firebase-admin/auth");
+const scryptAsync = promisify(crypto.scrypt);
 
 // ------------------------------------------------------------
 // FIREBASE
@@ -49,6 +51,91 @@ const db = mysql.createPool({
 async function initializeDatabase() {
   const c = await db.getConnection();
   try {
+    const [adminGuardColumn] = await c.query("SHOW COLUMNS FROM users LIKE 'admin_guard'");
+    if (adminGuardColumn.length) {
+      const [adminGuardIndexes] = await c.query("SHOW INDEX FROM users WHERE Key_name = 'admin_guard'");
+      if (adminGuardIndexes.length) await c.query("ALTER TABLE users DROP INDEX admin_guard");
+      await c.query("ALTER TABLE users DROP COLUMN admin_guard");
+      console.log("Removed the single-admin database constraint; allowlisted admins can now each have an account row.");
+    }
+    await c.query(`CREATE TABLE IF NOT EXISTS national_id_issuances (
+      issuance_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+      national_id_number CHAR(12) NOT NULL UNIQUE,
+      email VARCHAR(255) NOT NULL,
+      phone VARCHAR(32) NULL,
+      full_name VARCHAR(180) NOT NULL,
+      date_of_birth DATE NOT NULL,
+      sex ENUM('female','male','other') NOT NULL,
+      place_of_birth VARCHAR(160) NOT NULL,
+      nationality VARCHAR(100) NOT NULL DEFAULT 'Mosotho',
+      parent_names VARCHAR(255) NULL,
+      residential_address TEXT NULL,
+      birth_certificate_reference VARCHAR(64) NOT NULL,
+      issue_date DATE NOT NULL,
+      place_of_issue VARCHAR(160) NOT NULL DEFAULT 'Maseru',
+      expiry_date DATE NULL,
+      card_control_number VARCHAR(32) NULL UNIQUE,
+      issuing_authority VARCHAR(160) NOT NULL DEFAULT 'National Identity and Civil Registry',
+      issuance_status ENUM('issued','claimed','cancelled') NOT NULL DEFAULT 'issued',
+      claimed_user_id BIGINT UNSIGNED NULL,
+      issued_by BIGINT UNSIGNED NULL,
+      application_data JSON NULL,
+      issued_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE KEY uq_nid_birth_certificate_reference (birth_certificate_reference),
+      KEY idx_nid_issuance_email (email),
+      KEY idx_nid_issuance_user (claimed_user_id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
+    const issuanceColumns = [
+      ["application_data", "JSON NULL AFTER issued_by"],
+      ["place_of_issue", "VARCHAR(160) NOT NULL DEFAULT 'Maseru' AFTER issue_date"],
+      ["card_control_number", "VARCHAR(32) NULL UNIQUE AFTER expiry_date"],
+      ["issuing_authority", "VARCHAR(160) NOT NULL DEFAULT 'National Identity and Civil Registry' AFTER card_control_number"]
+    ];
+    for (const [column, definition] of issuanceColumns) {
+      const [existingColumn] = await c.query(`SHOW COLUMNS FROM national_id_issuances LIKE '${column}'`);
+      if (!existingColumn.length) await c.query(`ALTER TABLE national_id_issuances ADD COLUMN ${column} ${definition}`);
+    }
+    const [birthReferenceIndex] = await c.query(
+      "SHOW INDEX FROM national_id_issuances WHERE Key_name = 'uq_nid_birth_certificate_reference'"
+    );
+    if (!birthReferenceIndex.length) {
+      await c.query("ALTER TABLE national_id_issuances ADD UNIQUE INDEX uq_nid_birth_certificate_reference (birth_certificate_reference)");
+    }
+    await c.query(`CREATE TABLE IF NOT EXISTS national_birth_certificates (
+      birth_certificate_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+      reference_number VARCHAR(32) NOT NULL UNIQUE,
+      full_name VARCHAR(180) NOT NULL,
+      date_of_birth DATE NOT NULL,
+      sex ENUM('female','male','other') NOT NULL,
+      place_of_birth VARCHAR(160) NOT NULL,
+      parent_names VARCHAR(255) NULL,
+      certificate_condition ENUM('standard','damaged','replacement') NOT NULL DEFAULT 'standard',
+      email VARCHAR(255) NOT NULL,
+      phone VARCHAR(32) NULL,
+      parent_one_id_verified TINYINT(1) NOT NULL DEFAULT 0,
+      parent_two_id_verified TINYINT(1) NOT NULL DEFAULT 0,
+      birth_notification_verified TINYINT(1) NOT NULL DEFAULT 0,
+      immunization_card_verified TINYINT(1) NOT NULL DEFAULT 0,
+      verification_notes TEXT NULL,
+      record_status ENUM('approved','rejected') NOT NULL DEFAULT 'approved',
+      issued_by BIGINT UNSIGNED NULL,
+      applicant_user_id BIGINT UNSIGNED NULL,
+      claimed_user_id BIGINT UNSIGNED NULL,
+      original_application_id BIGINT UNSIGNED NULL,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      KEY idx_birth_cert_email (email),
+      KEY idx_birth_cert_applicant (applicant_user_id),
+      KEY idx_birth_cert_claimed (claimed_user_id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
+    const birthRecordColumns = [
+      ["applicant_user_id", "BIGINT UNSIGNED NULL AFTER issued_by"],
+      ["claimed_user_id", "BIGINT UNSIGNED NULL AFTER applicant_user_id"],
+      ["original_application_id", "BIGINT UNSIGNED NULL AFTER claimed_user_id"]
+    ];
+    for (const [column, definition] of birthRecordColumns) {
+      const [existingColumn] = await c.query(`SHOW COLUMNS FROM national_birth_certificates LIKE '${column}'`);
+      if (!existingColumn.length) await c.query(`ALTER TABLE national_birth_certificates ADD COLUMN ${column} ${definition}`);
+    }
     const [columns] = await c.query(
       "SHOW COLUMNS FROM finance_service_requests LIKE 'request_type'"
     );
@@ -337,10 +424,43 @@ async function verifyToken(req, res, next) {
 // HELPERS (IDs, refs, audit)
 // ------------------------------------------------------------
 async function generateNationalId(conn) {
-  const [[{ n }]] = await conn.query(
-    "SELECT COUNT(*) AS n FROM citizen_national_ids"
+  for (let attempt = 0; attempt < 20; attempt += 1) {
+    const candidate = `10${crypto.randomInt(0, 10000000000).toString().padStart(10, "0")}`;
+    const [[{ n }]] = await conn.query(
+      `SELECT (SELECT COUNT(*) FROM citizen_national_ids WHERE national_id_number = ?) +
+              (SELECT COUNT(*) FROM national_id_issuances WHERE national_id_number = ?) AS n`,
+      [candidate, candidate]
+    );
+    if (!Number(n)) return candidate;
+  }
+  throw new Error("Unable to allocate a unique National ID. Please try again.");
+}
+
+async function generateBirthCertificateReference(conn) {
+  const year = new Date().getFullYear();
+  const prefix = `NICR-${year}-`;
+  const [[applicationMax]] = await conn.query(
+    "SELECT COALESCE(MAX(CAST(SUBSTRING_INDEX(reference_number, '-', -1) AS UNSIGNED)), 0) AS n FROM applications WHERE reference_number LIKE ?", [`${prefix}%`]
   );
-  return `LS${String(n + 1).padStart(9, "0")}`;
+  const [[registryMax]] = await conn.query(
+    "SELECT COALESCE(MAX(CAST(SUBSTRING_INDEX(reference_number, '-', -1) AS UNSIGNED)), 0) AS n FROM national_birth_certificates WHERE reference_number LIKE ?", [`${prefix}%`]
+  );
+  const next = Math.max(Number(applicationMax.n), Number(registryMax.n)) + 1;
+  return `${prefix}${String(next).padStart(6, "0")}`;
+}
+
+async function hashCitizenPassword(password) {
+  const salt = crypto.randomBytes(16);
+  const key = await scryptAsync(String(password), salt, 64);
+  return `scrypt:${salt.toString("hex")}:${Buffer.from(key).toString("hex")}`;
+}
+
+async function verifyCitizenPassword(password, storedHash) {
+  const [algorithm, saltHex, keyHex] = String(storedHash || "").split(":");
+  if (algorithm !== "scrypt" || !saltHex || !keyHex) return false;
+  const expected = Buffer.from(keyHex, "hex");
+  const actual = Buffer.from(await scryptAsync(String(password), Buffer.from(saltHex, "hex"), expected.length));
+  return expected.length === actual.length && crypto.timingSafeEqual(expected, actual);
 }
 
 async function generateReference(conn, module) {
@@ -381,6 +501,26 @@ function isDateOfBirthField(field) {
   return /\b(?:date\s+of\s+birth|dob)\b/i.test(
     `${field.field_key || ""} ${field.label || ""}`.replace(/[_-]+/g, " ")
   );
+}
+
+function sharedCitizenFieldValue(fieldKey, identity) {
+  const rawKey = String(fieldKey || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+  const key = rawKey.startsWith("applicant") ? rawKey.slice("applicant".length) : rawKey;
+  const names = String(identity?.full_name || "").trim().split(/\s+/).filter(Boolean);
+  if (["fullname", "name", "holdername", "ownername", "instructorname"].includes(key)) return identity?.full_name || "";
+  if (["givenname", "givennames", "firstname", "forenames"].includes(key)) return names.slice(0, -1).join(" ") || names[0] || "";
+  if (["surname", "lastname", "familyname"].includes(key)) return names.length > 1 ? names[names.length - 1] : "";
+  if (["nationalid", "nationalidnumber", "nationalidno", "ownerid", "instructorid", "idnumber", "idno"].includes(key)) return identity?.national_id_number || identity?.national_id || "";
+  if (["dateofbirth", "birthdate", "dob"].includes(key)) return String(identity?.date_of_birth || "").slice(0, 10);
+  if (["birthcertificatereference", "birthcertificatenumber", "birthregistrationnumber"].includes(key)) return identity?.birth_certificate_reference || "";
+  if (["phone", "mobile", "telephone", "contactphone", "applicantphone"].includes(key)) return identity?.phone || "";
+  if (["email", "contactemail", "applicantemail"].includes(key)) return identity?.email || "";
+  if (["residentialaddress", "physicaladdress", "homeaddress", "address"].includes(key)) return identity?.residential_address || "";
+  if (["nationality", "citizenship"].includes(key)) return identity?.nationality || "";
+  if (["sex", "gender"].includes(key)) return identity?.sex || "";
+  if (["placeofbirth", "birthplace"].includes(key)) return identity?.place_of_birth || "";
+  if (["parentnames", "parentsnames", "fatherandmother", "namesofparents"].includes(key)) return identity?.parent_names || "";
+  return "";
 }
 
 const PASSPORT_TIER_META = {
@@ -427,9 +567,113 @@ app.get("/api/health", async (req, res) => {
 // ============================================================
 // AUTH: REGISTER
 // ============================================================
+app.post("/api/auth/register-national-id", async (req, res) => {
+  const nationalId = String(req.body?.national_id || "").trim();
+  const password = String(req.body?.password || "");
+  if (!/^10\d{10}$/.test(nationalId)) {
+    return res.status(400).json({ error: "Enter a valid 12-digit National ID." });
+  }
+  if (password.length < 8) {
+    return res.status(400).json({ error: "A password of at least eight characters is required." });
+  }
+  const conn = await db.getConnection();
+  let createdFirebaseUser = null;
+  try {
+    await conn.beginTransaction();
+    const [rows] = await conn.query(
+      `SELECT * FROM national_id_issuances
+       WHERE national_id_number = ? AND issuance_status = 'issued' FOR UPDATE`, [nationalId]
+    );
+    const issuance = rows[0];
+    if (!issuance) {
+      await conn.rollback();
+      return res.status(404).json({ error: "National ID was not found, is inactive, or has already been registered." });
+    }
+    const [birthRows] = await conn.query(
+      `SELECT * FROM national_birth_certificates
+       WHERE reference_number = ? AND record_status = 'approved' FOR UPDATE`,
+      [issuance.birth_certificate_reference]
+    );
+    const birthRecord = birthRows[0];
+    if (!birthRecord) throw new Error("The approved birth certificate record linked to this ID is unavailable.");
+    const officialFullName = String(birthRecord.full_name);
+    createdFirebaseUser = await firebaseAuth.createUser({
+      email: issuance.email, password, displayName: officialFullName
+    });
+    const passwordHash = await hashCitizenPassword(password);
+    const [userResult] = await conn.query(
+      `INSERT INTO users
+       (firebase_uid, full_name, email, phone, national_id, date_of_birth, date_of_birth_verified,
+        pending_date_of_birth, password_hash, role, account_type, account_status, status,
+        email_verified, phone_verified, account_verified)
+       VALUES (?, ?, ?, ?, ?, ?, 1, NULL, ?, 'client', 'citizen', 'active', 'active', 1, 0, 1)`,
+      [createdFirebaseUser.uid, officialFullName, issuance.email, issuance.phone || null,
+       nationalId, birthRecord.date_of_birth, passwordHash]
+    );
+    await conn.query(
+      "INSERT INTO citizen_national_ids (user_id, national_id_number) VALUES (?, ?)",
+      [userResult.insertId, nationalId]
+    );
+    await conn.query(
+      `UPDATE national_id_issuances SET issuance_status = 'claimed', claimed_user_id = ?
+       WHERE issuance_id = ?`, [userResult.insertId, issuance.issuance_id]
+    );
+    await conn.query(
+      `UPDATE national_birth_certificates SET claimed_user_id = ?
+       WHERE birth_certificate_id = ?`, [userResult.insertId, birthRecord.birth_certificate_id]
+    );
+    const token = await firebaseAuth.createCustomToken(createdFirebaseUser.uid);
+    await conn.commit();
+    res.status(201).json({ success: true, token, national_id: nationalId, full_name: officialFullName });
+  } catch (err) {
+    await conn.rollback();
+    if (createdFirebaseUser?.uid) {
+      try { await firebaseAuth.deleteUser(createdFirebaseUser.uid); } catch (deleteErr) {
+        console.error("Registration rollback could not remove Firebase account:", deleteErr.code || deleteErr.message);
+      }
+    }
+    console.error("National ID registration error:", err.message);
+    const duplicate = ["auth/email-already-exists", "ER_DUP_ENTRY"].includes(err.code);
+    res.status(duplicate ? 409 : 500).json({ error: duplicate ? "This email or National ID is already linked to an account." : "National ID registration failed." });
+  } finally {
+    conn.release();
+  }
+});
+
+app.post("/api/auth/login-national-id", async (req, res) => {
+  const nationalId = String(req.body?.national_id || "").trim();
+  const password = String(req.body?.password || "");
+  if (!/^10\d{10}$/.test(nationalId) || !password) {
+    return res.status(400).json({ error: "Enter your 12-digit National ID and password." });
+  }
+  try {
+    const [rows] = await db.query(
+      `SELECT u.firebase_uid, u.password_hash FROM users u
+       JOIN citizen_national_ids n ON n.user_id = u.user_id
+       JOIN national_id_issuances i ON i.national_id_number = n.national_id_number
+       WHERE n.national_id_number = ? AND i.issuance_status = 'claimed'
+         AND u.account_status = 'active' LIMIT 1`, [nationalId]
+    );
+    if (!rows[0] || !(await verifyCitizenPassword(password, rows[0].password_hash))) {
+      return res.status(401).json({ error: "National ID or password is incorrect." });
+    }
+    const token = await firebaseAuth.createCustomToken(rows[0].firebase_uid);
+    res.json({ token });
+  } catch (err) {
+    console.error("National ID sign-in error:", err.message);
+    res.status(500).json({ error: "Unable to sign in with National ID." });
+  }
+});
+
 app.post("/api/register", verifyToken, async (req, res) => {
-  const { full_name, national_id, phone } = req.body || {};
+  const { full_name, national_id, phone, password } = req.body || {};
   if (!full_name) return res.status(400).json({ error: "full_name is required" });
+  if (!req.isAdmin && !/^10\d{10}$/.test(String(national_id || ""))) {
+    return res.status(400).json({ error: "Enter a valid 12-digit National ID issued by Home Affairs." });
+  }
+  if (!req.isAdmin && String(password || "").length < 8) {
+    return res.status(400).json({ error: "A password of at least eight characters is required." });
+  }
 
   if (req.dbUser) {
     return res.json({
@@ -443,6 +687,33 @@ app.post("/api/register", verifyToken, async (req, res) => {
   const conn = await db.getConnection();
   try {
     await conn.beginTransaction();
+    let issuance = null;
+    if (!req.isAdmin) {
+      const [issuedRows] = await conn.query(
+        `SELECT * FROM national_id_issuances
+         WHERE national_id_number = ? AND issuance_status = 'issued' FOR UPDATE`,
+        [String(national_id)]
+      );
+      issuance = issuedRows[0] || null;
+      if (!issuance) {
+        await conn.rollback();
+        return res.status(403).json({ error: "This National ID has not been issued or has already been registered." });
+      }
+      const suppliedEmail = String(req.email || "").toLowerCase();
+      const suppliedPhone = String(phone || req.phone || "");
+      if ((suppliedEmail && suppliedEmail !== String(issuance.email).toLowerCase()) ||
+          (!suppliedEmail && (!issuance.phone || suppliedPhone !== String(issuance.phone)))) {
+        await conn.rollback();
+        return res.status(403).json({ error: "Use the email or phone number recorded by Home Affairs for this National ID." });
+      }
+      if (!suppliedEmail) {
+        await firebaseAuth.updateUser(req.uid, { email: issuance.email, password: String(password), displayName: issuance.full_name });
+      } else {
+        await firebaseAuth.updateUser(req.uid, { displayName: issuance.full_name });
+      }
+    }
+    const officialFullName = req.isAdmin ? full_name : issuance.full_name;
+    const passwordHash = req.isAdmin ? "firebase-managed" : await hashCitizenPassword(password);
     const role = req.isAdmin ? "admin" : "client";
     const accountType = req.isAdmin ? "admin" : "citizen";
 
@@ -453,22 +724,22 @@ app.post("/api/register", verifyToken, async (req, res) => {
          email_verified, phone_verified, account_verified)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'active', 'active', ?, ?, ?)`,
       [
-        req.uid, full_name, req.email || null, phone || req.phone || null,
-        national_id || null, "firebase-managed", role, accountType,
+        req.uid, officialFullName, req.email || issuance?.email || null, phone || req.phone || issuance?.phone || null,
+        req.isAdmin ? null : national_id, passwordHash, role, accountType,
         !!req.email ? 1 : 0, req.phone ? 1 : 0,
         (!!req.email && req.phone) ? 1 : 0
       ]
     );
     const userId = userResult.insertId;
-    const newNationalId = await generateNationalId(conn);
-    await conn.query(
-      "INSERT INTO citizen_national_ids (user_id, national_id_number) VALUES (?, ?)",
-      [userId, newNationalId]
-    );
-    if (!national_id) {
+    if (!req.isAdmin) {
       await conn.query(
-        "UPDATE users SET national_id = ? WHERE user_id = ?",
-        [newNationalId, userId]
+        "INSERT INTO citizen_national_ids (user_id, national_id_number) VALUES (?, ?)",
+        [userId, national_id]
+      );
+      await conn.query(
+        `UPDATE national_id_issuances SET issuance_status = 'claimed', claimed_user_id = ?
+         WHERE issuance_id = ?`,
+        [userId, issuance.issuance_id]
       );
     }
     await conn.commit();
@@ -477,7 +748,7 @@ app.post("/api/register", verifyToken, async (req, res) => {
     res.status(201).json({
       success: true,
       user: await userWithIdentity(rows[0]),
-      nationalId: newNationalId,
+      nationalId: req.isAdmin ? null : national_id,
       isAdmin: rows[0].role === "admin"
     });
   } catch (err) {
@@ -496,6 +767,23 @@ app.post("/api/register", verifyToken, async (req, res) => {
 // AUTH: LOGIN
 // ============================================================
 app.post("/api/login", verifyToken, async (req, res) => {
+  if (!req.dbUser && req.isAdmin) {
+    try {
+      await db.query(
+        `INSERT INTO users
+         (firebase_uid, full_name, email, phone, national_id, password_hash, role,
+          account_type, account_status, status, email_verified, phone_verified, account_verified)
+         VALUES (?, ?, ?, ?, NULL, 'firebase-managed', 'admin', 'admin', 'active', 'active', 1, ?, 1)
+         ON DUPLICATE KEY UPDATE role = 'admin', account_type = 'admin', account_status = 'active'`,
+        [req.uid, req.name || req.email, req.email, req.phone || null, req.phone ? 1 : 0]
+      );
+      const [adminRows] = await db.query("SELECT * FROM users WHERE firebase_uid = ?", [req.uid]);
+      req.dbUser = adminRows[0] || null;
+    } catch (err) {
+      console.error("Admin profile bootstrap error:", err.message);
+      return res.status(500).json({ error: "Unable to initialize the admin account." });
+    }
+  }
   if (!req.dbUser) {
     return res.status(404).json({
       code: "NOT_REGISTERED",
@@ -611,6 +899,25 @@ app.get("/api/services", async (req, res) => {
   }
 });
 
+app.get("/api/birth-certificates/my", verifyToken, async (req, res) => {
+  if (!req.dbUser) return res.status(404).json({ error: "Register first." });
+  try {
+    const [records] = await db.query(
+      `SELECT birth_certificate_id, reference_number, full_name, date_of_birth, sex,
+              place_of_birth, parent_names, certificate_condition, record_status, created_at
+       FROM national_birth_certificates
+       WHERE record_status = 'approved'
+         AND (claimed_user_id = ? OR applicant_user_id = ? OR LOWER(email) = ?)
+       ORDER BY created_at DESC`,
+      [req.dbUser.user_id, req.dbUser.user_id, String(req.email || "").toLowerCase()]
+    );
+    res.json({ records });
+  } catch (err) {
+    console.error("Citizen birth-record load error:", err.message);
+    res.status(500).json({ error: "Could not load the verified birth records." });
+  }
+});
+
 app.get("/api/services/:id", async (req, res) => {
   try {
     const [s] = await db.query(
@@ -674,6 +981,51 @@ app.post(
         "SELECT field_key, required FROM service_form_fields WHERE service_id = ?",
         [serviceId]
       );
+      let selectedBirthRecord = null;
+      if (service.service_code === "NICR_BIRTH_CERT") {
+        if (!fields.birth_certificate_reference || !fields.reason_for_copy) {
+          throw new Error("Choose an approved birth record and enter the reason for this copy request.");
+        }
+        const [birthRows] = await conn.query(
+          `SELECT * FROM national_birth_certificates
+           WHERE reference_number = ? AND record_status = 'approved'
+             AND (claimed_user_id = ? OR applicant_user_id = ? OR LOWER(email) = ?)
+           FOR UPDATE`,
+          [fields.birth_certificate_reference, req.dbUser.user_id, req.dbUser.user_id,
+           String(req.email || "").toLowerCase()]
+        );
+        selectedBirthRecord = birthRows[0];
+        if (!selectedBirthRecord) throw new Error("That approved birth record is not linked to your account.");
+        const condition = String(fields.certificate_condition || "").toLowerCase();
+        if (!["standard copy", "lost", "damaged"].includes(condition)) {
+          throw new Error("Choose standard copy, lost, or damaged.");
+        }
+        if (condition === "lost") {
+          if (!fields.lost_date || !fields.loss_details || !fields.police_loss_letter_reference) {
+            throw new Error("A lost certificate requires the loss date, details, and Police Loss Report Letter.");
+          }
+          const [letterRows] = await conn.query(
+            `SELECT l.letter_id FROM police_letters l
+             JOIN police_applications p ON p.application_id = l.application_id
+             JOIN police_application_values v ON v.application_id = p.application_id
+             WHERE l.reference_number = ? AND l.user_id = ? AND l.letter_type = 'loss_report'
+               AND p.status = 'approved' AND p.application_type = 'lost_item_report'
+               AND v.field_key = 'birth_certificate_reference'
+               AND v.field_value = ?
+               AND EXISTS (SELECT 1 FROM police_application_values kind
+                 WHERE kind.application_id = p.application_id AND kind.field_key = 'document_type'
+                   AND LOWER(kind.field_value) = 'birth certificate') LIMIT 1`,
+            [fields.police_loss_letter_reference, req.dbUser.user_id, fields.birth_certificate_reference]
+          );
+          if (!letterRows.length) throw new Error("The Police letter must be issued for your approved lost birth-certificate report.");
+        }
+        if (condition === "damaged" && (!fields.damage_date || !fields.damage_description)) {
+          throw new Error("A damaged certificate request requires the damage date and a description.");
+        }
+        if (condition === "damaged" && !(req.files || []).some(file => file.originalname.includes("__damaged_birth_certificate_image__"))) {
+          throw new Error("Upload a photo of the damaged birth certificate.");
+        }
+      }
       const isAnotherPersonService = /^NICR_(BIRTH|DEATH|MARRIAGE)_/.test(service.service_code || "");
       const primaryNationalId = req.dbUser.national_id_number || req.dbUser.national_id;
       if (primaryNationalId && !isAnotherPersonService) {
@@ -687,7 +1039,7 @@ app.post(
         }
       }
       for (const def of defs) {
-        if (def.required && !isDateOfBirthField(def) && !fields[def.field_key]) {
+        if (service.service_code !== "NICR_BIRTH_CERT" && def.required && !isDateOfBirthField(def) && !fields[def.field_key]) {
           throw new Error(`Missing required field: ${def.field_key}`);
         }
       }
@@ -716,11 +1068,11 @@ app.post(
             (application_id, request_type, subject_full_name, date_of_event, requested_changes)
            VALUES (?, ?, ?, ?, ?)`,
           [appId, mapNICRRequestType(service.service_code),
-           fields.child_first_name
+           selectedBirthRecord ? selectedBirthRecord.full_name : fields.child_first_name
              ? `${fields.child_first_name} ${fields.child_middle_name || ""} ${fields.child_last_name || ""}`.trim()
              : fields.subject_full_name || fields.certificate_holder_name ||
                fields.deceased_full_name || fields.full_name || req.dbUser.full_name,
-           fields.child_dob || fields.date_of_birth || fields.date_of_death ||
+           (selectedBirthRecord?.date_of_birth || fields.child_dob || fields.date_of_birth || fields.date_of_death) ||
              fields.marriage_date || null,
            JSON.stringify(fields)]
         );
@@ -977,6 +1329,169 @@ function requireAdmin(req, res, next) {
   next();
 }
 
+app.get("/api/admin/birth-certificates", verifyToken, requireAdmin, async (_req, res) => {
+  try {
+    const [certificates] = await db.query(
+      `SELECT * FROM national_birth_certificates ORDER BY created_at DESC LIMIT 100`
+    );
+    res.json({ certificates });
+  } catch (err) {
+    console.error("Birth certificate registry error:", err.message);
+    res.status(500).json({ error: "Unable to load the birth certificate register." });
+  }
+});
+
+app.post("/api/admin/birth-certificates", verifyToken, requireAdmin, async (req, res) => {
+  const {
+    full_name, date_of_birth, sex, place_of_birth, parent_names, certificate_condition,
+    email, phone, parent_one_id_verified, parent_two_id_verified,
+    birth_notification_verified, immunization_card_verified, verification_notes
+  } = req.body || {};
+  if (!full_name || !date_of_birth || !sex || !place_of_birth || !email) {
+    return res.status(400).json({ error: "Complete the applicant, birth, and account contact details." });
+  }
+  if (!parent_one_id_verified || !parent_two_id_verified ||
+      !birth_notification_verified || !immunization_card_verified) {
+    return res.status(400).json({ error: "Verify the parent or guardian IDs, birth notification, and immunization card before approval." });
+  }
+  if (!/^\S+@\S+\.\S+$/.test(String(email).trim())) {
+    return res.status(400).json({ error: "Enter a valid account email." });
+  }
+  const normalizedEmail = String(email).trim().toLowerCase();
+  if (ADMIN_EMAILS.includes(normalizedEmail)) {
+    return res.status(409).json({ error: "Use the citizen's email address, not an administrator email." });
+  }
+  const [[existingAccount]] = await db.query("SELECT user_id FROM users WHERE LOWER(email) = ? LIMIT 1", [normalizedEmail]);
+  if (existingAccount) return res.status(409).json({ error: "That email already belongs to an account. Use an unused citizen email for this identity record." });
+  const conn = await db.getConnection();
+  try {
+    await conn.beginTransaction();
+    const [[duplicateBirth]] = await conn.query(
+      `SELECT reference_number FROM national_birth_certificates
+       WHERE record_status = 'approved' AND LOWER(TRIM(full_name)) = LOWER(TRIM(?))
+         AND date_of_birth = ? LIMIT 1 FOR UPDATE`,
+      [full_name.trim(), date_of_birth]
+    );
+    if (duplicateBirth) throw new Error(`An approved birth record already exists (${duplicateBirth.reference_number}). Use that record instead of creating a duplicate.`);
+    const reference = await generateBirthCertificateReference(conn);
+    const [result] = await conn.query(
+      `INSERT INTO national_birth_certificates
+       (reference_number, full_name, date_of_birth, sex, place_of_birth, parent_names,
+        certificate_condition, email, phone, parent_one_id_verified, parent_two_id_verified,
+        birth_notification_verified, immunization_card_verified, verification_notes,
+        record_status, issued_by)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 1, 1, 1, ?, 'approved', ?)`,
+      [reference, full_name.trim(), date_of_birth, sex, place_of_birth.trim(), parent_names || null,
+       certificate_condition || "standard", String(email).trim().toLowerCase(), phone || null,
+       verification_notes || null, req.dbUser?.user_id || null]
+    );
+    await conn.commit();
+    const [[certificate]] = await conn.query(
+      "SELECT * FROM national_birth_certificates WHERE birth_certificate_id = ?", [result.insertId]
+    );
+    res.status(201).json({ success: true, certificate });
+  } catch (err) {
+    await conn.rollback();
+    console.error("Birth certificate record creation error:", err.message);
+    res.status(500).json({ error: "Birth certificate record could not be created." });
+  } finally {
+    conn.release();
+  }
+});
+
+app.get("/api/admin/national-ids", verifyToken, requireAdmin, async (_req, res) => {
+  try {
+    const [issuances] = await db.query(
+      `SELECT i.*, u.full_name AS account_name
+       FROM national_id_issuances i
+       LEFT JOIN users u ON u.user_id = i.claimed_user_id
+       ORDER BY i.issued_at DESC LIMIT 100`
+    );
+    res.json({ issuances });
+  } catch (err) {
+    console.error("National ID list error:", err.message);
+    res.status(500).json({ error: "Unable to load National ID register" });
+  }
+});
+
+app.post("/api/admin/national-ids", verifyToken, requireAdmin, async (req, res) => {
+  const {
+    full_name, date_of_birth, sex, place_of_birth, nationality, parent_names,
+    residential_address, email, phone, birth_certificate_reference, issue_date, place_of_issue,
+    expiry_date, issuing_authority
+    , photo_captured, fingerprints_captured, signature_captured, capture_reference
+  } = req.body || {};
+  if (!email || !birth_certificate_reference || !issue_date || !place_of_issue || !String(residential_address || "").trim()) {
+    return res.status(400).json({ error: "Complete the identity, contact, residential address, and birth-certificate fields." });
+  }
+  if (!/^\S+@\S+\.\S+$/.test(String(email).trim())) {
+    return res.status(400).json({ error: "Enter a valid email address for the citizen account." });
+  }
+  if (ADMIN_EMAILS.includes(String(email).trim().toLowerCase())) {
+    return res.status(409).json({ error: "That email is reserved for an administrator account." });
+  }
+  if (!photo_captured || !fingerprints_captured || !signature_captured || !capture_reference) {
+    return res.status(400).json({ error: "Record officer-confirmed in-person photo, fingerprints, signature or thumbprint, and capture reference before issuance." });
+  }
+  const conn = await db.getConnection();
+  try {
+    await conn.beginTransaction();
+    const [birthRows] = await conn.query(
+      `SELECT * FROM national_birth_certificates
+       WHERE reference_number = ? AND record_status = 'approved' FOR UPDATE`,
+      [birth_certificate_reference.trim()]
+    );
+    const birthRecord = birthRows[0];
+    if (!birthRecord) {
+      await conn.rollback();
+      return res.status(400).json({ error: "Choose an approved birth-certificate record from the Home Affairs register." });
+    }
+    const birthDate = new Date(`${String(birthRecord.date_of_birth).slice(0, 10)}T00:00:00Z`);
+    const today = new Date();
+    let applicantAge = today.getUTCFullYear() - birthDate.getUTCFullYear();
+    if (today.getUTCMonth() < birthDate.getUTCMonth() ||
+        (today.getUTCMonth() === birthDate.getUTCMonth() && today.getUTCDate() < birthDate.getUTCDate())) applicantAge -= 1;
+    if (!Number.isFinite(birthDate.getTime()) || applicantAge < 16) {
+      await conn.rollback();
+      return res.status(400).json({ error: "First National ID issuance requires an eligible applicant aged 16 or older." });
+    }
+    const nationalId = await generateNationalId(conn);
+    const defaultExpiryDate = new Date(`${issue_date}T00:00:00Z`);
+    defaultExpiryDate.setUTCFullYear(defaultExpiryDate.getUTCFullYear() + 10);
+    const cardExpiryDate = expiry_date || defaultExpiryDate.toISOString().slice(0, 10);
+    const [result] = await conn.query(
+      `INSERT INTO national_id_issuances
+       (national_id_number, email, phone, full_name, date_of_birth, sex, place_of_birth,
+        nationality, parent_names, residential_address, birth_certificate_reference,
+        issue_date, place_of_issue, expiry_date, card_control_number, issuing_authority,
+        issued_by, application_data)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       [nationalId, String(email).trim().toLowerCase(), phone || birthRecord.phone || null, birthRecord.full_name,
+       birthRecord.date_of_birth, birthRecord.sex, birthRecord.place_of_birth, nationality || "Mosotho", birthRecord.parent_names || null,
+       residential_address || null, birth_certificate_reference.trim(), issue_date,
+       place_of_issue || "Maseru", cardExpiryDate, null,
+       issuing_authority || "National Identity and Civil Registry", req.dbUser?.user_id || null,
+       JSON.stringify({ ...(req.body || {}), full_name: birthRecord.full_name,
+         date_of_birth: String(birthRecord.date_of_birth).slice(0, 10), sex: birthRecord.sex,
+         place_of_birth: birthRecord.place_of_birth, parent_names: birthRecord.parent_names,
+         national_id_number: nationalId })]
+    );
+    const cardControlNumber = `NID-${new Date(`${issue_date}T00:00:00Z`).getUTCFullYear()}-${String(result.insertId).padStart(6, "0")}`;
+    await conn.query("UPDATE national_id_issuances SET card_control_number = ? WHERE issuance_id = ?", [cardControlNumber, result.insertId]);
+    await conn.commit();
+    const [[issuance]] = await conn.query(
+      "SELECT * FROM national_id_issuances WHERE issuance_id = ?", [result.insertId]
+    );
+    res.status(201).json({ success: true, issuance });
+  } catch (err) {
+    await conn.rollback();
+    console.error("National ID issue error:", err.message);
+    res.status(err.code === "ER_DUP_ENTRY" ? 409 : 500).json({ error: err.code === "ER_DUP_ENTRY" ? "This birth certificate has already been used for a National ID." : "National ID could not be issued." });
+  } finally {
+    conn.release();
+  }
+});
+
 app.get("/api/admin/stats", verifyToken, requireAdmin, async (req, res) => {
   try {
     const [byStatus] = await db.query(
@@ -1133,6 +1648,78 @@ app.post("/api/admin/applications/:id/status", verifyToken, requireAdmin, async 
       throw new Error("This application belongs to a different office");
     }
 
+    let birthRegistryRecord = null;
+    if (newStatus === "approved" && app.module === "NICR") {
+      const [[service]] = await conn.query(
+        `SELECT service_code FROM service_catalog WHERE service_id = ? LIMIT 1`, [app.service_id]
+      );
+      if (service?.service_code === "NICR_BIRTH_CERT") {
+        const [valueRows] = await conn.query(
+          "SELECT field_key, field_value FROM application_field_values WHERE application_id = ?",
+          [app.application_id]
+        );
+        const birthValues = Object.fromEntries(valueRows.map(row => [row.field_key, row.field_value]));
+        if (birthValues.birth_certificate_reference) {
+          const [[sourceRecord]] = await conn.query(
+            `SELECT birth_certificate_id FROM national_birth_certificates
+             WHERE reference_number = ? AND record_status = 'approved' LIMIT 1`,
+            [birthValues.birth_certificate_reference]
+          );
+          if (!sourceRecord) throw new Error("The source birth record is no longer approved.");
+          // Copy/replacement requests use the existing source record; approving
+          // them must never create a second civil birth record.
+        } else {
+        const [docRows] = await conn.query(
+          `SELECT original_filename FROM documents WHERE application_id = ?`, [app.application_id]
+        );
+        const names = docRows.map(doc => doc.original_filename || "").join(" ").toLowerCase();
+        const verifiedDocs = {
+          parent_one_id_verified: names.includes("birth_parent_one_id"),
+          parent_two_id_verified: names.includes("birth_parent_two_id"),
+          birth_notification_verified: names.includes("birth_notification"),
+          immunization_card_verified: names.includes("birth_immunization_card")
+        };
+        if (Object.values(verifiedDocs).some(value => !value)) {
+          throw new Error("This birth-certificate request cannot be approved until both parent IDs, the birth notification, and the immunization card are on file.");
+        }
+        const childName = [birthValues.child_first_name, birthValues.child_middle_name, birthValues.child_last_name]
+          .filter(Boolean).join(" ").trim();
+        if (!childName || !birthValues.child_dob || !birthValues.child_sex || !birthValues.child_place_of_occurrence) {
+          throw new Error("Complete the child name, date of birth, sex, and place of birth before approval.");
+        }
+        const [[duplicate]] = await conn.query(
+          `SELECT reference_number FROM national_birth_certificates
+           WHERE record_status = 'approved' AND LOWER(TRIM(full_name)) = LOWER(TRIM(?))
+             AND date_of_birth = ? AND reference_number <> ? LIMIT 1 FOR UPDATE`,
+          [childName, birthValues.child_dob, app.reference_number]
+        );
+        if (duplicate) throw new Error(`An approved birth record already exists (${duplicate.reference_number}); do not create a duplicate.`);
+        birthRegistryRecord = {
+          reference: app.reference_number,
+          fullName: childName,
+          dateOfBirth: birthValues.child_dob,
+          sex: String(birthValues.child_sex).toLowerCase(),
+          placeOfBirth: birthValues.child_place_of_occurrence,
+          parentNames: birthValues.parent_names || null,
+          condition: /damaged/i.test(birthValues.certificate_condition || "") ? "damaged" : "standard",
+          userId: app.user_id,
+          applicationId: app.application_id,
+          email: null,
+          phone: null,
+          verifiedDocs
+        };
+        const [[owner]] = await conn.query(
+          "SELECT email, phone, full_name FROM users WHERE user_id = ? LIMIT 1", [app.user_id]
+        );
+        birthRegistryRecord.email = owner?.email || "";
+        birthRegistryRecord.phone = owner?.phone || null;
+        if (String(owner?.full_name || "").trim().toLowerCase() === childName.toLowerCase()) {
+          birthRegistryRecord.claimedUserId = app.user_id;
+        }
+        }
+      }
+    }
+
     await conn.query(
       `UPDATE applications
          SET status = ?, decision_notes = ?,
@@ -1155,6 +1742,29 @@ app.post("/api/admin/applications/:id/status", verifyToken, requireAdmin, async 
       [app.user_id, app.application_id, "Application status updated",
        `Application ${app.reference_number} is now: ${newStatus.replace(/_/g, " ")}.`]
     );
+
+    if (birthRegistryRecord) {
+      await conn.query(
+        `INSERT INTO national_birth_certificates
+         (reference_number, full_name, date_of_birth, sex, place_of_birth, parent_names,
+          certificate_condition, email, phone, parent_one_id_verified, parent_two_id_verified,
+          birth_notification_verified, immunization_card_verified, record_status, issued_by,
+          applicant_user_id, claimed_user_id, original_application_id)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'approved', ?, ?, ?, ?)
+         ON DUPLICATE KEY UPDATE full_name = VALUES(full_name), date_of_birth = VALUES(date_of_birth),
+          sex = VALUES(sex), place_of_birth = VALUES(place_of_birth), parent_names = VALUES(parent_names),
+          email = VALUES(email), phone = VALUES(phone), record_status = 'approved'`,
+        [birthRegistryRecord.reference, birthRegistryRecord.fullName, birthRegistryRecord.dateOfBirth,
+         birthRegistryRecord.sex, birthRegistryRecord.placeOfBirth, birthRegistryRecord.parentNames,
+         birthRegistryRecord.condition, birthRegistryRecord.email, birthRegistryRecord.phone,
+         birthRegistryRecord.verifiedDocs.parent_one_id_verified ? 1 : 0,
+         birthRegistryRecord.verifiedDocs.parent_two_id_verified ? 1 : 0,
+         birthRegistryRecord.verifiedDocs.birth_notification_verified ? 1 : 0,
+         birthRegistryRecord.verifiedDocs.immunization_card_verified ? 1 : 0,
+         req.dbUser?.user_id || null, birthRegistryRecord.userId,
+         birthRegistryRecord.claimedUserId || null, birthRegistryRecord.applicationId]
+      );
+    }
 
     await conn.commit();
     await logAudit(req.dbUser.user_id, app.application_id, "STATUS_CHANGED",
@@ -1313,6 +1923,14 @@ app.post(
       );
       if (!svcRows.length) throw new Error("Passport service not available");
       const service = normalizePassportService(svcRows[0]);
+      const [defs] = await conn.query(
+        "SELECT field_key, required FROM passport_service_fields WHERE service_id = ?", [serviceId]
+      );
+      const sharedIdentity = await getPensionIdentity(conn, req.dbUser.user_id, req.phone);
+      for (const def of defs) {
+        const officialValue = sharedCitizenFieldValue(def.field_key, sharedIdentity);
+        if (officialValue) fields[def.field_key] = officialValue;
+      }
       const documents = req.files || [];
       const passportSizePhoto = documents.find(file =>
         file.originalname.startsWith("passport_size_photo__") && file.mimetype.startsWith("image/")
@@ -1364,10 +1982,6 @@ app.post(
         }
       }
 
-      const [defs] = await conn.query(
-        "SELECT field_key, required FROM passport_service_fields WHERE service_id = ?",
-        [serviceId]
-      );
       for (const def of defs) {
         if (def.required && !isDateOfBirthField(def) && !fields[def.field_key]) {
           throw new Error(`Missing required field: ${def.field_key}`);
@@ -2344,6 +2958,19 @@ app.post(
     try {
       await conn.beginTransaction();
 
+      if (["DRIVING_SCHOOL_REGISTRATION", "INSTRUCTOR_REGISTRATION"].includes(applicationType)) {
+        const sharedIdentity = await getPensionIdentity(conn, req.dbUser.user_id, req.phone);
+        if (applicationType === "DRIVING_SCHOOL_REGISTRATION") {
+          if (sharedIdentity?.full_name) fields.owner_name = sharedIdentity.full_name;
+          if (sharedIdentity?.national_id_number || sharedIdentity?.national_id) fields.owner_id = sharedIdentity.national_id_number || sharedIdentity.national_id;
+          if (sharedIdentity?.phone) fields.contact_phone = sharedIdentity.phone;
+          if (sharedIdentity?.email) fields.contact_email = sharedIdentity.email;
+        } else {
+          if (sharedIdentity?.full_name) fields.full_name = sharedIdentity.full_name;
+          if (sharedIdentity?.national_id_number || sharedIdentity?.national_id) fields.national_id = sharedIdentity.national_id_number || sharedIdentity.national_id;
+        }
+      }
+
       let catId = categoryId;
       if (!catId) {
         const [c] = await conn.query(
@@ -2827,6 +3454,55 @@ app.post("/api/police/admin/applications/:id/status", verifyToken, requireAdmin,
 // ------------------------------------------------------------
 // POLICE — ADMIN record payment
 // ------------------------------------------------------------
+app.post("/api/police/admin/applications/:id/loss-letter", verifyToken, requireAdmin, async (req, res) => {
+  const conn = await db.getConnection();
+  try {
+    await conn.beginTransaction();
+    const [[report]] = await conn.query(
+      `SELECT p.*, u.full_name, u.national_id, u.phone FROM police_applications p
+       JOIN users u ON u.user_id = p.user_id WHERE p.application_id = ? FOR UPDATE`, [req.params.id]
+    );
+    if (!report || report.application_type !== "lost_item_report" || report.status !== "approved") throw new Error("Approve the lost-item report before issuing its letter.");
+    const [[birthRef]] = await conn.query(
+      `SELECT field_value FROM police_application_values WHERE application_id = ? AND field_key = 'birth_certificate_reference' LIMIT 1`, [report.application_id]
+    );
+    if (!birthRef?.field_value) throw new Error("This report is not linked to a birth certificate.");
+    const [[documentKind]] = await conn.query(
+      `SELECT field_value FROM police_application_values WHERE application_id = ?
+       AND field_key = 'document_type' LIMIT 1`, [report.application_id]
+    );
+    if (String(documentKind?.field_value || "").toLowerCase() !== "birth certificate") throw new Error("A birth-certificate loss report must identify the document type.");
+    const [[existing]] = await conn.query("SELECT reference_number FROM police_letters WHERE application_id = ? AND letter_type = 'loss_report' LIMIT 1", [report.application_id]);
+    if (existing) { await conn.commit(); return res.json({ success: true, reference: existing.reference_number, alreadyIssued: true }); }
+    const [[incident]] = await conn.query(
+      `SELECT MAX(CASE WHEN field_key='items_lost' THEN field_value END) AS items,
+              MAX(CASE WHEN field_key='incident_date' THEN field_value END) AS incident_date,
+              MAX(CASE WHEN field_key='incident_location' THEN field_value END) AS location
+       FROM police_application_values WHERE application_id = ?`, [report.application_id]
+    );
+    const letterRef = await generatePoliceLetterReference(conn);
+    const rendered = POLICE_LETTER_TEMPLATES.loss_report.build({
+      reference: report.reference_number, letterReference: letterRef, date: new Date().toLocaleString("en-LS"), fullName: report.full_name,
+      nationalId: report.national_id || "", contact: report.phone || "", title: report.title || "Lost birth certificate",
+      type: "lost item report", district: report.district || "", location: incident?.location || "",
+      incidentDate: incident?.incident_date || "", status: report.status, items: incident?.items || "Birth certificate"
+    });
+    await conn.query(
+      `INSERT INTO police_letters (reference_number, user_id, application_id, letter_type, title, body, status, issued_at)
+       VALUES (?, ?, ?, 'loss_report', ?, ?, 'issued', NOW())`,
+      [letterRef, report.user_id, report.application_id, rendered.title, rendered.body]
+    );
+    await conn.query(
+      `INSERT INTO police_notifications (user_id, application_id, title, message)
+       VALUES (?, ?, 'Police Loss Report Letter issued', ?)` ,
+      [report.user_id, report.application_id, `Your Police letter ${letterRef} is ready. Use it as proof in your Home Affairs copy request.`]
+    );
+    await conn.commit();
+    res.status(201).json({ success: true, reference: letterRef, title: rendered.title, body: rendered.body });
+  } catch (err) { await conn.rollback(); res.status(400).json({ error: err.message || "Could not issue the Police letter." }); }
+  finally { conn.release(); }
+});
+
 app.post("/api/police/admin/applications/:id/payment", verifyToken, requireAdmin, async (req, res) => {
   const { fee_type, amount, payment_method, transaction_reference, payment_status } = req.body || {};
   if (!amount) return res.status(400).json({ error: "amount required" });
@@ -3066,6 +3742,7 @@ Commissioner of Oaths / Police Officer`
 LOSS REPORT LETTER
 
 Reference: ${ctx.reference}
+Letter reference: ${ctx.letterReference || ctx.reference}
 Date: ${ctx.date}
 Reporter: ${ctx.fullName}
 National ID: ${ctx.nationalId || "—"}
@@ -3220,6 +3897,9 @@ app.post("/api/police/letters", verifyToken, async (req, res) => {
   if (!letter_type || !POLICE_LETTER_TEMPLATES[letter_type]) {
     return res.status(400).json({ error: "Invalid letter_type" });
   }
+  if (letter_type === "loss_report") {
+    return res.status(403).json({ error: "Police must review and issue a Loss Report Letter after approving your lost-item report." });
+  }
 
   const conn = await db.getConnection();
   try {
@@ -3304,11 +3984,15 @@ app.get("/api/police/letters/my", verifyToken, async (req, res) => {
   if (!req.dbUser) return res.json({ letters: [] });
   try {
     const [rows] = await db.query(
-      `SELECT letter_id, reference_number, letter_type, title, status,
-              issued_at, application_id
-       FROM police_letters
-       WHERE user_id = ?
-       ORDER BY issued_at DESC`,
+      `SELECT l.letter_id, l.reference_number, l.letter_type, l.title, l.status,
+              l.issued_at, l.application_id, p.reference_number AS report_reference,
+              (SELECT v.field_value FROM police_application_values v
+               WHERE v.application_id = p.application_id AND v.field_key = 'birth_certificate_reference'
+               LIMIT 1) AS birth_certificate_reference
+       FROM police_letters l
+       LEFT JOIN police_applications p ON p.application_id = l.application_id
+       WHERE l.user_id = ?
+       ORDER BY l.issued_at DESC`,
       [req.dbUser.user_id]
     );
     res.json({ letters: rows });
@@ -5256,10 +5940,30 @@ function pensionAgeOnDate(dateOfBirth, today = new Date()) {
 
 async function getPensionIdentity(conn, userId, authPhone = null) {
   const [[identity]] = await conn.query(
-    `SELECT u.full_name, u.phone, u.national_id,
+    `SELECT u.full_name, u.phone, u.email, u.national_id,
             (SELECT n.national_id_number FROM citizen_national_ids n
              WHERE n.user_id = u.user_id LIMIT 1) AS national_id_number,
-            (SELECT COALESCE(cr.date_of_birth, crq.date_of_event,
+            (SELECT i.residential_address FROM national_id_issuances i
+             WHERE i.claimed_user_id = u.user_id ORDER BY i.issued_at DESC LIMIT 1) AS residential_address,
+            (SELECT i.nationality FROM national_id_issuances i
+             WHERE i.claimed_user_id = u.user_id ORDER BY i.issued_at DESC LIMIT 1) AS nationality,
+            (SELECT bc.sex FROM national_birth_certificates bc
+             WHERE bc.record_status = 'approved' AND bc.claimed_user_id = u.user_id
+             ORDER BY bc.created_at DESC LIMIT 1) AS sex,
+            (SELECT bc.place_of_birth FROM national_birth_certificates bc
+             WHERE bc.record_status = 'approved' AND bc.claimed_user_id = u.user_id
+             ORDER BY bc.created_at DESC LIMIT 1) AS place_of_birth,
+            (SELECT bc.parent_names FROM national_birth_certificates bc
+             WHERE bc.record_status = 'approved' AND bc.claimed_user_id = u.user_id
+             ORDER BY bc.created_at DESC LIMIT 1) AS parent_names,
+            (SELECT bc.reference_number FROM national_birth_certificates bc
+             WHERE bc.record_status = 'approved' AND bc.claimed_user_id = u.user_id
+             ORDER BY bc.created_at DESC LIMIT 1) AS birth_certificate_reference,
+            COALESCE(
+             (SELECT bc.date_of_birth FROM national_birth_certificates bc
+              WHERE bc.record_status = 'approved' AND bc.claimed_user_id = u.user_id
+              ORDER BY bc.created_at DESC LIMIT 1),
+             (SELECT COALESCE(cr.date_of_birth, crq.date_of_event,
                     (SELECT v.field_value FROM application_field_values v
                      WHERE v.application_id = a.application_id
                        AND v.field_key IN ('holder_date_of_birth','date_of_birth','child_dob')
@@ -5282,7 +5986,7 @@ async function getPensionIdentity(conn, userId, authPhone = null) {
                         AND LOWER(TRIM(holder.field_value)) = LOWER(TRIM(u.full_name))
                     ))
              ORDER BY a.decision_at DESC, a.application_id DESC
-             LIMIT 1) AS verified_date_of_birth
+             LIMIT 1)) AS verified_date_of_birth
      FROM users u WHERE u.user_id = ? LIMIT 1`,
     [userId]
   );
@@ -5300,6 +6004,13 @@ async function getPensionIdentity(conn, userId, authPhone = null) {
     national_id_number: idNumber,
     legacy_national_id: identity.national_id || null,
     phone,
+    email: identity.email || null,
+    residential_address: identity.residential_address || null,
+    nationality: identity.nationality || null,
+    sex: identity.sex || null,
+    place_of_birth: identity.place_of_birth || null,
+    parent_names: identity.parent_names || null,
+    birth_certificate_reference: identity.birth_certificate_reference || null,
     date_of_birth: dateOfBirth,
     date_of_birth_source: identity.verified_date_of_birth ? "HOME_AFFAIRS" :
       (profile?.date_of_birth_verified ? "PROFILE" : null),
@@ -5321,6 +6032,12 @@ async function userWithIdentity(user, authPhone = null) {
     date_of_birth: identity?.date_of_birth || null,
     date_of_birth_verified: Boolean(identity?.date_of_birth),
     date_of_birth_source: identity?.date_of_birth_source || null,
+    residential_address: identity?.residential_address || null,
+    nationality: identity?.nationality || null,
+    sex: identity?.sex || null,
+    place_of_birth: identity?.place_of_birth || null,
+    parent_names: identity?.parent_names || null,
+    birth_certificate_reference: identity?.birth_certificate_reference || null,
     age: identity?.age ?? null
   });
 }

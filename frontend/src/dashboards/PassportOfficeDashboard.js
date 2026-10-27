@@ -71,6 +71,32 @@ const isPassportNumberField = field => /passport.*(number|no\b)/i.test(
   `${field.field_key || ""} ${field.label || ""}`
 );
 
+function passportHomeAffairsValue(field, profile) {
+  const key = `${field.field_key || ""} ${field.label || ""}`.toLowerCase().replace(/[^a-z0-9]+/g, "_");
+  const names = String(profile?.full_name || "").trim().split(/\s+/).filter(Boolean);
+  if (/parent_names|parents_names|names_of_parents/.test(key)) return profile?.parent_names || "";
+  if (/emergency|next_of_kin|guardian|seller|new_owner|spouse|witness|child/.test(key)) return "";
+  if (/given_names|first_name|forenames/.test(key)) return names.slice(0, -1).join(" ") || names[0] || "";
+  if (/surname|last_name|family_name/.test(key)) return names.length > 1 ? names[names.length - 1] : "";
+  if (/full_name|applicant_name|holder_name/.test(key)) return profile?.full_name || "";
+  if (/national_id|identity_number|id_number|id_no/.test(key)) return profile?.national_id_number || profile?.national_id || "";
+  if (/date_of_birth|birth_date|dob/.test(key)) return String(profile?.date_of_birth || "").slice(0, 10);
+  if (/nationality|citizenship/.test(key)) return profile?.nationality || "";
+  if (/birth_certificate_(reference|number)|birth_registration_number/.test(key)) return profile?.birth_certificate_reference || "";
+  if (/place_of_birth|birth_place/.test(key)) return profile?.place_of_birth || "";
+  if (/residential_address|physical_address|home_address|(^|_)address($|_)/.test(key)) return profile?.residential_address || "";
+  if (/phone|mobile|telephone/.test(key)) return profile?.phone || "";
+  if (/email/.test(key)) return profile?.email || "";
+  if (/sex|gender/.test(key)) return profile?.sex || "";
+  return "";
+}
+
+function isVerifiedPassportIdentityField(field, profile) {
+  const value = passportHomeAffairsValue(field, profile);
+  const key = `${field.field_key || ""} ${field.label || ""}`.toLowerCase();
+  return Boolean(value) && /(name|surname|forename|national.?id|identity.?number|date.?of.?birth|birth.?date|dob|nationality|citizenship|sex|gender|place.?of.?birth|birth.?certificate|birth.?registration)/i.test(key);
+}
+
 // Statuses in which the citizen is still allowed to delete their own application
 const DELETABLE_STATUSES = ["submitted", "more_information_required"];
 
@@ -197,6 +223,7 @@ function PassportOfficeDashboard({ onLogout }) {
       .then(data => {
         setActiveService(normalizePassportService(data.service));
         setFields(data.fields);
+        setValues(Object.fromEntries((data.fields || []).map(field => [field.field_key, passportHomeAffairsValue(field, me)]).filter(([, value]) => Boolean(value))));
       })
       .catch(err => alert(err.message));
   }
@@ -910,6 +937,12 @@ function PassportOfficeDashboard({ onLogout }) {
           </div>
 
           <form onSubmit={submit}>
+            {me && <div style={{ marginBottom: 14, padding: 12, background: "#eff8ff", borderRadius: 8, fontSize: 12, color: COLORS.textMid }}>
+              <strong>Home Affairs identity linked</strong>
+              <div style={{ marginTop: 5 }}>{me.full_name || "Name unavailable"} · ID {me.national_id_number || me.national_id || "not linked"} · DOB {me.date_of_birth ? String(me.date_of_birth).slice(0, 10) : "not verified"}</div>
+              {me.residential_address && <div style={{ marginTop: 3 }}>Address: {me.residential_address}</div>}
+              <div style={{ marginTop: 4 }}>Verified identity fields are filled from your Home Affairs record. Service-specific items, photos, and proof still need to be supplied.</div>
+            </div>}
             {isReplacement && (
               <Field
                 field={{
@@ -1002,12 +1035,12 @@ function PassportOfficeDashboard({ onLogout }) {
             )}
 
             {(isRenewal || isReplacement || hasRequiredDocuments) && additionalPassportFields.map(f => (
-              <Field
-                key={f.field_key}
-                field={f}
-                value={values[f.field_key] || ""}
-                onChange={v => setValues(p => ({ ...p, [f.field_key]: v }))}
-              />
+              <div key={f.field_key}>
+                {passportHomeAffairsValue(f, me) && <p style={{ margin: "0 0 5px", fontSize: 11, color: COLORS.green }}>{isVerifiedPassportIdentityField(f, me) ? "Filled from your verified Home Affairs record" : "Prefilled from your Home Affairs address; update if you have moved"}</p>}
+                <Field field={f} value={values[f.field_key] || ""}
+                  disabled={isVerifiedPassportIdentityField(f, me)}
+                  onChange={v => setValues(p => ({ ...p, [f.field_key]: v }))} />
+              </div>
             ))}
 
             {isEmergencyFirstTime && !additionalPassportFields.some(f => f.field_key === "reason") && (
@@ -1201,7 +1234,7 @@ function Chip({ children, tone, className }) {
   );
 }
 
-function Field({ field, value, onChange }) {
+function Field({ field, value, onChange, disabled = false }) {
   const common = {
     width: "100%", padding: "10px 12px",
     border: `1px solid ${COLORS.border}`, borderRadius: 6,
@@ -1212,12 +1245,12 @@ function Field({ field, value, onChange }) {
   if (field.field_type === "textarea") {
     input = (
       <textarea value={value} onChange={e => onChange(e.target.value)}
-        required={field.required} rows={3} style={common} />
+        required={field.required} rows={3} disabled={disabled} style={common} />
     );
   } else if (field.field_type === "select") {
     input = (
       <select value={value} onChange={e => onChange(e.target.value)}
-        required={field.required} style={common}>
+        required={field.required} disabled={disabled} style={common}>
         <option value="">Select…</option>
         {(field.options || []).map(o => <option key={o} value={o}>{o}</option>)}
       </select>
@@ -1226,7 +1259,7 @@ function Field({ field, value, onChange }) {
     input = (
       <input type={field.field_type} value={value}
         onChange={e => onChange(e.target.value)}
-        required={field.required} style={common}
+        required={field.required} disabled={disabled} style={common}
         placeholder={field.placeholder || ""} />
     );
   }
