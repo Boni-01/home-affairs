@@ -647,7 +647,7 @@ app.get("/api/services/:id", async (req, res) => {
 app.post(
   "/api/applications",
   verifyToken,
-  uploadDocuments.array("documents", 10),
+  uploadDocuments.array("documents", 20),
   async (req, res) => {
     if (!req.dbUser) return res.status(400).json({ error: "Register first" });
 

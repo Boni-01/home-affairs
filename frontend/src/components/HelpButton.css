@@ -84,6 +84,11 @@ body[data-theme="dark"] .auth-page {
   color: #fff !important;
 }
 
+body[data-theme="dark"] .dashboard-page .home-affairs-requirements {
+  background: #102b48 !important;
+  border-color: #34516c !important;
+}
+
 body[data-theme="dark"] .dashboard-page *,
 body[data-theme="dark"] .home-dashboard-page *,
 body[data-theme="dark"] .auth-page * {

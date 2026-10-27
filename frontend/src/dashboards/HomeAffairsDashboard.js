@@ -140,11 +140,6 @@ const BIRTH_CERTIFICATE_EXTRA_FIELDS = {
 };
 
 const NATIONAL_ID_UPLOADS = {
-  NICR_ID_NEW: {
-    key: "__birth_certificate_image",
-    label: "Birth certificate photo",
-    instructions: "Upload a clear image showing the applicant's name. You must upload it before completing the ID form."
-  },
   NICR_ID_RENEW: {
     key: "__old_id_image",
     label: "Photo of current National ID",
@@ -164,9 +159,154 @@ const DAMAGED_BIRTH_CERTIFICATE_UPLOAD = {
   instructions: "Upload a clear image of the damaged certificate showing the holder's name."
 };
 
+const NATIONAL_ID_AGE_FIELD = {
+  field_key: "applicant_age_category",
+  label: "Applicant’s age",
+  field_type: "select",
+  options: ["16 or younger", "Older than 16"],
+  required: true
+};
+
+const REQUIREMENT_FIELDS = {
+  NICR_BIRTH_CERT: [
+    { field_key: "child_first_name", label: "Child’s first name", field_type: "text", required: true },
+    { field_key: "child_middle_name", label: "Child’s middle name", field_type: "text", required: false },
+    { field_key: "child_last_name", label: "Child’s last name", field_type: "text", required: true },
+    { field_key: "child_dob", label: "Child’s date of birth", field_type: "date", required: true },
+    { field_key: "child_sex", label: "Child’s sex", field_type: "select", options: ["Female", "Male"], required: true },
+    { field_key: "child_weight_at_birth", label: "Weight at birth (kg)", field_type: "number", min: 0, step: "any", required: true },
+    { field_key: "child_place_of_occurrence", label: "Place of occurrence", field_type: "text", required: true }
+  ],
+  NICR_DEATH_CERT: [
+    { field_key: "deceased_full_name", label: "Deceased’s full name", field_type: "text", required: true },
+    { field_key: "date_of_death", label: "Date of death", field_type: "date", required: true },
+    { field_key: "death_circumstance", label: "Circumstance of death", field_type: "select", options: ["Natural", "Unnatural"], required: true },
+    { field_key: "informant_full_name", label: "Informant’s full name", field_type: "text", required: true },
+    { field_key: "informant_relationship", label: "Informant’s relationship to the deceased", field_type: "text", required: true },
+    { field_key: "death_registered_by", label: "Who is registering the death?", field_type: "select", options: ["Informant", "Funeral director"], required: true },
+    { field_key: "registration_appointment_date", label: "Appointment date (confirm with the registration officer)", field_type: "date", required: true }
+  ],
+  NICR_MARRIAGE_CERT: [
+    { field_key: "marriage_type", label: "Marriage type", field_type: "select", options: ["Civil", "Religious", "Customary"], required: true },
+    { field_key: "partner_one_full_name", label: "First partner’s full name", field_type: "text", required: true },
+    { field_key: "partner_two_full_name", label: "Second partner’s full name", field_type: "text", required: true },
+    { field_key: "partner_one_nationality", label: "First partner’s status", field_type: "select", options: ["Basotho national", "Foreign national"], required: true },
+    { field_key: "partner_two_nationality", label: "Second partner’s status", field_type: "select", options: ["Basotho national", "Foreign national"], required: true },
+    { field_key: "previous_marriage", label: "Has either partner been previously married?", field_type: "select", options: ["No", "Yes"], required: true },
+    { field_key: "documents_need_translation", label: "Are any foreign documents in a language other than English or Sotho?", field_type: "select", options: ["No", "Yes"], required: false },
+    { field_key: "first_witness_full_name", label: "First adult witness’s full name", field_type: "text", required: true },
+    { field_key: "second_witness_full_name", label: "Second adult witness’s full name", field_type: "text", required: true },
+    { field_key: "first_customary_marriage", label: "Is this the first customary marriage being registered?", field_type: "select", options: ["Yes", "No"], required: false }
+  ]
+};
+
+const REQUIRED_DOCUMENTS = {
+  birth: [
+    { key: "__birth_parent_one_id", label: "Parent 1’s valid National ID or passport", required: true },
+    { key: "__birth_parent_two_id", label: "Parent 2’s valid National ID or passport", required: true },
+    { key: "__birth_notification", label: "Hospital birth notification", required: true },
+    { key: "__birth_immunization_card", label: "Child’s immunization card", required: true },
+    { key: "__birth_additional_support", label: "Optional baptismal certificate or letter from local authorities", required: false }
+  ],
+  nationalId: {
+    minor: { key: "__national_id_guardian_id", label: "Certified copy of parent’s or guardian’s ID card", required: true },
+    adult: { key: "__national_id_birth_certificate", label: "Applicant’s birth certificate", required: true }
+  },
+  death: [
+    { key: "__death_medical_certificate", label: "Medical certificate", required: true },
+    { key: "__death_deceased_id", label: "Deceased’s photo ID", required: true },
+    { key: "__death_informant_id", label: "Informant’s photo ID", required: true },
+    { key: "__death_form_d", label: "Completed Form D", required: true }
+  ],
+  marriageCivil: [
+    { key: "__marriage_partner_one_id", label: "First partner’s valid National ID or passport", required: true },
+    { key: "__marriage_partner_two_id", label: "Second partner’s valid National ID or passport", required: true },
+    { key: "__marriage_partner_one_birth_certificate", label: "First partner’s certified birth certificate", required: true },
+    { key: "__marriage_partner_two_birth_certificate", label: "Second partner’s certified birth certificate", required: true },
+    { key: "__marriage_first_witness_id", label: "First witness’s valid ID", required: true },
+    { key: "__marriage_second_witness_id", label: "Second witness’s valid ID", required: true }
+  ],
+  marriageReligious: [
+    { key: "__marriage_communion_certificate", label: "Holy communion certificate", required: true },
+    { key: "__marriage_confirmation_certificate", label: "Confirmation certificate", required: true },
+    { key: "__marriage_baptism_certificate", label: "Baptismal certificate", required: true }
+  ]
+};
+
+function getRequirementFormFields(serviceCode, values) {
+  if (serviceCode === "NICR_ID_NEW") return [NATIONAL_ID_AGE_FIELD];
+
+  const fields = REQUIREMENT_FIELDS[serviceCode] || [];
+  if (serviceCode !== "NICR_MARRIAGE_CERT") return fields;
+  return fields.filter(field => {
+    const civilOnlyFields = [
+      "partner_one_nationality",
+      "partner_two_nationality",
+      "previous_marriage",
+      "first_witness_full_name",
+      "second_witness_full_name"
+    ];
+    if (civilOnlyFields.includes(field.field_key)) return values.marriage_type === "Civil";
+    if (field.field_key === "documents_need_translation") {
+      return values.partner_one_nationality === "Foreign national" ||
+        values.partner_two_nationality === "Foreign national";
+    }
+    return field.field_key !== "first_customary_marriage" || values.marriage_type === "Customary";
+  });
+}
+
+function getRequirementUploads(serviceCode, values) {
+  if (serviceCode === "NICR_BIRTH_CERT") return REQUIRED_DOCUMENTS.birth;
+  if (serviceCode === "NICR_ID_NEW") {
+    if (values.applicant_age_category === "16 or younger") {
+      return [REQUIRED_DOCUMENTS.nationalId.minor];
+    }
+    if (values.applicant_age_category === "Older than 16") {
+      return [REQUIRED_DOCUMENTS.nationalId.adult];
+    }
+    return [];
+  }
+  if (serviceCode === "NICR_DEATH_CERT") {
+    const uploads = [...REQUIRED_DOCUMENTS.death];
+    if (values.death_circumstance === "Unnatural") {
+      uploads.push(
+        { key: "__death_post_mortem", label: "Post-mortem report", required: true },
+        { key: "__death_police_clearance", label: "Lesotho Mounted Police Service clearance", required: true }
+      );
+    }
+    if (values.death_registered_by === "Funeral director") {
+      uploads.push({ key: "__death_family_authorization", label: "Family’s signed letter of authorization", required: true });
+    }
+    return uploads;
+  }
+  if (serviceCode === "NICR_MARRIAGE_CERT") {
+    const uploads = values.marriage_type === "Civil" ? [...REQUIRED_DOCUMENTS.marriageCivil] :
+      values.marriage_type === "Religious" ? [...REQUIRED_DOCUMENTS.marriageReligious] : [];
+    if (values.marriage_type === "Civil" && values.previous_marriage === "Yes") {
+      uploads.push({ key: "__marriage_previous_status", label: "Final divorce decree or former spouse’s death certificate", required: true });
+    }
+    if (values.marriage_type === "Civil" && (values.partner_one_nationality === "Foreign national" ||
+      values.partner_two_nationality === "Foreign national")) {
+      uploads.push(
+        { key: "__marriage_proof_of_address", label: "Proof of residence", required: true },
+        { key: "__marriage_no_impediment", label: "Certificate of No Impediment for each foreign partner", required: true, multiple: true },
+        { key: "__marriage_apostille", label: "Apostille legalization for foreign documents", required: true, multiple: true }
+      );
+      if (values.documents_need_translation === "Yes") {
+        uploads.push({ key: "__marriage_translations", label: "Accredited translations of foreign documents", required: true, multiple: true });
+      }
+    }
+    return uploads;
+  }
+  return [];
+}
+
 function getServiceRequirements(activeService, selectedService) {
   const service = selectedService || activeService;
   if (!service) return null;
+
+  if (activeService?.isNationalIdGroup && selectedService &&
+    service.service_code !== "NICR_ID_NEW") return null;
 
   if (activeService?.isNationalIdGroup ||
     (service.service_code === "NICR_ID_NEW" && isNationalIdService(service))) {
@@ -776,7 +916,8 @@ function HomeAffairsDashboard({ onLogout }) {
   async function submit(e) {
     e.preventDefault();
     setSubmitError("");
-    const requiredUploads = [];
+    const requirementUploads = getRequirementUploads(selectedService?.service_code, values);
+    const requiredUploads = requirementUploads.filter(upload => upload.required);
     const nationalIdUpload = NATIONAL_ID_UPLOADS[selectedService?.service_code];
     if (nationalIdUpload) requiredUploads.push(nationalIdUpload);
     if (selectedService?.service_code === "NICR_ID_LOST" &&
@@ -786,20 +927,67 @@ function HomeAffairsDashboard({ onLogout }) {
     if (selectedService?.service_code === "NICR_BIRTH_CERT" && values.certificate_condition === "Damaged") {
       requiredUploads.push(DAMAGED_BIRTH_CERTIFICATE_UPLOAD);
     }
-    const missingUpload = requiredUploads.find(upload =>
-      !files[upload.key] || !files[upload.key].type.startsWith("image/")
-    );
+    const missingUpload = requiredUploads.find(upload => {
+      const selectedFiles = Array.isArray(files[upload.key])
+        ? files[upload.key]
+        : files[upload.key] ? [files[upload.key]] : [];
+      return selectedFiles.length === 0;
+    });
     if (missingUpload) {
-      setSubmitError(`Upload a valid image: ${missingUpload.label}.`);
+      setSubmitError(`Upload the required document: ${missingUpload.label}.`);
       return;
     }
+    const uploadsToValidate = [
+      ...requirementUploads,
+      ...(nationalIdUpload ? [nationalIdUpload] : []),
+      ...(selectedService?.service_code === "NICR_ID_LOST" &&
+        selectedService.national_id_variant === "Damaged" ? [DAMAGED_ID_UPLOAD] : []),
+      ...(selectedService?.service_code === "NICR_BIRTH_CERT" &&
+        values.certificate_condition === "Damaged" ? [DAMAGED_BIRTH_CERTIFICATE_UPLOAD] : [])
+    ];
+    const invalidUpload = uploadsToValidate.find(upload => {
+      const selectedFiles = Array.isArray(files[upload.key])
+        ? files[upload.key]
+        : files[upload.key] ? [files[upload.key]] : [];
+      return selectedFiles.some(file =>
+        !(file.type === "application/pdf" || file.type.startsWith("image/")) ||
+        file.size > 10 * 1024 * 1024
+      );
+    });
+    if (invalidUpload) {
+      setSubmitError(`Use a PDF or image under 10 MB for ${invalidUpload.label}.`);
+      return;
+    }
+    if (selectedService?.service_code === "NICR_MARRIAGE_CERT" &&
+      values.marriage_type === "Customary" && values.first_customary_marriage !== "Yes") {
+      setSubmitError("Only the first customary marriage can be registered.");
+      return;
+    }
+
+    const applicableDocumentKeys = new Set(requirementUploads.map(upload => upload.key));
+    if (nationalIdUpload) applicableDocumentKeys.add(nationalIdUpload.key);
+    if (selectedService?.service_code === "NICR_ID_LOST" &&
+      selectedService.national_id_variant === "Damaged") {
+      applicableDocumentKeys.add(DAMAGED_ID_UPLOAD.key);
+    }
+    if (selectedService?.service_code === "NICR_BIRTH_CERT" && values.certificate_condition === "Damaged") {
+      applicableDocumentKeys.add(DAMAGED_BIRTH_CERTIFICATE_UPLOAD.key);
+    }
+
     setSubmitting(true);
     try {
       const fd = new FormData();
       fd.append("serviceId", selectedService.service_id);
       fd.append("fields", JSON.stringify(values));
       for (const [k, f] of Object.entries(files)) {
-        if (f && f instanceof File) fd.append("documents", f, `${k}__${f.name}`);
+        if (k === "__extra" || !applicableDocumentKeys.has(k)) continue;
+        const selectedFiles = Array.isArray(f) ? f : [f];
+        for (const file of selectedFiles) {
+          if (file instanceof File) fd.append("documents", file, `${k}__${file.name}`);
+        }
+      }
+      for (const file of files.__extra || []) {
+        if (file instanceof File) fd.append("documents", file, `__extra__${file.name}`);
       }
       const res = await api("/applications", { method: "POST", body: fd });
       closeService();
@@ -970,6 +1158,13 @@ function HomeAffairsDashboard({ onLogout }) {
   const serviceRequirements = activeService
     ? getServiceRequirements(activeService, selectedService)
     : null;
+  const requirementFormFields = selectedService
+    ? getRequirementFormFields(selectedService.service_code, values)
+    : [];
+  const requirementFieldKeys = new Set(requirementFormFields.map(field => field.field_key));
+  const requirementUploads = selectedService
+    ? getRequirementUploads(selectedService.service_code, values)
+    : [];
 
   return (
     <main className="dashboard-page" style={layout.page}>
@@ -1145,7 +1340,7 @@ function HomeAffairsDashboard({ onLogout }) {
             {activeService.description}
           </p>
           {serviceRequirements && (
-            <section style={{
+            <section className="home-affairs-requirements" style={{
               background: "#f3f7ff",
               border: `1px solid ${COLORS.border}`,
               borderRadius: 8,
@@ -1221,6 +1416,38 @@ function HomeAffairsDashboard({ onLogout }) {
                 onFile={() => {}}
               />
             )}
+            {requirementFormFields.map(field => (
+              <Field
+                key={field.field_key}
+                field={field}
+                value={values[field.field_key] || ""}
+                onChange={value => {
+                  const nextValues = { ...values, [field.field_key]: value };
+                  setValues(nextValues);
+                  if (selectedService.service_code === "NICR_ID_NEW" &&
+                    field.field_key === "applicant_age_category") {
+                    setFiles(previous => {
+                      const next = { ...previous };
+                      delete next[REQUIRED_DOCUMENTS.nationalId.minor.key];
+                      delete next[REQUIRED_DOCUMENTS.nationalId.adult.key];
+                      return next;
+                    });
+                  }
+                  if (selectedService.service_code === "NICR_MARRIAGE_CERT") {
+                    const applicableKeys = new Set(
+                      getRequirementUploads(selectedService.service_code, nextValues)
+                        .map(upload => upload.key)
+                    );
+                    setFiles(previous => Object.fromEntries(
+                      Object.entries(previous).filter(([key]) =>
+                        !key.startsWith("__marriage_") || applicableKeys.has(key)
+                      )
+                    ));
+                  }
+                }}
+                onFile={() => {}}
+              />
+            ))}
             {selectedService && NATIONAL_ID_UPLOADS[selectedService.service_code] && (
               <RequiredImageUpload
                 key={selectedService.service_code}
@@ -1232,11 +1459,9 @@ function HomeAffairsDashboard({ onLogout }) {
                 }))}
               />
             )}
-            {!(selectedService?.service_code === "NICR_ID_NEW" &&
-              !files[NATIONAL_ID_UPLOADS.NICR_ID_NEW.key]) &&
-              !(selectedService?.service_code === "NICR_ID_LOST" &&
+            {!(selectedService?.service_code === "NICR_ID_LOST" &&
                 selectedService.national_id_variant === "Damaged" && !files[DAMAGED_ID_UPLOAD.key]) &&
-              fields.map(f => (
+              fields.filter(field => !requirementFieldKeys.has(field.field_key)).map(f => (
               <Field
                 key={f.field_key}
                 field={f}
@@ -1252,6 +1477,17 @@ function HomeAffairsDashboard({ onLogout }) {
                   }
                 }}
                 onFile={file => setFiles(p => ({ ...p, [f.field_key]: file }))}
+              />
+            ))}
+            {requirementUploads.map(upload => (
+              <RequiredDocumentUpload
+                key={upload.key}
+                upload={upload}
+                files={files[upload.key]}
+                onChange={selectedFiles => setFiles(previous => ({
+                  ...previous,
+                  [upload.key]: upload.multiple ? selectedFiles : selectedFiles[0] || null
+                }))}
               />
             ))}
             {(BIRTH_CERTIFICATE_EXTRA_FIELDS[values.certificate_condition] || []).map(f => (
@@ -1291,7 +1527,7 @@ function HomeAffairsDashboard({ onLogout }) {
                 <div style={{ marginTop: 16, marginBottom: 16 }}>
                   <label style={{
                     display: "block", fontSize: 13, fontWeight: 600, marginBottom: 6
-                  }}>Additional documents</label>
+                  }}>Additional supporting documents (optional)</label>
                   <input type="file" multiple onChange={e => {
                     const arr = Array.from(e.target.files || []);
                     setFiles(p => ({ ...p, __extra: arr }));
@@ -2300,7 +2536,9 @@ function Field({ field, value, onChange, onFile }) {
     input = <input type={field.field_type} value={value}
       onChange={e => onChange(e.target.value)}
       required={field.required} style={common}
-      placeholder={field.placeholder || ""} />;
+      placeholder={field.placeholder || ""}
+      min={field.min}
+      step={field.step} />;
   }
   return (
     <div style={{ marginBottom: 14 }}>
@@ -2338,6 +2576,34 @@ function RequiredImageUpload({ upload, file, onChange }) {
           Selected: {file.name}
         </p>
       )}
+    </div>
+  );
+}
+
+function RequiredDocumentUpload({ upload, files, onChange }) {
+  const selectedFiles = Array.isArray(files) ? files : files ? [files] : [];
+  return (
+    <div style={{ marginBottom: 16 }}>
+      <label style={{
+        display: "block", fontSize: 13, fontWeight: 600,
+        marginBottom: 6, color: COLORS.textMid
+      }}>
+        {upload.label}{upload.required ? " *" : " (optional)"}
+      </label>
+      <input
+        type="file"
+        accept="image/*,.pdf,application/pdf"
+        multiple={!!upload.multiple}
+        required={upload.required}
+        onChange={e => onChange(Array.from(e.target.files || []))}
+      />
+      {selectedFiles.map(file => (
+        <p key={`${file.name}-${file.lastModified}`} style={{
+          margin: "6px 0 0", fontSize: 12, color: COLORS.textMuted
+        }}>
+          Selected: {file.name}
+        </p>
+      ))}
     </div>
   );
 }
