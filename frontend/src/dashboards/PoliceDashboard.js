@@ -4,7 +4,6 @@ import Navbar from "../components/Navbar";
 import DashboardSearch, { matchesDashboardSearch } from "../components/DashboardSearch";
 import { auth, API_BASE } from "../Database/firebase";
 import CollectionCentreReferral from "../components/CollectionCentreReferral";
-import "./PoliceDashboard.css";
 
 async function api(path, opts = {}) {
   const user = auth.currentUser;
@@ -685,7 +684,7 @@ function PoliceDashboard({ onLogout }) {
           <section className="police-letters-section">
             <h2 style={section.title}>Police letters</h2>
             <p style={section.subtitle}>
-              Generate official letters from templates. You can download any letter as a PDF.
+              Generate official letters from templates and preview them here.
             </p>
 
             <div className="police-letters-card" style={{
