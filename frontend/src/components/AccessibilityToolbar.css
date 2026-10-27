@@ -1,0 +1,202 @@
+:root {
+  --accessibility-toolbar-height: 54px;
+}
+
+.accessibility-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 1200;
+  display: flex;
+  min-height: var(--accessibility-toolbar-height);
+  box-sizing: border-box;
+  align-items: center;
+  justify-content: center;
+  gap: 8px 18px;
+  padding: 6px 16px;
+  border-bottom: 1px solid #cbd5e1;
+  background: #f8fafc;
+  color: #172b4d;
+  font: 14px/1.3 Arial, Helvetica, sans-serif;
+}
+
+.accessibility-toolbar-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.accessibility-toolbar-label {
+  font-weight: 700;
+}
+
+.accessibility-control,
+.accessibility-language-select {
+  min-height: 36px;
+  border: 2px solid #334155;
+  border-radius: 5px;
+  background: #fff;
+  color: #111827;
+  font: inherit;
+  font-weight: 700;
+}
+
+.accessibility-control {
+  padding: 5px 10px;
+  cursor: pointer;
+}
+
+.accessibility-speaker-icon {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+  vertical-align: middle;
+}
+
+.accessibility-control:hover:not(:disabled) {
+  background: #e2e8f0;
+}
+
+.accessibility-control:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.accessibility-control:focus-visible,
+.accessibility-language-select:focus-visible,
+.accessibility-field-speaker:focus-visible {
+  outline: 3px solid #c2410c;
+  outline-offset: 2px;
+}
+
+.accessibility-zoom-level {
+  min-width: 42px;
+  text-align: center;
+  font-weight: 700;
+}
+
+.accessibility-language-label {
+  margin-left: 4px;
+  font-weight: 700;
+}
+
+.accessibility-language-select {
+  padding: 4px 24px 4px 8px;
+}
+
+.accessibility-toolbar-hint {
+  color: #334155;
+  font-size: 12px;
+  text-align: center;
+}
+
+.accessibility-speech-status {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+
+.accessibility-field-speaker {
+  position: fixed;
+  z-index: 1300;
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  padding: 0;
+  border: 2px solid #00209f;
+  border-radius: 50%;
+  background: #fff;
+  color: #00209f;
+  box-shadow: 0 2px 8px rgb(15 23 42 / 25%);
+  cursor: pointer;
+  font-size: 19px;
+}
+
+.accessibility-field-speaker:hover {
+  background: #e2e8f0;
+}
+
+body[data-contrast="high"],
+body[data-contrast="high"] #root,
+body[data-contrast="high"] #root * {
+  border-color: #ff0 !important;
+  background-color: #000 !important;
+  color: #fff !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+}
+
+body[data-contrast="high"] {
+  background: #000 !important;
+  background-image: none !important;
+}
+
+body[data-contrast="high"] a,
+body[data-contrast="high"] button[aria-pressed="true"] {
+  color: #ff0 !important;
+}
+
+body[data-contrast="high"] a {
+  text-decoration: underline !important;
+}
+
+body[data-contrast="high"] input::placeholder,
+body[data-contrast="high"] textarea::placeholder {
+  color: #fff !important;
+  opacity: 1;
+}
+
+body[data-contrast="high"] button:focus-visible,
+body[data-contrast="high"] a:focus-visible,
+body[data-contrast="high"] input:focus-visible,
+body[data-contrast="high"] select:focus-visible,
+body[data-contrast="high"] textarea:focus-visible {
+  outline: 3px solid #ff0 !important;
+  outline-offset: 3px;
+}
+
+body[data-contrast="high"] ::selection {
+  background: #ff0 !important;
+  color: #000 !important;
+}
+
+@media (max-width: 700px) {
+  :root {
+    --accessibility-toolbar-height: 94px;
+  }
+
+  .accessibility-toolbar {
+    flex-direction: column;
+    gap: 3px;
+    padding: 5px 8px;
+  }
+
+  .accessibility-toolbar-controls {
+    gap: 5px;
+  }
+
+  .accessibility-toolbar-label,
+  .accessibility-language-label {
+    display: none;
+  }
+
+  .accessibility-control,
+  .accessibility-language-select {
+    min-height: 34px;
+    padding: 4px 7px;
+    font-size: 13px;
+  }
+
+  .accessibility-toolbar-hint {
+    font-size: 10px;
+  }
+}

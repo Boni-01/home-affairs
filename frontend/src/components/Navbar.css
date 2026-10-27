@@ -19,7 +19,7 @@
    ------------------------------------------------------------ */
 .navbar {
   position: sticky;
-  top: 0;
+  top: var(--accessibility-toolbar-height, 0px);
   z-index: 1000;
   background: #fff;
   box-shadow: var(--nav-shadow);
@@ -28,7 +28,7 @@
 
 .navbar-dashboard {
   position: fixed;
-  inset: 0 0 auto;
+  inset: var(--accessibility-toolbar-height, 0px) 0 auto;
   z-index: 1100;
 }
 

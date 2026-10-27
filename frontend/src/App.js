@@ -18,6 +18,7 @@ import Help from "./pages/Help";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import HelpButton from "./components/HelpButton";
+import AccessibilityToolbar from "./components/AccessibilityToolbar";
 
 import { useState } from "react";
 import {
@@ -102,6 +103,7 @@ function App() {
         flexDirection: "column",
         minHeight: "100vh"
       }}>
+        <AccessibilityToolbar />
         <Navbar
           isAuthenticated={isAuthenticated}
           onLogout={handleLogout}
