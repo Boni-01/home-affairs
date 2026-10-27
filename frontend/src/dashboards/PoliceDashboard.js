@@ -778,7 +778,7 @@ function PoliceDashboard({ onLogout }) {
                   maxHeight: 500,
                   overflowY: "auto"
                 }}>{letterPreview.body}</pre>
-                <CollectionCentreReferral department="Police Services" />
+                <CollectionCentreReferral department="Police Services" itemType="letter" />
               </div>
             )}
 
