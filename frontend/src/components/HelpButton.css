@@ -517,3 +517,9 @@ body[data-theme="dark"] .help-panel a {
     bottom: 16px;
   }
 }
+
+@media (max-width: 700px) {
+  .help-widget-auth {
+    display: none;
+  }
+}

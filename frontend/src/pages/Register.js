@@ -228,11 +228,10 @@ function Register({ onSuccess, getPostAuthRoute }) {
       fontFamily: "Arial, sans-serif"
     }}>
       {/* Split Screen Container */}
-      <section style={{
+      <section className="auth-card" style={{
         width: "100%",
         maxWidth: 1060,
         display: "grid",
-        gridTemplateColumns: "1fr 1.1fr",
         background: COLORS.white,
         borderRadius: 16,
         boxShadow: "0 16px 40px rgba(0, 32, 159, .12)",
@@ -241,7 +240,7 @@ function Register({ onSuccess, getPostAuthRoute }) {
       }}>
         
         {/* Left Side: Informational & Branding Panel */}
-        <div style={{
+        <div className="auth-info-panel" style={{
           background: "linear-gradient(135deg, #00209F 0%, #001257 100% )",
           color: COLORS.white,
           padding: "48px 40px",
@@ -272,7 +271,7 @@ function Register({ onSuccess, getPostAuthRoute }) {
               Access streamlined public services securely through a unified national profile.
             </p>
 
-            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            <div className="auth-info-highlights" style={{ display: "flex", flexDirection: "column", gap: 16 }}>
               {[
                 { title: "Home Affairs & Passports", desc: "Track applications and renewals seamlessly." },
                 { title: "Traffic & Transport", desc: "Manage driver licenses and vehicle registrations." },
@@ -294,7 +293,7 @@ function Register({ onSuccess, getPostAuthRoute }) {
           </div>
 
           {/* Bottom Container with Centered Back Button */}
-          <div style={{ marginTop: 40, borderTop: "1px solid rgba(255,255,255,0.15)", paddingTop: 20, display: "flex", flexDirection: "column", alignItems: "center", gap: 14 }}>
+          <div className="auth-info-footer" style={{ marginTop: 40, borderTop: "1px solid rgba(255,255,255,0.15)", paddingTop: 20, display: "flex", flexDirection: "column", alignItems: "center", gap: 14 }}>
             <Link
               to="/home-dashboard"
               style={{
@@ -323,7 +322,7 @@ function Register({ onSuccess, getPostAuthRoute }) {
         </div>
 
         {/* Right Side: Registration Form */}
-        <div style={{ padding: "40px 44px", overflowY: "auto", maxHeight: "90vh" }}>
+        <div className="auth-form-panel" style={{ padding: "40px 44px", overflowY: "auto", maxHeight: "90vh" }}>
           <header style={{ marginBottom: 24 }}>
             <h1 style={{ margin: "0 0 8px", color: COLORS.blue, fontSize: 26 }}>
               Create an account
@@ -336,8 +335,19 @@ function Register({ onSuccess, getPostAuthRoute }) {
           <div id={RECAPTCHA_CONTAINER_ID} />
           <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
             {["email", "phone"].map(method => (
-              <button key={method} type="button" onClick={() => { setAuthMode(method); setError(""); }}
-                style={{ ...buttonStyle(authMode === method ? (method === "phone" ? COLORS.green : COLORS.blue) : "#eef2f7"), color: authMode === method ? "#fff" : COLORS.textMuted, marginTop: 0 }}>
+              <button
+                key={method}
+                type="button"
+                aria-pressed={authMode === method}
+                className={`auth-register-mode-button auth-register-mode-${method}${authMode === method ? " selected" : ""}`}
+                onClick={() => { setAuthMode(method); setError(""); }}
+                style={{
+                  ...buttonStyle(method === "email" ? COLORS.blue : COLORS.green),
+                  color: "#fff",
+                  marginTop: 0,
+                  opacity: authMode === method ? 1 : 0.82
+                }}
+              >
                 Register with {method === "email" ? "email" : "phone"}
               </button>
             ))}
@@ -353,7 +363,7 @@ function Register({ onSuccess, getPostAuthRoute }) {
                 display: "grid",
                 gridTemplateColumns: "1fr 1fr",
                 gap: 14
-              }}>
+              }} className="auth-register-fields">
                 <label style={{ color: "#263b35", fontSize: 13, fontWeight: 600 }}>
                   First name
                   <input type="text" autoComplete="given-name" required

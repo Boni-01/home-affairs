@@ -248,12 +248,12 @@ function Login({ onSuccess, getPostAuthRoute }) {
 
       {/* Split Screen Container */}
       <section
+        className="auth-card"
         aria-labelledby="login-title"
         style={{
           width: "100%",
           maxWidth: "1000px",
           display: "grid",
-          gridTemplateColumns: "1fr 1.1fr",
           background: COLORS.white,
           borderRadius: 16,
           boxShadow: "0 16px 40px rgba(0, 32, 159, .12)",
@@ -262,7 +262,7 @@ function Login({ onSuccess, getPostAuthRoute }) {
         }}
       >
         {/* Left Side: Informational & Portal Highlights */}
-        <div style={{
+        <div className="auth-info-panel" style={{
           background: "linear-gradient(135deg, #00209F 0%, #001257 100%)",
           color: COLORS.white,
           padding: "48px 40px",
@@ -293,7 +293,7 @@ function Login({ onSuccess, getPostAuthRoute }) {
               Log in to access your active applications, tax portals, verification history, and official documents.
             </p>
 
-            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            <div className="auth-info-highlights" style={{ display: "flex", flexDirection: "column", gap: 16 }}>
               {[
                 { title: "Active Applications", desc: "Check live status on passports, IDs, and licenses." },
                 { title: "Fast-Track Services", desc: "Skip queues with verified digital submissions." },
@@ -314,7 +314,7 @@ function Login({ onSuccess, getPostAuthRoute }) {
           </div>
 
           {/* Bottom Container with Centered Back Button */}
-          <div style={{ marginTop: 40, borderTop: "1px solid rgba(255,255,255,0.15)", paddingTop: 20, display: "flex", flexDirection: "column", alignItems: "center", gap: 14 }}>
+          <div className="auth-info-footer" style={{ marginTop: 40, borderTop: "1px solid rgba(255,255,255,0.15)", paddingTop: 20, display: "flex", flexDirection: "column", alignItems: "center", gap: 14 }}>
             <Link
               to="/home-dashboard"
               style={{
@@ -343,7 +343,7 @@ function Login({ onSuccess, getPostAuthRoute }) {
         </div>
 
         {/* Right Side: Login Form */}
-        <div style={{ padding: "40px 44px", overflowY: "auto", maxHeight: "90vh" }}>
+        <div className="auth-form-panel" style={{ padding: "40px 44px", overflowY: "auto", maxHeight: "90vh" }}>
           <header style={{ marginBottom: 22 }}>
             <h1 id="login-title" style={{ margin: "0 0 6px", color: COLORS.blue, fontSize: "26px" }}>
               Sign in to your account
@@ -359,21 +359,27 @@ function Login({ onSuccess, getPostAuthRoute }) {
           }}>
             <button
               type="button"
+              aria-pressed={mode === "email"}
+              className="auth-login-mode-button auth-login-mode-email"
               onClick={() => { setMode("email"); setError(""); setInfo(""); }}
               style={{
                 flex: 1, padding: "10px", border: 0, borderRadius: "6px",
-                background: mode === "email" ? COLORS.blue : "transparent",
-                color: mode === "email" ? "#fff" : COLORS.textMuted,
+                background: COLORS.blue,
+                color: "#fff",
+                opacity: mode === "email" ? 1 : 0.82,
                 fontWeight: 700, cursor: "pointer", fontSize: 14
               }}
             >Email</button>
             <button
               type="button"
+              aria-pressed={mode === "phone"}
+              className="auth-login-mode-button auth-login-mode-phone"
               onClick={() => { setMode("phone"); setError(""); setInfo(""); }}
               style={{
                 flex: 1, padding: "10px", border: 0, borderRadius: "6px",
-                background: mode === "phone" ? COLORS.green : "transparent",
-                color: mode === "phone" ? "#fff" : COLORS.textMuted,
+                background: COLORS.green,
+                color: "#fff",
+                opacity: mode === "phone" ? 1 : 0.82,
                 fontWeight: 700, cursor: "pointer", fontSize: 14
               }}
             >Phone OTP</button>

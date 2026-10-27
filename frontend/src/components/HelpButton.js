@@ -28,7 +28,7 @@ export default function HelpButton() {
   if (!HELP_PATHS.has(pathname)) return null;
 
   return (
-    <div className="help-widget">
+    <div className={`help-widget${["/login", "/register"].includes(pathname) ? " help-widget-auth" : ""}`}>
       {!isAdminDashboard && (
         <button
           className="help-button"
