@@ -13,6 +13,7 @@ import PensionsDashboard from "./dashboards/PensionsDashboard";
 import PensionsDashboardAdmin from "./admin/PensionsDashboardAdmin";
 import TrafficDashboard from "./dashboards/TrafficDashboard";
 import TrafficDashboardAdmin from "./admin/TrafficDashboardAdmin";
+import Help from "./pages/Help";
 
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
@@ -113,6 +114,7 @@ function App() {
               path="/"
               element={<HomeDashboard isAuthenticated={isAuthenticated} />}
             />
+            <Route path="/help" element={<Help />} />
 
             {/* AUTH */}
             <Route

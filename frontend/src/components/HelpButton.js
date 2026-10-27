@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import "./HelpButton.css";
 
 const HELP_PATHS = new Set([
   "/",
+  "/help",
   "/login",
   "/register",
   "/home-affairs-dashboard",
@@ -22,8 +23,8 @@ const HELP_PATHS = new Set([
 
 export default function HelpButton() {
   const { pathname } = useLocation();
+  const navigate = useNavigate();
   const isAdminDashboard = pathname.startsWith("/admin/");
-  const [isOpen, setIsOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(
     () => localStorage.getItem("home-affairs-theme") === "dark"
   );
@@ -56,13 +57,6 @@ export default function HelpButton() {
 
   return (
     <div className="help-widget">
-      {!isAdminDashboard && isOpen && (
-        <section id="help-panel" className="help-panel" aria-labelledby="help-panel-title">
-          <h2 id="help-panel-title">Need help?</h2>
-          <p>Contact the Government Service Desk for assistance.</p>
-          <a href="mailto:helpdesk@gov.ls">helpdesk@gov.ls</a>
-        </section>
-      )}
       <button
         className="dark-mode-button"
         type="button"
@@ -95,9 +89,7 @@ export default function HelpButton() {
         <button
           className="help-button"
           type="button"
-          aria-expanded={isOpen}
-          aria-controls={isOpen ? "help-panel" : undefined}
-          onClick={() => setIsOpen((open) => !open)}
+          onClick={() => navigate("/help")}
         >
           <svg
             className="help-button-icon"

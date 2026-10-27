@@ -14,3 +14,11 @@ test('starts on login and only opens dashboards after login', async () => {
 
   expect(await screen.findByRole('heading', { name: /home dashboard/i })).toBeInTheDocument();
 });
+
+test('opens the help page from the help button', async () => {
+  render(<App />);
+
+  await userEvent.click(screen.getByRole('button', { name: /help/i }));
+
+  expect(screen.getByRole('heading', { name: /help and frequently asked questions/i })).toBeInTheDocument();
+});

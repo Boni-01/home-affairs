@@ -1,0 +1,41 @@
+body[data-theme="dark"] .help-page {
+	background: #06182d !important;
+	color: #f8fafc !important;
+}
+
+body[data-theme="dark"] .help-page .help-eyebrow,
+body[data-theme="dark"] .help-page .help-intro,
+body[data-theme="dark"] .help-page .help-category,
+body[data-theme="dark"] .help-page .help-no-results,
+body[data-theme="dark"] .help-page .help-contact-text {
+	color: #cbd5e1 !important;
+}
+
+body[data-theme="dark"] .help-page .help-search {
+	border-color: #52677e !important;
+	background: #102b48 !important;
+	color: #f8fafc !important;
+}
+
+body[data-theme="dark"] .help-page .help-search::placeholder {
+	color: #aebed0 !important;
+}
+
+body[data-theme="dark"] .help-page .help-card {
+	border-color: #34516c !important;
+	background: #102b48 !important;
+}
+
+body[data-theme="dark"] .help-page .help-question {
+	color: #f8fafc !important;
+}
+
+body[data-theme="dark"] .help-page .help-steps {
+	color: #dbeafe !important;
+}
+
+body[data-theme="dark"] .help-page .help-contact {
+	border-left-color: #60a5fa !important;
+	background: #172b4d !important;
+	color: #f8fafc !important;
+}
