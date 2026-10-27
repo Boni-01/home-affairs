@@ -163,6 +163,85 @@ const DAMAGED_BIRTH_CERTIFICATE_UPLOAD = {
   instructions: "Upload a clear image of the damaged certificate showing the holder's name."
 };
 
+function getServiceRequirements(activeService, selectedService) {
+  const service = selectedService || activeService;
+  if (!service) return null;
+
+  if (activeService?.isNationalIdGroup ||
+    (service.service_code === "NICR_ID_NEW" && isNationalIdService(service))) {
+    return {
+      groups: [{
+        label: "National ID",
+        items: [
+          "Applicants aged 16 and under (minors): a certified copy of a parent’s or guardian’s ID card.",
+          "Applicants older than 16: a birth certificate."
+        ]
+      }]
+    };
+  }
+
+  if (service.service_code === "NICR_BIRTH_CERT") {
+    return {
+      groups: [{
+        label: "Birth Certificate",
+        items: [
+          "Valid identification for both parents, such as National ID cards or passports.",
+          "The child’s name, date of birth, sex, weight at birth, and place of occurrence.",
+          "A birth notification from the hospital and an immunization card. A baptismal certificate or a letter from local authorities may also be requested depending on the circumstances."
+        ]
+      }]
+    };
+  }
+
+  if (service.service_code === "NICR_DEATH_CERT") {
+    return {
+      groups: [{
+        label: "Death Certificate",
+        items: [
+          "A medical certificate issued by an attending physician or hospital doctor. For unnatural deaths, a post-mortem and police clearance from the Lesotho Mounted Police Service are required first.",
+          "Photo ID for the deceased and photo ID for the informant, usually a relative.",
+          "The informant or an appointed funeral director must complete Form D and schedule an appointment with the registration officer.",
+          "If a funeral director registers the death, a signed letter of authorization from the family is mandatory."
+        ]
+      }]
+    };
+  }
+
+  if (service.service_code === "NICR_MARRIAGE_CERT") {
+    return {
+      groups: [
+        {
+          label: "Civil marriages (Marriage Act of 1974)",
+          items: [
+            "Valid identification: a National ID card for Basotho nationals or a valid passport for foreigners.",
+            "Certified copies of both partners’ birth certificates.",
+            "Proof of residence, particularly for foreign spouses.",
+            "If previously married, a final divorce decree or the former spouse’s death certificate.",
+            "Two adult witnesses with valid identification must be present to sign the certificate."
+          ]
+        },
+        {
+          label: "Foreign spouses",
+          items: [
+            "A Certificate of No Impediment proving the foreign partner is single and not prohibited from marrying in their home country.",
+            "Foreign documents must be legalized with an Apostille stamp.",
+            "Non-English or non-Sotho documents must be translated by an accredited translator."
+          ]
+        },
+        {
+          label: "Religious and customary marriages",
+          items: [
+            "Religious marriages: holy communion, confirmation, and baptismal certificates are typically required before the ceremony.",
+            "Only the first customary marriage can be registered with the National Identity and Civil Registry Department to gain full legal weight."
+          ]
+        }
+      ]
+    };
+  }
+
+  return null;
+}
+
 function isNationalIdService(service) {
   return NATIONAL_ID_SERVICE_CODES.has(service.service_code);
 }
@@ -887,6 +966,9 @@ function HomeAffairsDashboard({ onLogout }) {
     return categorizedServices;
   }, [activeModule, allModuleServices]);
   const groupedServicesModule = activeModule === "IMMIGRATION" || activeModule === "LRMIS";
+  const serviceRequirements = activeService
+    ? getServiceRequirements(activeService, selectedService)
+    : null;
 
   return (
     <main className="dashboard-page" style={layout.page}>
@@ -1061,6 +1143,27 @@ function HomeAffairsDashboard({ onLogout }) {
           <p style={{ margin: "0 0 20px", fontSize: 13, color: COLORS.textMuted }}>
             {activeService.description}
           </p>
+          {serviceRequirements && (
+            <section style={{
+              background: "#f3f7ff",
+              border: `1px solid ${COLORS.border}`,
+              borderRadius: 8,
+              padding: 14,
+              marginBottom: 18
+            }}>
+              <h3 style={{ margin: "0 0 10px", fontSize: 14, color: COLORS.blue }}>
+                Requirements
+              </h3>
+              {serviceRequirements.groups.map(group => (
+                <div key={group.label} style={{ marginTop: 10 }}>
+                  <strong style={{ fontSize: 12 }}>{group.label}</strong>
+                  <ul style={{ margin: "6px 0 0", paddingLeft: 20, fontSize: 12, lineHeight: 1.6 }}>
+                    {group.items.map(item => <li key={item}>{item}</li>)}
+                  </ul>
+                </div>
+              ))}
+            </section>
+          )}
           <form onSubmit={submit}>
             {activeService.isNationalIdGroup && (
               <Field
