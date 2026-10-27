@@ -3,7 +3,7 @@ import { COLORS, layout, header, section } from "../styles/dashboardStyles";
 import Navbar from "../components/Navbar";
 import DashboardSearch, { matchesDashboardSearch } from "../components/DashboardSearch";
 import { auth, API_BASE } from "../Database/firebase";
-import CollectionCentreReferral from "../components/CollectionCentreReferral";
+import CollectionCentreReferral, { COLLECTION_CENTRES } from "../components/CollectionCentreReferral";
 
 // ============================================================
 // SVG ICONS
@@ -165,7 +165,7 @@ const SERVICE_CONFIG = {
       { key: "licence_number", label: "Current Licence Number", type: "text", required: true },
       { key: "licence_category", label: "Licence Category", type: "text", required: true },
       { key: "expiry_date", label: "Current Expiry Date", type: "date", required: true },
-      { key: "collection_office", label: "Collection Office", type: "select", options: ["Maseru", "Leribe", "Berea", "Mafeteng", "Mohale's Hoek", "Quthing"], required: true }
+      { key: "collection_office", label: "Collection Centre (district — capital)", type: "select", options: COLLECTION_CENTRES.map(({ district, capital }) => `${district} — ${capital}`), required: true }
     ]
   },
   LICENCE_REPLACEMENT: {
@@ -272,7 +272,7 @@ const SERVICE_CONFIG = {
       { key: "registration_number", label: "Registration Number (if assigned)", type: "text" },
       { key: "plate_type", label: "Plate Type", type: "select", options: ["Standard", "Personalised", "Commercial", "Government"], required: true },
       { key: "preferred_text", label: "Preferred Plate Text (personalised only)", type: "text" },
-      { key: "collection_office", label: "Collection Office", type: "select", options: ["Maseru", "Leribe", "Berea", "Mafeteng"], required: true }
+      { key: "collection_office", label: "Collection Centre (district — capital)", type: "select", options: COLLECTION_CENTRES.map(({ district, capital }) => `${district} — ${capital}`), required: true }
     ]
   },
   NUMBER_PLATE_REPLACEMENT: {
