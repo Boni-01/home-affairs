@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import "./AccessibilityToolbar.css";
+import { setDarkMode } from "./theme";
 
 const MIN_ZOOM = 1;
 const MAX_ZOOM = 1.5;
@@ -77,12 +78,17 @@ export default function AccessibilityToolbar() {
   const [highContrast, setHighContrast] = useState(
     () => localStorage.getItem(CONTRAST_STORAGE_KEY) === "true"
   );
+  const [isDarkMode, setIsDarkMode] = useState(
+    () => localStorage.getItem("home-affairs-theme") === "dark"
+  );
   const [language, setLanguage] = useState("en-LS");
   const [activeField, setActiveField] = useState(null);
   const [speakerPosition, setSpeakerPosition] = useState(null);
   const [speechStatus, setSpeechStatus] = useState("");
+  const [activeSpeech, setActiveSpeech] = useState(null);
   const speakerRef = useRef(null);
   const activeFieldRef = useRef(null);
+  const utteranceRef = useRef(null);
 
   useEffect(() => {
     document.documentElement.style.zoom = String(zoom);
@@ -97,6 +103,24 @@ export default function AccessibilityToolbar() {
     }
     localStorage.setItem(CONTRAST_STORAGE_KEY, String(highContrast));
   }, [highContrast]);
+
+  useEffect(() => {
+    if (localStorage.getItem("home-affairs-theme") === "dark") {
+      document.body.dataset.theme = "dark";
+    } else {
+      delete document.body.dataset.theme;
+    }
+  }, []);
+
+  useEffect(() => {
+    const syncTheme = event => {
+      const nextDarkMode = event.detail?.isDarkMode ??
+        localStorage.getItem("home-affairs-theme") === "dark";
+      setIsDarkMode(nextDarkMode);
+    };
+    window.addEventListener("home-affairs-theme-change", syncTheme);
+    return () => window.removeEventListener("home-affairs-theme-change", syncTheme);
+  }, []);
 
   const updateSpeakerPosition = useCallback(() => {
     const field = activeFieldRef.current;
@@ -153,7 +177,16 @@ export default function AccessibilityToolbar() {
     };
   }, [updateSpeakerPosition]);
 
-  const speak = useCallback(text => {
+  const stopReading = useCallback(() => {
+    if ("speechSynthesis" in window) {
+      window.speechSynthesis.cancel();
+    }
+    utteranceRef.current = null;
+    setActiveSpeech(null);
+    setSpeechStatus("");
+  }, []);
+
+  const speak = useCallback((text, kind) => {
     if (!text) {
       setSpeechStatus("There is no page text to read.");
       return;
@@ -170,10 +203,23 @@ export default function AccessibilityToolbar() {
       item.lang.toLowerCase().startsWith(language.slice(0, 2).toLowerCase())
     );
     if (voice) utterance.voice = voice;
+    utteranceRef.current = utterance;
+    setActiveSpeech(kind);
+    utterance.onstart = () => setSpeechStatus("");
     utterance.onerror = event => {
-      setSpeechStatus(`Unable to read text aloud: ${event.error}.`);
+      if (utteranceRef.current === utterance) {
+        utteranceRef.current = null;
+        setActiveSpeech(null);
+        setSpeechStatus(`Unable to read text aloud: ${event.error}.`);
+      }
     };
-    utterance.onend = () => setSpeechStatus("");
+    utterance.onend = () => {
+      if (utteranceRef.current === utterance) {
+        utteranceRef.current = null;
+        setActiveSpeech(null);
+        setSpeechStatus("");
+      }
+    };
     setSpeechStatus("");
     window.speechSynthesis.speak(utterance);
   }, [language]);
@@ -186,15 +232,23 @@ export default function AccessibilityToolbar() {
   };
 
   const toggleHighContrast = () => setHighContrast(current => !current);
+  const toggleDarkMode = () => {
+    const nextDarkMode = !isDarkMode;
+    setDarkMode(nextDarkMode);
+    setIsDarkMode(nextDarkMode);
+  };
   const readActiveField = () => {
     if (activeFieldRef.current) {
-      speak(getFieldText(activeFieldRef.current, language));
+      speak(getFieldText(activeFieldRef.current, language), "field");
     }
   };
 
   return (
     <>
-      <section className="accessibility-toolbar" aria-label="Accessibility controls">
+      <section
+        className="accessibility-toolbar"
+        aria-label="Accessibility controls"
+      >
         <div className="accessibility-toolbar-controls">
           <span className="accessibility-toolbar-label">Accessibility</span>
           <button
@@ -204,7 +258,11 @@ export default function AccessibilityToolbar() {
             onClick={() => adjustZoom(-ZOOM_STEP)}
             disabled={zoom <= MIN_ZOOM}
           >
-            A-
+            <svg className="accessibility-control-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="10.5" cy="10.5" r="6.5" />
+              <path d="m15.5 15.5 5 5M7.5 10.5h6" />
+            </svg>
+            <span>A-</span>
           </button>
           <span className="accessibility-zoom-level" aria-live="polite">
             {Math.round(zoom * 100)}%
@@ -216,18 +274,74 @@ export default function AccessibilityToolbar() {
             onClick={() => adjustZoom(ZOOM_STEP)}
             disabled={zoom >= MAX_ZOOM}
           >
-            A+
+            <svg className="accessibility-control-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="10.5" cy="10.5" r="6.5" />
+              <path d="m15.5 15.5 5 5M7.5 10.5h6m-3-3v6" />
+            </svg>
+            <span>A+</span>
           </button>
           <button
             type="button"
-            className="accessibility-control"
+            className="accessibility-control accessibility-contrast-toggle"
             aria-pressed={highContrast}
             onClick={toggleHighContrast}
           >
+            <svg className="accessibility-control-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="12" cy="12" r="9" />
+              <path d="M12 3v18a9 9 0 0 0 0-18Z" />
+            </svg>
             {highContrast ? "High contrast on" : "High contrast"}
           </button>
+          <button
+            type="button"
+            className="accessibility-control accessibility-theme-toggle"
+            aria-label={isDarkMode ? "Turn light mode on" : "Turn dark mode on"}
+            aria-pressed={isDarkMode}
+            onClick={toggleDarkMode}
+          >
+            <svg
+              className="accessibility-theme-icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              {isDarkMode ? (
+                <>
+                  <circle cx="12" cy="12" r="4" />
+                  <path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42" />
+                </>
+              ) : (
+                <path d="M20.9 13A9 9 0 0 1 11 3.1 9 9 0 1 0 20.9 13Z" />
+              )}
+            </svg>
+            {isDarkMode ? "Light mode" : "Dark mode"}
+          </button>
+          <button
+            type="button"
+            className="accessibility-control accessibility-read-page"
+            aria-label={activeSpeech === "page" ? "Stop reading" : "Read page instructions"}
+            onClick={() => activeSpeech === "page"
+              ? stopReading()
+              : speak(getPageInstructions(), "page")}
+          >
+            {activeSpeech === "page"
+              ? "Stop reading"
+              : (
+                <>
+                  <svg className="accessibility-speaker-icon" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M11 5 6 9H3v6h3l5 4V5Z" />
+                    <path d="M15.5 8.5a5 5 0 0 1 0 7m3-10a9 9 0 0 1 0 13" />
+                  </svg>
+                  Read page instructions
+                </>
+              )}
+          </button>
           <label className="accessibility-language-label" htmlFor="accessibility-voice-language">
-            Voice
+            Translate
           </label>
           <select
             id="accessibility-voice-language"
@@ -238,17 +352,6 @@ export default function AccessibilityToolbar() {
             <option value="en-LS">English</option>
             <option value="st-LS">Sesotho</option>
           </select>
-          <button
-            type="button"
-            className="accessibility-control accessibility-read-page"
-            onClick={() => speak(getPageInstructions())}
-          >
-            <svg className="accessibility-speaker-icon" viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M11 5 6 9H3v6h3l5 4V5Z" />
-              <path d="M15.5 8.5a5 5 0 0 1 0 7m3-10a9 9 0 0 1 0 13" />
-            </svg>
-            Read page instructions
-          </button>
           {activeField && (
             <button
               type="button"
@@ -261,9 +364,6 @@ export default function AccessibilityToolbar() {
             </button>
           )}
         </div>
-        <span className="accessibility-toolbar-hint">
-          Page text is read as displayed; available spoken voices depend on your device.
-        </span>
         <span className="accessibility-speech-status" role="status" aria-live="polite">
           {speechStatus}
         </span>

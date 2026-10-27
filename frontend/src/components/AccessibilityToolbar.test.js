@@ -6,6 +6,7 @@ describe("AccessibilityToolbar", () => {
   beforeEach(() => {
     localStorage.clear();
     delete document.body.dataset.contrast;
+    delete document.body.dataset.theme;
     document.documentElement.style.zoom = "";
   });
 
@@ -25,6 +26,55 @@ describe("AccessibilityToolbar", () => {
 
     expect(document.body).toHaveAttribute("data-contrast", "high");
     expect(localStorage.getItem("home-affairs-high-contrast")).toBe("true");
+  });
+
+  test("moves the dark mode toggle into the toolbar and persists the theme", async () => {
+    render(<AccessibilityToolbar />);
+
+    await userEvent.click(screen.getByRole("button", { name: "Turn dark mode on" }));
+
+    expect(document.body).toHaveAttribute("data-theme", "dark");
+    expect(localStorage.getItem("home-affairs-theme")).toBe("dark");
+    expect(screen.getByRole("button", { name: "Turn light mode on" })).toBeInTheDocument();
+  });
+
+  test("stops page instructions when the read button is pressed again", () => {
+    Object.defineProperty(window, "SpeechSynthesisUtterance", {
+      configurable: true,
+      value: class {
+        constructor(text) {
+          this.text = text;
+        }
+      }
+    });
+    const cancel = jest.fn();
+    Object.defineProperty(window, "speechSynthesis", {
+      configurable: true,
+      value: {
+        cancel,
+        getVoices: () => [],
+        speak: jest.fn()
+      }
+    });
+    render(
+      <>
+        <AccessibilityToolbar />
+        <main>
+          <h1>Welcome</h1>
+          <p>These are the page instructions.</p>
+        </main>
+      </>
+    );
+    document.querySelectorAll("main h1, main p").forEach(element => {
+      jest.spyOn(element, "getClientRects").mockReturnValue([{}]);
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Read page instructions" }));
+    expect(screen.getByRole("button", { name: "Stop reading" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Stop reading" }));
+
+    expect(cancel).toHaveBeenCalledTimes(2);
+    expect(screen.getByRole("button", { name: "Read page instructions" })).toBeInTheDocument();
   });
 
   test("adds a speaker beside a focused field and reads its label", () => {
@@ -91,7 +141,7 @@ describe("AccessibilityToolbar", () => {
       </>
     );
     await userEvent.selectOptions(
-      screen.getByRole("combobox", { name: "Voice" }),
+      screen.getByRole("combobox", { name: "Translate" }),
       "st-LS"
     );
     fireEvent.focus(screen.getByLabelText("Email address"));
@@ -102,5 +152,18 @@ describe("AccessibilityToolbar", () => {
 
     expect(utterances[0].text).toBe("Aterese ea imeile");
     expect(utterances[0].lang).toBe("st-LS");
+  });
+
+  test("places the read-aloud language selector after the page-reading control", () => {
+    render(<AccessibilityToolbar />);
+    const toolbar = screen.getByRole("region", { name: "Accessibility controls" });
+    const pageReadButton = screen.getByRole("button", { name: "Read page instructions" });
+    const languageSelect = screen.getByRole("combobox", { name: "Translate" });
+
+    expect(
+      pageReadButton.compareDocumentPosition(languageSelect) &
+        Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+    expect(toolbar).toContainElement(languageSelect);
   });
 });

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import "./DashboardSettingsModal.css";
+import { setDarkMode } from "./theme";
 
 const SETTINGS_TABS = [
   ["profile", "Profile"],
@@ -46,8 +47,17 @@ export default function DashboardSettingsModal({
     const closeOnEscape = event => {
       if (event.key === "Escape") onClose();
     };
+    const syncTheme = event => {
+      setIsDarkMode(
+        event.detail?.isDarkMode ?? localStorage.getItem("home-affairs-theme") === "dark"
+      );
+    };
     document.addEventListener("keydown", closeOnEscape);
-    return () => document.removeEventListener("keydown", closeOnEscape);
+    window.addEventListener("home-affairs-theme-change", syncTheme);
+    return () => {
+      document.removeEventListener("keydown", closeOnEscape);
+      window.removeEventListener("home-affairs-theme-change", syncTheme);
+    };
   }, [onClose]);
 
   const openDashboardTab = item => {
@@ -58,12 +68,8 @@ export default function DashboardSettingsModal({
 
   const toggleDarkMode = () => {
     const nextDarkMode = !isDarkMode;
-    localStorage.setItem("home-affairs-theme", nextDarkMode ? "dark" : "light");
-    document.body.dataset.theme = nextDarkMode ? "dark" : "light";
+    setDarkMode(nextDarkMode);
     setIsDarkMode(nextDarkMode);
-    window.dispatchEvent(new CustomEvent("home-affairs-theme-change", {
-      detail: { isDarkMode: nextDarkMode }
-    }));
   };
 
   return (

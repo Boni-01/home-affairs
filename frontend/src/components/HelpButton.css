@@ -27,38 +27,6 @@
   font-weight: 700;
 }
 
-.dark-mode-button {
-  display: inline-flex;
-  min-height: 52px;
-  align-items: center;
-  justify-content: center;
-  gap: 9px;
-  padding: 0 20px;
-  border: 1px solid #009543;
-  border-radius: 999px;
-  background: #001a80;
-  box-shadow: 0 5px 18px rgb(15 23 42 / 24%);
-  color: #fff;
-  cursor: pointer;
-  font: inherit;
-  font-size: 15px;
-  font-weight: 700;
-}
-
-.dark-mode-button:hover {
-  background: #00209f;
-}
-
-.dark-mode-button:focus-visible {
-  outline: 3px solid #009543;
-  outline-offset: 3px;
-}
-
-.dark-mode-icon {
-  width: 22px;
-  height: 22px;
-}
-
 .help-button:hover {
   background: #001a80;
 }
