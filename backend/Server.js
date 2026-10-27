@@ -434,7 +434,7 @@ app.post("/api/register", verifyToken, async (req, res) => {
   if (req.dbUser) {
     return res.json({
       success: true,
-      user: await userWithPhoto(req.dbUser),
+      user: await userWithIdentity(req.dbUser),
       alreadyRegistered: true,
       isAdmin: req.dbUser.role === "admin"
     });
@@ -476,7 +476,7 @@ app.post("/api/register", verifyToken, async (req, res) => {
     const [rows] = await conn.query("SELECT * FROM users WHERE user_id = ?", [userId]);
     res.status(201).json({
       success: true,
-      user: await userWithPhoto(rows[0]),
+      user: await userWithIdentity(rows[0]),
       nationalId: newNationalId,
       isAdmin: rows[0].role === "admin"
     });
@@ -509,18 +509,9 @@ app.post("/api/login", verifyToken, async (req, res) => {
 
   await db.query("UPDATE users SET last_login = NOW() WHERE user_id = ?", [req.dbUser.user_id]);
 
-  const [nid] = await db.query(
-    "SELECT national_id_number FROM citizen_national_ids WHERE user_id = ?",
-    [req.dbUser.user_id]
-  );
-
   res.json({
     success: true,
-    user: await userWithPhoto({
-      ...req.dbUser,
-      date_of_birth: req.dbUser.date_of_birth_verified ? req.dbUser.date_of_birth : null,
-      national_id_number: nid[0]?.national_id_number || req.dbUser.national_id
-    }),
+    user: await userWithIdentity(req.dbUser, req.phone),
     isAdmin: req.dbUser.role === "admin"
   });
 });
@@ -530,16 +521,8 @@ app.post("/api/login", verifyToken, async (req, res) => {
 // ============================================================
 app.get("/api/me", verifyToken, async (req, res) => {
   if (!req.dbUser) return res.status(404).json({ error: "Not registered" });
-  const [nid] = await db.query(
-    "SELECT national_id_number FROM citizen_national_ids WHERE user_id = ?",
-    [req.dbUser.user_id]
-  );
   res.json({
-    user: await userWithPhoto({
-      ...req.dbUser,
-      date_of_birth: req.dbUser.date_of_birth_verified ? req.dbUser.date_of_birth : null,
-      national_id_number: nid[0]?.national_id_number || req.dbUser.national_id
-    }),
+    user: await userWithIdentity(req.dbUser, req.phone),
     isAdmin: req.dbUser.role === "admin"
   });
 });
@@ -570,15 +553,7 @@ app.post("/api/me/profile", verifyToken, async (req, res) => {
       "SELECT * FROM users WHERE user_id = ? LIMIT 1",
       [req.dbUser.user_id]
     );
-    const [nid] = await db.query(
-      "SELECT national_id_number FROM citizen_national_ids WHERE user_id = ? LIMIT 1",
-      [req.dbUser.user_id]
-    );
-    const user = await userWithPhoto({
-      ...users[0],
-      date_of_birth: users[0].date_of_birth_verified ? users[0].date_of_birth : null,
-      national_id_number: nid[0]?.national_id_number || users[0].national_id
-    });
+    const user = await userWithIdentity(users[0], req.phone);
     res.json({ success: true, user });
   } catch (err) {
     console.error("Profile update error:", err);
@@ -614,7 +589,7 @@ app.post(
       "users", req.dbUser.user_id, { path: relativePath }, req.ip);
 
     const [rows] = await db.query("SELECT * FROM users WHERE user_id = ?", [req.dbUser.user_id]);
-    res.json({ success: true, user: await userWithPhoto(rows[0]) });
+    res.json({ success: true, user: await userWithIdentity(rows[0], req.phone) });
   }
 );
 
@@ -4110,6 +4085,65 @@ app.post(
       if (requestType === "GOV_PAYMENT" && service.service_code !== "GOV-PAYMENT") {
         throw new Error("Government payment requests must use the Government payment service");
       }
+      if (requestType === "PENSION_ELIGIBILITY") {
+        const benefitType = fields.benefit_type;
+        if (benefitType === "OLD_AGE" || benefitType === "RETIREMENT") {
+          const identity = await getPensionIdentity(conn, req.dbUser.user_id, req.phone);
+          if (!identity?.national_id_number || identity.age === null) {
+            throw new Error("A verified date of birth linked to your National ID is required for this eligibility check.");
+          }
+
+          let minimumAge = 70;
+          if (benefitType === "RETIREMENT") {
+            const retirementAges = {
+              REGULAR: 60,
+              UNIFORMED: 55,
+              EARLY_PERMISSION: 45
+            };
+            minimumAge = retirementAges[fields.retirement_category];
+            if (!minimumAge) throw new Error("Select a valid retirement category.");
+            if (
+              fields.retirement_category === "EARLY_PERMISSION" &&
+              fields.early_retirement_permission !== true
+            ) {
+              throw new Error("Special government permission is required for early retirement.");
+            }
+          }
+
+          fields = {
+            ...fields,
+            age: identity.age,
+            minimum_eligible_age: minimumAge,
+            eligibility_result: identity.age >= minimumAge ? "QUALIFIES_BY_AGE" : "DOES_NOT_MEET_AGE"
+          };
+        } else if (benefitType === "DEATH_SURVIVOR") {
+          if (!["SPOUSE", "CHILD", "NOMINATED"].includes(fields.beneficiary_relationship)) {
+            throw new Error("Select a valid relationship to the deceased worker.");
+          }
+          if ((req.files || []).length < 5) {
+            throw new Error("Upload all five required death/survivor benefit documents.");
+          }
+          fields = { ...fields, eligibility_result: "REQUIRES_DOCUMENT_VERIFICATION" };
+        } else if (benefitType === "ORPHAN") {
+          if (!["ONE_PARENT_DECEASED", "BOTH_PARENTS_DECEASED"].includes(fields.parental_status)) {
+            throw new Error("Confirm whether one or both parents have died.");
+          }
+          if ((req.files || []).length < 5) {
+            throw new Error("Upload all five required orphan benefit documents.");
+          }
+          const childAge = pensionAgeOnDate(fields.child_date_of_birth);
+          if (childAge === null || childAge >= 18) {
+            throw new Error("The child's verified date of birth must show an age under 18.");
+          }
+          fields = {
+            ...fields,
+            child_age: childAge,
+            eligibility_result: "REQUIRES_DOCUMENT_VERIFICATION"
+          };
+        } else {
+          throw new Error("Select a valid pension benefit.");
+        }
+      }
       if (requestType === "GOV_PAYMENT" &&
           (!String(fields.payment_reference || "").trim() || !String(fields.payer_name || "").trim())) {
         throw new Error("Government reference number and payer name are required");
@@ -5208,12 +5242,15 @@ app.get("/api/pensions/programmes", async (req, res) => {
 
 function pensionAgeOnDate(dateOfBirth, today = new Date()) {
   if (!dateOfBirth) return null;
-  const dob = new Date(dateOfBirth);
-  if (Number.isNaN(dob.getTime())) return null;
-  let age = today.getFullYear() - dob.getFullYear();
-  const beforeBirthday = today.getMonth() < dob.getMonth() ||
-    (today.getMonth() === dob.getMonth() && today.getDate() < dob.getDate());
-  if (beforeBirthday) age -= 1;
+  const [year, month, day] = String(dateOfBirth).slice(0, 10).split("-").map(Number);
+  const dob = new Date(Date.UTC(year, month - 1, day));
+  if (
+    !year || !month || !day ||
+    dob.getUTCFullYear() !== year ||
+    dob.getUTCMonth() !== month - 1 ||
+    dob.getUTCDate() !== day
+  ) return null;
+  const age = today.getFullYear() - year;
   return age >= 0 ? age : null;
 }
 
@@ -5269,6 +5306,23 @@ async function getPensionIdentity(conn, userId, authPhone = null) {
     age: pensionAgeOnDate(dateOfBirth),
     payment_phone: phone ? String(phone).replace(/[^0-9]/g, "") : ""
   };
+}
+
+async function userWithIdentity(user, authPhone = null) {
+  if (!user) return null;
+  const identity = await getPensionIdentity(db, user.user_id, authPhone);
+  const nationalId = identity?.national_id_number ||
+    user.national_id_number || user.national_id || null;
+  return userWithPhoto({
+    ...user,
+    full_name: identity?.full_name || user.full_name,
+    national_id: nationalId,
+    national_id_number: nationalId,
+    date_of_birth: identity?.date_of_birth || null,
+    date_of_birth_verified: Boolean(identity?.date_of_birth),
+    date_of_birth_source: identity?.date_of_birth_source || null,
+    age: identity?.age ?? null
+  });
 }
 
 async function findDeathCertificateRequest(conn, fullName) {

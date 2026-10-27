@@ -26,6 +26,10 @@ function getValue(value) {
   return value || "Not provided";
 }
 
+function getIdentityValue(value) {
+  return value ? String(value).slice(0, 10) : "Not verified";
+}
+
 export default function DashboardSettingsModal({
   user,
   applicationItem,
@@ -127,6 +131,8 @@ export default function DashboardSettingsModal({
                 <div><dt>Email</dt><dd>{getValue(user?.email)}</dd></div>
                 <div><dt>Phone</dt><dd>{getValue(user?.phone)}</dd></div>
                 <div><dt>National ID</dt><dd>{getValue(user?.national_id_number || user?.national_id)}</dd></div>
+                <div><dt>Date of birth</dt><dd>{getIdentityValue(user?.date_of_birth)}</dd></div>
+                <div><dt>Age</dt><dd>{user?.age == null ? "Not available" : `${user.age} years`}</dd></div>
                 <div><dt>Account type</dt><dd>{getValue(user?.account_type || user?.role)}</dd></div>
                 <div><dt>Account status</dt><dd>{getValue(user?.account_status)}</dd></div>
               </dl>
