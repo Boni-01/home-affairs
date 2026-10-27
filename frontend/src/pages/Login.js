@@ -13,6 +13,7 @@ import {
   RECAPTCHA_CONTAINER_ID,
   API_BASE
 } from "../Database/firebase";
+import "./Auth.css";
 
 const COLORS = {
   blue: "#00209F",
@@ -233,7 +234,6 @@ function Login({ onSuccess, getPostAuthRoute }) {
       placeItems: "center",
       padding: "24px",
       boxSizing: "border-box",
-      background: COLORS.lightBg,
       fontFamily: "Arial, sans-serif"
     }}>
       <div id={RECAPTCHA_CONTAINER_ID}></div>

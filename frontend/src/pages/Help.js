@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import './Help.css';
+import './Auth.css';
 
 const faqs = [
 	{
@@ -145,7 +146,7 @@ export default function Help() {
 }
 
 const styles = {
-	page: { minHeight: '100vh', boxSizing: 'border-box', padding: '48px 20px', background: '#f5f7fa', color: '#172b4d', fontFamily: 'Arial, sans-serif' },
+	page: { minHeight: '100vh', boxSizing: 'border-box', padding: '48px 20px', color: '#172b4d', fontFamily: 'Arial, sans-serif' },
 	content: { width: '100%', maxWidth: '850px', margin: '0 auto' },
 	eyebrow: { margin: '0 0 8px', color: '#526581', fontSize: '13px', fontWeight: 700, letterSpacing: '1px' },
 	heading: { margin: '0 0 12px', fontSize: '32px', lineHeight: 1.2 },

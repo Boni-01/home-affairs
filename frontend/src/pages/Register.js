@@ -14,6 +14,7 @@ import {
   googleProvider,
   API_BASE
 } from "../Database/firebase";
+import "./Auth.css";
 
 const COLORS = {
   blue: "#00209F",
@@ -224,7 +225,6 @@ function Register({ onSuccess, getPostAuthRoute }) {
       placeItems: "center",
       padding: 24,
       boxSizing: "border-box",
-      background: COLORS.lightBg,
       fontFamily: "Arial, sans-serif"
     }}>
       {/* Split Screen Container */}
