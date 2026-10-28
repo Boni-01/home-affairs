@@ -1437,7 +1437,7 @@ app.post("/api/admin/national-ids", verifyToken, requireAdmin, async (req, res) 
   try {
     await conn.beginTransaction();
     const [birthRows] = await conn.query(
-      `SELECT * FROM national_birth_certificates
+      `SELECT *, DATE_FORMAT(date_of_birth, '%Y-%m-%d') AS date_of_birth FROM national_birth_certificates
        WHERE reference_number = ? AND record_status = 'approved' FOR UPDATE`,
       [birth_certificate_reference.trim()]
     );
